@@ -10,7 +10,7 @@
 void   dsmatrix_message__init
                      (DSMatrixMessage         *message)
 {
-  static DSMatrixMessage init_value = DSMATRIX_MESSAGE__INIT;
+  static const DSMatrixMessage init_value = DSMATRIX_MESSAGE__INIT;
   *message = init_value;
 }
 size_t dsmatrix_message__get_packed_size
@@ -47,13 +47,60 @@ void   dsmatrix_message__free_unpacked
                      (DSMatrixMessage *message,
                       ProtobufCAllocator *allocator)
 {
+  if(!message)
+    return;
   assert(message->base.descriptor == &dsmatrix_message__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
+void   dsu_integer_matrix_message__init
+                     (DSuIntegerMatrixMessage         *message)
+{
+  static const DSuIntegerMatrixMessage init_value = DSU_INTEGER_MATRIX_MESSAGE__INIT;
+  *message = init_value;
+}
+size_t dsu_integer_matrix_message__get_packed_size
+                     (const DSuIntegerMatrixMessage *message)
+{
+  assert(message->base.descriptor == &dsu_integer_matrix_message__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t dsu_integer_matrix_message__pack
+                     (const DSuIntegerMatrixMessage *message,
+                      uint8_t       *out)
+{
+  assert(message->base.descriptor == &dsu_integer_matrix_message__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t dsu_integer_matrix_message__pack_to_buffer
+                     (const DSuIntegerMatrixMessage *message,
+                      ProtobufCBuffer *buffer)
+{
+  assert(message->base.descriptor == &dsu_integer_matrix_message__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+DSuIntegerMatrixMessage *
+       dsu_integer_matrix_message__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (DSuIntegerMatrixMessage *)
+     protobuf_c_message_unpack (&dsu_integer_matrix_message__descriptor,
+                                allocator, len, data);
+}
+void   dsu_integer_matrix_message__free_unpacked
+                     (DSuIntegerMatrixMessage *message,
+                      ProtobufCAllocator *allocator)
+{
+  if(!message)
+    return;
+  assert(message->base.descriptor == &dsu_integer_matrix_message__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
 void   dsmatrix_array_message__init
                      (DSMatrixArrayMessage         *message)
 {
-  static DSMatrixArrayMessage init_value = DSMATRIX_ARRAY_MESSAGE__INIT;
+  static const DSMatrixArrayMessage init_value = DSMATRIX_ARRAY_MESSAGE__INIT;
   *message = init_value;
 }
 size_t dsmatrix_array_message__get_packed_size
@@ -90,13 +137,15 @@ void   dsmatrix_array_message__free_unpacked
                      (DSMatrixArrayMessage *message,
                       ProtobufCAllocator *allocator)
 {
+  if(!message)
+    return;
   assert(message->base.descriptor == &dsmatrix_array_message__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
 void   dsssystem_message__init
                      (DSSSystemMessage         *message)
 {
-  static DSSSystemMessage init_value = DSSSYSTEM_MESSAGE__INIT;
+  static const DSSSystemMessage init_value = DSSSYSTEM_MESSAGE__INIT;
   *message = init_value;
 }
 size_t dsssystem_message__get_packed_size
@@ -133,13 +182,15 @@ void   dsssystem_message__free_unpacked
                      (DSSSystemMessage *message,
                       ProtobufCAllocator *allocator)
 {
+  if(!message)
+    return;
   assert(message->base.descriptor == &dsssystem_message__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
 void   dscase_message__init
                      (DSCaseMessage         *message)
 {
-  static DSCaseMessage init_value = DSCASE_MESSAGE__INIT;
+  static const DSCaseMessage init_value = DSCASE_MESSAGE__INIT;
   *message = init_value;
 }
 size_t dscase_message__get_packed_size
@@ -176,13 +227,15 @@ void   dscase_message__free_unpacked
                      (DSCaseMessage *message,
                       ProtobufCAllocator *allocator)
 {
+  if(!message)
+    return;
   assert(message->base.descriptor == &dscase_message__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
 void   dscyclical_case_message__init
                      (DSCyclicalCaseMessage         *message)
 {
-  static DSCyclicalCaseMessage init_value = DSCYCLICAL_CASE_MESSAGE__INIT;
+  static const DSCyclicalCaseMessage init_value = DSCYCLICAL_CASE_MESSAGE__INIT;
   *message = init_value;
 }
 size_t dscyclical_case_message__get_packed_size
@@ -219,13 +272,15 @@ void   dscyclical_case_message__free_unpacked
                      (DSCyclicalCaseMessage *message,
                       ProtobufCAllocator *allocator)
 {
+  if(!message)
+    return;
   assert(message->base.descriptor == &dscyclical_case_message__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
 void   dsgmasystem_message__init
                      (DSGMASystemMessage         *message)
 {
-  static DSGMASystemMessage init_value = DSGMASYSTEM_MESSAGE__INIT;
+  static const DSGMASystemMessage init_value = DSGMASYSTEM_MESSAGE__INIT;
   *message = init_value;
 }
 size_t dsgmasystem_message__get_packed_size
@@ -262,13 +317,105 @@ void   dsgmasystem_message__free_unpacked
                      (DSGMASystemMessage *message,
                       ProtobufCAllocator *allocator)
 {
+  if(!message)
+    return;
   assert(message->base.descriptor == &dsgmasystem_message__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
+void   dsvector_message__init
+                     (DSVectorMessage         *message)
+{
+  static const DSVectorMessage init_value = DSVECTOR_MESSAGE__INIT;
+  *message = init_value;
+}
+size_t dsvector_message__get_packed_size
+                     (const DSVectorMessage *message)
+{
+  assert(message->base.descriptor == &dsvector_message__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t dsvector_message__pack
+                     (const DSVectorMessage *message,
+                      uint8_t       *out)
+{
+  assert(message->base.descriptor == &dsvector_message__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t dsvector_message__pack_to_buffer
+                     (const DSVectorMessage *message,
+                      ProtobufCBuffer *buffer)
+{
+  assert(message->base.descriptor == &dsvector_message__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+DSVectorMessage *
+       dsvector_message__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (DSVectorMessage *)
+     protobuf_c_message_unpack (&dsvector_message__descriptor,
+                                allocator, len, data);
+}
+void   dsvector_message__free_unpacked
+                     (DSVectorMessage *message,
+                      ProtobufCAllocator *allocator)
+{
+  if(!message)
+    return;
+  assert(message->base.descriptor == &dsvector_message__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
+void   dsextension_data_message__init
+                     (DSExtensionDataMessage         *message)
+{
+  static const DSExtensionDataMessage init_value = DSEXTENSION_DATA_MESSAGE__INIT;
+  *message = init_value;
+}
+size_t dsextension_data_message__get_packed_size
+                     (const DSExtensionDataMessage *message)
+{
+  assert(message->base.descriptor == &dsextension_data_message__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t dsextension_data_message__pack
+                     (const DSExtensionDataMessage *message,
+                      uint8_t       *out)
+{
+  assert(message->base.descriptor == &dsextension_data_message__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t dsextension_data_message__pack_to_buffer
+                     (const DSExtensionDataMessage *message,
+                      ProtobufCBuffer *buffer)
+{
+  assert(message->base.descriptor == &dsextension_data_message__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+DSExtensionDataMessage *
+       dsextension_data_message__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (DSExtensionDataMessage *)
+     protobuf_c_message_unpack (&dsextension_data_message__descriptor,
+                                allocator, len, data);
+}
+void   dsextension_data_message__free_unpacked
+                     (DSExtensionDataMessage *message,
+                      ProtobufCAllocator *allocator)
+{
+  if(!message)
+    return;
+  assert(message->base.descriptor == &dsextension_data_message__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
 void   dsdesign_space_message__init
                      (DSDesignSpaceMessage         *message)
 {
-  static DSDesignSpaceMessage init_value = DSDESIGN_SPACE_MESSAGE__INIT;
+  static const DSDesignSpaceMessage init_value = DSDESIGN_SPACE_MESSAGE__INIT;
   *message = init_value;
 }
 size_t dsdesign_space_message__get_packed_size
@@ -305,6 +452,8 @@ void   dsdesign_space_message__free_unpacked
                      (DSDesignSpaceMessage *message,
                       ProtobufCAllocator *allocator)
 {
+  if(!message)
+    return;
   assert(message->base.descriptor == &dsdesign_space_message__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
@@ -372,6 +521,70 @@ const ProtobufCMessageDescriptor dsmatrix_message__descriptor =
   (ProtobufCMessageInit) dsmatrix_message__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
+static const ProtobufCFieldDescriptor dsu_integer_matrix_message__field_descriptors[3] =
+{
+  {
+    "rows",
+    1,
+    PROTOBUF_C_LABEL_REQUIRED,
+    PROTOBUF_C_TYPE_INT32,
+    0,   /* quantifier_offset */
+    offsetof(DSuIntegerMatrixMessage, rows),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "columns",
+    2,
+    PROTOBUF_C_LABEL_REQUIRED,
+    PROTOBUF_C_TYPE_INT32,
+    0,   /* quantifier_offset */
+    offsetof(DSuIntegerMatrixMessage, columns),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "values",
+    3,
+    PROTOBUF_C_LABEL_REPEATED,
+    PROTOBUF_C_TYPE_INT32,
+    offsetof(DSuIntegerMatrixMessage, n_values),
+    offsetof(DSuIntegerMatrixMessage, values),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+};
+static const unsigned dsu_integer_matrix_message__field_indices_by_name[] = {
+  1,   /* field[1] = columns */
+  0,   /* field[0] = rows */
+  2,   /* field[2] = values */
+};
+static const ProtobufCIntRange dsu_integer_matrix_message__number_ranges[1 + 1] =
+{
+  { 1, 0 },
+  { 0, 3 }
+};
+const ProtobufCMessageDescriptor dsu_integer_matrix_message__descriptor =
+{
+  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "DSuIntegerMatrixMessage",
+  "DSuIntegerMatrixMessage",
+  "DSuIntegerMatrixMessage",
+  "",
+  sizeof(DSuIntegerMatrixMessage),
+  3,
+  dsu_integer_matrix_message__field_descriptors,
+  dsu_integer_matrix_message__field_indices_by_name,
+  1,  dsu_integer_matrix_message__number_ranges,
+  (ProtobufCMessageInit) dsu_integer_matrix_message__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
 static const ProtobufCFieldDescriptor dsmatrix_array_message__field_descriptors[1] =
 {
   {
@@ -410,7 +623,7 @@ const ProtobufCMessageDescriptor dsmatrix_array_message__descriptor =
   (ProtobufCMessageInit) dsmatrix_array_message__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCFieldDescriptor dsssystem_message__field_descriptors[12] =
+static const ProtobufCFieldDescriptor dsssystem_message__field_descriptors[13] =
 {
   {
     "alpha",
@@ -556,6 +769,18 @@ static const ProtobufCFieldDescriptor dsssystem_message__field_descriptors[12] =
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
+  {
+    "numberOfConservations",
+    13,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_INT32,
+    offsetof(DSSSystemMessage, has_numberofconservations),
+    offsetof(DSSSystemMessage, numberofconservations),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
 };
 static const unsigned dsssystem_message__field_indices_by_name[] = {
   2,   /* field[2] = Gd */
@@ -570,11 +795,12 @@ static const unsigned dsssystem_message__field_indices_by_name[] = {
   0,   /* field[0] = alpha */
   1,   /* field[1] = beta */
   6,   /* field[6] = modifierFlag */
+  12,   /* field[12] = numberOfConservations */
 };
 static const ProtobufCIntRange dsssystem_message__number_ranges[1 + 1] =
 {
   { 1, 0 },
-  { 0, 12 }
+  { 0, 13 }
 };
 const ProtobufCMessageDescriptor dsssystem_message__descriptor =
 {
@@ -584,14 +810,14 @@ const ProtobufCMessageDescriptor dsssystem_message__descriptor =
   "DSSSystemMessage",
   "",
   sizeof(DSSSystemMessage),
-  12,
+  13,
   dsssystem_message__field_descriptors,
   dsssystem_message__field_indices_by_name,
   1,  dsssystem_message__number_ranges,
   (ProtobufCMessageInit) dsssystem_message__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCFieldDescriptor dscase_message__field_descriptors[9] =
+static const ProtobufCFieldDescriptor dscase_message__field_descriptors[12] =
 {
   {
     "caseNumber",
@@ -701,6 +927,42 @@ static const ProtobufCFieldDescriptor dscase_message__field_descriptors[9] =
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
+  {
+    "signature_3d",
+    10,
+    PROTOBUF_C_LABEL_REPEATED,
+    PROTOBUF_C_TYPE_INT32,
+    offsetof(DSCaseMessage, n_signature_3d),
+    offsetof(DSCaseMessage, signature_3d),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "conserved_sig",
+    11,
+    PROTOBUF_C_LABEL_REPEATED,
+    PROTOBUF_C_TYPE_INT32,
+    offsetof(DSCaseMessage, n_conserved_sig),
+    offsetof(DSCaseMessage, conserved_sig),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "numberinheritedconservations",
+    12,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_INT32,
+    offsetof(DSCaseMessage, has_numberinheritedconservations),
+    offsetof(DSCaseMessage, numberinheritedconservations),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
 };
 static const unsigned dscase_message__field_indices_by_name[] = {
   2,   /* field[2] = Cd */
@@ -708,15 +970,18 @@ static const unsigned dscase_message__field_indices_by_name[] = {
   6,   /* field[6] = U */
   4,   /* field[4] = caseIdentifier */
   0,   /* field[0] = caseNumber */
+  10,   /* field[10] = conserved_sig */
   7,   /* field[7] = delta */
+  11,   /* field[11] = numberinheritedconservations */
   5,   /* field[5] = signature */
+  9,   /* field[9] = signature_3d */
   1,   /* field[1] = ssystem */
   8,   /* field[8] = zeta */
 };
 static const ProtobufCIntRange dscase_message__number_ranges[1 + 1] =
 {
   { 1, 0 },
-  { 0, 9 }
+  { 0, 12 }
 };
 const ProtobufCMessageDescriptor dscase_message__descriptor =
 {
@@ -726,7 +991,7 @@ const ProtobufCMessageDescriptor dscase_message__descriptor =
   "DSCaseMessage",
   "",
   sizeof(DSCaseMessage),
-  9,
+  12,
   dscase_message__field_descriptors,
   dscase_message__field_indices_by_name,
   1,  dscase_message__number_ranges,
@@ -952,7 +1217,200 @@ const ProtobufCMessageDescriptor dsgmasystem_message__descriptor =
   (ProtobufCMessageInit) dsgmasystem_message__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCFieldDescriptor dsdesign_space_message__field_descriptors[10] =
+static const ProtobufCFieldDescriptor dsvector_message__field_descriptors[1] =
+{
+  {
+    "vector",
+    1,
+    PROTOBUF_C_LABEL_REPEATED,
+    PROTOBUF_C_TYPE_INT32,
+    offsetof(DSVectorMessage, n_vector),
+    offsetof(DSVectorMessage, vector),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+};
+static const unsigned dsvector_message__field_indices_by_name[] = {
+  0,   /* field[0] = vector */
+};
+static const ProtobufCIntRange dsvector_message__number_ranges[1 + 1] =
+{
+  { 1, 0 },
+  { 0, 1 }
+};
+const ProtobufCMessageDescriptor dsvector_message__descriptor =
+{
+  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "DSVectorMessage",
+  "DSVectorMessage",
+  "DSVectorMessage",
+  "",
+  sizeof(DSVectorMessage),
+  1,
+  dsvector_message__field_descriptors,
+  dsvector_message__field_indices_by_name,
+  1,  dsvector_message__number_ranges,
+  (ProtobufCMessageInit) dsvector_message__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
+static const ProtobufCFieldDescriptor dsextension_data_message__field_descriptors[10] =
+{
+  {
+    "numberCycles",
+    1,
+    PROTOBUF_C_LABEL_REQUIRED,
+    PROTOBUF_C_TYPE_INT32,
+    0,   /* quantifier_offset */
+    offsetof(DSExtensionDataMessage, numbercycles),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "mainCycleVariables",
+    2,
+    PROTOBUF_C_LABEL_REPEATED,
+    PROTOBUF_C_TYPE_INT32,
+    offsetof(DSExtensionDataMessage, n_maincyclevariables),
+    offsetof(DSExtensionDataMessage, maincyclevariables),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "numbersecondaryvariables",
+    3,
+    PROTOBUF_C_LABEL_REPEATED,
+    PROTOBUF_C_TYPE_INT32,
+    offsetof(DSExtensionDataMessage, n_numbersecondaryvariables),
+    offsetof(DSExtensionDataMessage, numbersecondaryvariables),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "allsecondaryvariables",
+    4,
+    PROTOBUF_C_LABEL_REPEATED,
+    PROTOBUF_C_TYPE_MESSAGE,
+    offsetof(DSExtensionDataMessage, n_allsecondaryvariables),
+    offsetof(DSExtensionDataMessage, allsecondaryvariables),
+    &dsvector_message__descriptor,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "originalsSystem",
+    5,
+    PROTOBUF_C_LABEL_REQUIRED,
+    PROTOBUF_C_TYPE_MESSAGE,
+    0,   /* quantifier_offset */
+    offsetof(DSExtensionDataMessage, originalssystem),
+    &dsssystem_message__descriptor,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "g_l_eq",
+    6,
+    PROTOBUF_C_LABEL_REQUIRED,
+    PROTOBUF_C_TYPE_MESSAGE,
+    0,   /* quantifier_offset */
+    offsetof(DSExtensionDataMessage, g_l_eq),
+    &dsu_integer_matrix_message__descriptor,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "g_l_term",
+    7,
+    PROTOBUF_C_LABEL_REQUIRED,
+    PROTOBUF_C_TYPE_MESSAGE,
+    0,   /* quantifier_offset */
+    offsetof(DSExtensionDataMessage, g_l_term),
+    &dsu_integer_matrix_message__descriptor,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "h_l_eq",
+    8,
+    PROTOBUF_C_LABEL_REQUIRED,
+    PROTOBUF_C_TYPE_MESSAGE,
+    0,   /* quantifier_offset */
+    offsetof(DSExtensionDataMessage, h_l_eq),
+    &dsu_integer_matrix_message__descriptor,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "h_l_term",
+    9,
+    PROTOBUF_C_LABEL_REQUIRED,
+    PROTOBUF_C_TYPE_MESSAGE,
+    0,   /* quantifier_offset */
+    offsetof(DSExtensionDataMessage, h_l_term),
+    &dsu_integer_matrix_message__descriptor,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "originalbeta",
+    10,
+    PROTOBUF_C_LABEL_REQUIRED,
+    PROTOBUF_C_TYPE_MESSAGE,
+    0,   /* quantifier_offset */
+    offsetof(DSExtensionDataMessage, originalbeta),
+    &dsmatrix_message__descriptor,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+};
+static const unsigned dsextension_data_message__field_indices_by_name[] = {
+  3,   /* field[3] = allsecondaryvariables */
+  5,   /* field[5] = g_l_eq */
+  6,   /* field[6] = g_l_term */
+  7,   /* field[7] = h_l_eq */
+  8,   /* field[8] = h_l_term */
+  1,   /* field[1] = mainCycleVariables */
+  0,   /* field[0] = numberCycles */
+  2,   /* field[2] = numbersecondaryvariables */
+  9,   /* field[9] = originalbeta */
+  4,   /* field[4] = originalsSystem */
+};
+static const ProtobufCIntRange dsextension_data_message__number_ranges[1 + 1] =
+{
+  { 1, 0 },
+  { 0, 10 }
+};
+const ProtobufCMessageDescriptor dsextension_data_message__descriptor =
+{
+  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "DSExtensionDataMessage",
+  "DSExtensionDataMessage",
+  "DSExtensionDataMessage",
+  "",
+  sizeof(DSExtensionDataMessage),
+  10,
+  dsextension_data_message__field_descriptors,
+  dsextension_data_message__field_indices_by_name,
+  1,  dsextension_data_message__number_ranges,
+  (ProtobufCMessageInit) dsextension_data_message__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
+static const ProtobufCFieldDescriptor dsdesign_space_message__field_descriptors[15] =
 {
   {
     "gma",
@@ -1074,23 +1532,88 @@ static const ProtobufCFieldDescriptor dsdesign_space_message__field_descriptors[
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
+  {
+    "extensionData",
+    11,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_MESSAGE,
+    0,   /* quantifier_offset */
+    offsetof(DSDesignSpaceMessage, extensiondata),
+    &dsextension_data_message__descriptor,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "parent3digitsignature",
+    12,
+    PROTOBUF_C_LABEL_REPEATED,
+    PROTOBUF_C_TYPE_INT32,
+    offsetof(DSDesignSpaceMessage, n_parent3digitsignature),
+    offsetof(DSDesignSpaceMessage, parent3digitsignature),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "blowingCasesNumbers",
+    13,
+    PROTOBUF_C_LABEL_REPEATED,
+    PROTOBUF_C_TYPE_INT32,
+    offsetof(DSDesignSpaceMessage, n_blowingcasesnumbers),
+    offsetof(DSDesignSpaceMessage, blowingcasesnumbers),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "numberOfConservations",
+    14,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_INT32,
+    offsetof(DSDesignSpaceMessage, has_numberofconservations),
+    offsetof(DSDesignSpaceMessage, numberofconservations),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "numberinheritedconservations",
+    15,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_INT32,
+    offsetof(DSDesignSpaceMessage, has_numberinheritedconservations),
+    offsetof(DSDesignSpaceMessage, numberinheritedconservations),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
 };
 static const unsigned dsdesign_space_message__field_indices_by_name[] = {
   4,   /* field[4] = Cd */
   5,   /* field[5] = Ci */
+  12,   /* field[12] = blowingCasesNumbers */
   7,   /* field[7] = casePrefix */
   9,   /* field[9] = cyclicalCases */
   8,   /* field[8] = cyclicalCasesNumbers */
   6,   /* field[6] = delta */
+  10,   /* field[10] = extensionData */
   0,   /* field[0] = gma */
   1,   /* field[1] = modifierFlags */
   2,   /* field[2] = numberOfCases */
+  13,   /* field[13] = numberOfConservations */
+  14,   /* field[14] = numberinheritedconservations */
+  11,   /* field[11] = parent3digitsignature */
   3,   /* field[3] = validCases */
 };
 static const ProtobufCIntRange dsdesign_space_message__number_ranges[1 + 1] =
 {
   { 1, 0 },
-  { 0, 10 }
+  { 0, 15 }
 };
 const ProtobufCMessageDescriptor dsdesign_space_message__descriptor =
 {
@@ -1100,7 +1623,7 @@ const ProtobufCMessageDescriptor dsdesign_space_message__descriptor =
   "DSDesignSpaceMessage",
   "",
   sizeof(DSDesignSpaceMessage),
-  10,
+  15,
   dsdesign_space_message__field_descriptors,
   dsdesign_space_message__field_indices_by_name,
   1,  dsdesign_space_message__number_ranges,

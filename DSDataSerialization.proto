@@ -5,6 +5,12 @@ message DSMatrixMessage {
         repeated double values = 3;
 }
 
+message DSuIntegerMatrixMessage {
+    required int32 rows = 1;
+    required int32 columns = 2;
+    repeated int32 values = 3;
+}
+
 message DSMatrixArrayMessage {
         repeated DSMatrixMessage matrices = 1;
 }
@@ -22,6 +28,7 @@ message DSSSystemMessage {
         repeated string Xd_t = 10;
         repeated string Xd_a = 11;
         repeated string Xi = 12;
+        optional int32 numberOfConservations = 13;
 }
 
 message DSCaseMessage {
@@ -34,6 +41,9 @@ message DSCaseMessage {
         optional DSMatrixMessage U = 7;
         optional DSMatrixMessage delta = 8;
         optional DSMatrixMessage zeta = 9;
+        repeated int32 signature_3d = 10;
+        repeated int32 conserved_sig = 11;
+        optional int32 numberinheritedconservations = 12;
 }
 
 message DSCyclicalCaseMessage {
@@ -55,6 +65,23 @@ message DSGMASystemMessage {
         repeated int32 signature = 11;
 }
 
+message DSVectorMessage{
+        repeated int32 vector = 1;
+}
+
+message DSExtensionDataMessage{
+        required int32 numberCycles = 1;
+        repeated int32 mainCycleVariables = 2;
+        repeated int32 numbersecondaryvariables = 3;
+        repeated DSVectorMessage allsecondaryvariables = 4;
+        required DSSSystemMessage originalsSystem = 5;
+        required DSuIntegerMatrixMessage g_l_eq = 6;
+        required DSuIntegerMatrixMessage g_l_term = 7;
+        required DSuIntegerMatrixMessage h_l_eq = 8;
+        required DSuIntegerMatrixMessage h_l_term = 9;
+        required DSMatrixMessage originalbeta = 10;
+}
+
 message DSDesignSpaceMessage {
         required DSGMASystemMessage gma = 1;
         required int32 modifierFlags = 2;
@@ -66,5 +93,10 @@ message DSDesignSpaceMessage {
         optional string casePrefix = 8;
         repeated int32 cyclicalCasesNumbers = 9;
         repeated DSCyclicalCaseMessage cyclicalCases = 10;
+        optional DSExtensionDataMessage  extensionData = 11;
+        repeated int32 parent3digitsignature = 12;
+        repeated int32 blowingCasesNumbers = 13;
+        optional int32 numberOfConservations = 14;
+        optional int32 numberinheritedconservations = 15;
 }
 

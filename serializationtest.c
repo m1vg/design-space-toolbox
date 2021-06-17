@@ -13,7 +13,8 @@
 
 
 int main(int argc, const char ** argv) {
-        DSDesignSpace * ds = DSDesignSpaceByParsingStringList("x1. = a1 + a2*x2 - b1*x1", NULL, "x2. = a3*x1 + a4 + b1*x1 - a2*x2 - b2*x2", NULL);
+//        DSDesignSpace * ds = DSDesignSpaceByParsingStringList("x1. = a1 + a2*x2 - b1*x1", NULL, "x2. = a3*x1 + a4 + b1*x1 - a2*x2 - b2*x2", NULL);
+        DSDesignSpace * ds = DSDesignSpaceByParsingStringList("X1. = a11 + 2*b31*X3 - b11*X1 - 2*b12*(X1^2)", NULL, "'X2. = b12*(X1^2) - b23*X2 - b22*X2'", NULL, "'X3. = a31 + b23*X2 - b31*X3 - b33*X3'", NULL);
         DSDesignSpaceCalculateCyclicalCases(ds);
         DSDesignSpace * decodedDs;
         DSUInteger i;

@@ -348,7 +348,7 @@ bail:
  *        write and add.
  *
  * This function acts on an existing DSVariablePool object, and changes its
- * priviliges to read, write and add. This provilige setting allows adding
+ * priviliges to read, write and add. This privilige setting allows adding
  * new variables to the variable pool and changing the values of the variables.
  *
  * \param pool A DSVariablePool object that will have its priviliges changed.
@@ -504,6 +504,7 @@ extern void DSVariablePoolAddVariableWithName(DSVariablePool *pool, const char *
         else
                 DSVariablePoolVariableArray(pool) = DSSecureRealloc(DSVariablePoolVariableArray(pool), (dsVariablePoolNumberOfVariables(pool)+1)*sizeof(DSVariable *));
         DSVariablePoolVariableArray(pool)[dsVariablePoolNumberOfVariables(pool)++] = var;
+    
 bail:
         return;
 }
@@ -564,6 +565,7 @@ extern double DSVariablePoolValueForVariableWithName(const DSVariablePool *pool,
         }
         if (DSVariablePoolIsReadWriteAdd(pool) == false) {
                 DSError(M_DS_VAR_LOCKED, A_DS_ERROR);
+                printf("variable is locked \n");
                 goto bail;
         }
         var = DSVariablePoolVariableWithName(pool, name);
@@ -647,6 +649,7 @@ extern void DSVariablePoolSetValueForVariableWithName(const DSVariablePool *pool
         }
         if (DSVariablePoolIsReadOnly(pool) == true) {
                 DSError(M_DS_VAR_LOCKED, A_DS_ERROR);
+            printf("variable is locked \n");
                 goto bail;
         }
         if (name == NULL) {
@@ -908,4 +911,35 @@ bail:
         return indices;
 }
 
+extern double DSVariablePoolDistanceToPool(const DSVariablePool *pool1, const DSVariablePool *pool2){
+    
+    double distance = 0.0;
+    DSUInteger nVar1 = DSVariablePoolNumberOfVariables(pool1), i;
+    DSUInteger nVar2 = DSVariablePoolNumberOfVariables(pool2);
+    const DSVariable *current_var;
+    double aux;
+    
+    if (pool1 == NULL) {
+            DSError(M_DS_VAR_NULL, A_DS_ERROR);
+            goto bail;
+    }
+    if (pool2 == NULL) {
+            DSError(M_DS_VAR_NULL, A_DS_ERROR);
+            goto bail;
+    }
+    if (nVar1 != nVar2) {
+            DSError(M_DS_WRONG ": Pools have different number of variables ", A_DS_ERROR);
+            goto bail;
+    }
+    
+    for (i=0; i < nVar1; i++){
+        current_var = DSVariablePoolAllVariables(pool1)[i];
+        aux = DSVariablePoolValueForVariableWithName(pool1, DSVariableName(current_var)) - DSVariablePoolValueForVariableWithName(pool2, DSVariableName(current_var));
+        distance += pow(aux, 2.0);
+    }
+    
+bail:
+    return pow(distance, 0.5);
+    
+}
 

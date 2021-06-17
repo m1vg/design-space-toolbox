@@ -118,6 +118,67 @@ bail:
         return Xi;
 }
 
+extern const DSVariablePool * DSCyclicalCaseMainCycleVariables(const DSCyclicalCase *cyclicalCase,
+                                                               DSUInteger cycle)
+{
+    
+    DSVariablePool * X_main = NULL;
+    const DSVariablePool * Xd = NULL;
+    DSUInteger i;
+    
+    
+    if (cyclicalCase == NULL) {
+        DSError(M_DS_SUBCASE_NULL, A_DS_ERROR);
+        goto bail;
+    }
+    if (cycle > DSCyclicalCaseNumberOfCycles(cyclicalCase)) {
+        DSError("cycle index exceeds number of cycles", A_DS_ERROR);
+        goto bail;
+    }
+    
+    Xd = DSDesignSpaceXd(cyclicalCase->internalDesignspace);
+    X_main = DSVariablePoolAlloc();
+    i = cyclicalCase->internalDesignspace->extensionData->mainCycleVariables[cycle - 1];
+    DSVariablePoolAddVariableWithName(X_main, DSVariablePoolVariableAtIndex(Xd, i)->name);
+    
+bail:
+    return X_main;
+
+}
+
+extern const DSVariablePool * DSCyclicalCaseSecondaryCycleVariables(const DSCyclicalCase *cyclicalCase,
+                                                                    DSUInteger cycle)
+{
+    
+    DSVariablePool * X_sec = NULL;
+    const DSVariablePool * Xd = NULL;
+    DSUInteger i, ii, index;
+    
+    
+    if (cyclicalCase == NULL) {
+        DSError(M_DS_SUBCASE_NULL, A_DS_ERROR);
+        goto bail;
+    }
+    if (cycle > DSCyclicalCaseNumberOfCycles(cyclicalCase)) {
+        DSError("cycle index exceeds number of cycles", A_DS_ERROR);
+        goto bail;
+    }
+    
+    Xd = DSDesignSpaceXd(cyclicalCase->internalDesignspace);
+    X_sec = DSVariablePoolAlloc();
+    i = cyclicalCase->internalDesignspace->extensionData->numberSecondaryVariables[cycle - 1];
+    
+    for (ii=0; ii<i; ii++){
+        index = cyclicalCase->internalDesignspace->extensionData->allSecondaryVariables[cycle-1][ii];
+        DSVariablePoolAddVariableWithName(X_sec, DSVariablePoolVariableAtIndex(Xd, index)->name);
+    }
+    
+bail:
+    return X_sec;
+    
+}
+
+
 extern const DSDesignSpace * DSCyclicalCaseInternalDesignSpace(const DSCyclicalCase * subcase)
 {
         DSDesignSpace * ds = NULL;
@@ -153,16 +214,51 @@ extern const DSUInteger DSCyclicalCaseNumberOfValidSubcases(const DSCyclicalCase
                 goto bail;
         }
         ds = cyclicalCase->internalDesignspace;
-//        for (i = 0; i < cyclicalCase->numberOfInternal; i++) {
-//                ds = cyclicalCase->internalDesignspaces[i];
                 if (ds == NULL) {
                         DSError(M_DS_DESIGN_SPACE_NULL, A_DS_ERROR);
                         goto bail;
                 }
                 numberOfValidSubcases = DSDesignSpaceNumberOfValidCases(ds);
-//        }
 bail:
         return numberOfValidSubcases;
+}
+
+extern const DSUInteger DSCyclicalCaseNumberOfCycles(const DSCyclicalCase *cyclicalCase)
+{
+    DSDesignSpace * ds;
+    DSUInteger numberOfCycles = 0;
+    if (cyclicalCase == NULL) {
+        DSError(M_DS_CASE_NULL ": Cyclical case is null", A_DS_ERROR);
+        goto bail;
+    }
+    ds = cyclicalCase->internalDesignspace;
+    if (ds == NULL) {
+        DSError(M_DS_DESIGN_SPACE_NULL, A_DS_ERROR);
+        goto bail;
+    }
+    numberOfCycles = ds->extensionData->numberCycles;
+bail:
+    return numberOfCycles;
+}
+
+extern const DSUInteger DSCyclicalCaseNumberOfValidBlowingSubcases(const DSCyclicalCase *cyclicalCase)
+{
+    DSDesignSpace * ds;
+    DSUInteger numberOfValidBlowingSubcases = 0;
+    if (cyclicalCase == NULL) {
+        DSError(M_DS_CASE_NULL ": Cyclical case is null", A_DS_ERROR);
+        goto bail;
+    }
+    ds = cyclicalCase->internalDesignspace;
+    if (ds == NULL) {
+        DSError(M_DS_DESIGN_SPACE_NULL, A_DS_ERROR);
+        goto bail;
+    }
+//    numberOfValidBlowingSubcases = DSDictionaryCount(ds->unstableCases);
+    numberOfValidBlowingSubcases = DSDesignSpaceNumberOfValidBlowingCases(ds, true);
+    
+bail:
+    return numberOfValidBlowingSubcases;
 }
 
 extern const DSUInteger DSCyclicalCaseNumberOfSubcases(const DSCyclicalCase * cyclicalCase)
@@ -178,6 +274,26 @@ extern const DSUInteger DSCyclicalCaseNumberOfSubcases(const DSCyclicalCase * cy
 //        }
 bail:
         return numberOfCases;
+}
+
+extern const DSUInteger DSCyclicalCaseDSDictionaryNumberOfValidSubCasesAndValidBlowingSubcases(const DSDictionary *cyclicalCases){
+    
+    DSUInteger i, valid_cyclical_cases = 0;
+    DSCyclicalCase *cyclicalCase;
+    
+    if(cyclicalCases == NULL)
+        goto bail;
+    
+    for(i = 0; i<DSDictionaryCount(cyclicalCases); i++ ){
+        cyclicalCase = DSDictionaryValueForName(cyclicalCases, DSDictionaryNames(cyclicalCases)[i]);
+        if (DSCyclicalCaseNumberOfValidSubcases(cyclicalCase) !=0 ||
+            DSCyclicalCaseNumberOfValidBlowingSubcases(cyclicalCase) !=0)
+//        if (DSCyclicalCaseNumberOfValidSubcases(cyclicalCase) != 0)
+            valid_cyclical_cases++;
+    }
+    
+bail:
+    return valid_cyclical_cases;
 }
 
 extern DSCase * DSCyclicalCaseSubcaseWithCaseNumber(const DSCyclicalCase * cyclicalCase, const DSUInteger subcaseNumber)
@@ -262,7 +378,41 @@ extern const DSUInteger * DSCyclicalCaseSignature(const DSCyclicalCase *cyclical
 
 extern char * DSCyclicalCaseSignatureToString(const DSCyclicalCase *cyclicalCase)
 {
+    if (cyclicalCase->internalDesignspace->parent3DigitsSignature == NULL){
         return DSCaseSignatureToString(DSCyclicalCaseOriginalCase(cyclicalCase));
+    }else{
+                char temp[100];
+                char * string = NULL;
+                char space[50];
+                DSUInteger i;
+                DSCase *aCase = cyclicalCase->originalCase;
+                DSUInteger *parentSig = cyclicalCase->internalDesignspace->parent3DigitsSignature;
+                DSUInteger numberOfEquations;
+        
+                numberOfEquations =  DSCaseNumberOfEquations(aCase) + DSCaseNumberOfConservations(aCase) + DSCaseNumberOfInheritedConservations(aCase);
+        
+                string = DSSecureCalloc(sizeof(char), 5*numberOfEquations);
+                strcpy(space, "  ");
+                    for (i = 0; i < 3*numberOfEquations; i++) {
+                        if (parentSig[i] >= 10){
+                            if (parentSig[i] != 0.0){
+                                sprintf(temp, "(%i)", parentSig[i]);
+                            } else
+                                continue;
+                        } else {
+                            if (parentSig[i] != 0.0){
+                                sprintf(temp, "%i", parentSig[i]);
+                            }else if ((i+2)%3 == 0 || (i+1)%3 == 0){
+                                sprintf(temp, "%i", parentSig[i]);
+                            }else
+                                continue;
+                        }
+                        strncat(string, temp, 100-strlen(string));
+                        if ((i+1)%3 == 0)
+                            strncat(string, space, 100-strlen(space));
+                    }
+                    return string;
+            }
 }
 
 extern const DSSSystem *DSCyclicalCaseSSystem(const DSCyclicalCase *cyclicalCase)
@@ -277,18 +427,19 @@ extern const DSSSystem *DSCyclicalCaseSSystem(const DSCyclicalCase *cyclicalCase
 extern const bool DSCyclicalCaseIsValid(const DSCyclicalCase *aSubcase, const bool strict)
 {
         bool isValid = false;
-        DSUInteger numberOfValidCases = 0;
+        DSUInteger numberOfValidCases = 0, numberOfValidBlowingCases = 0;
         if (aSubcase == NULL) {
                 DSError(M_DS_SUBCASE_NULL, A_DS_ERROR);
                 goto bail;
         }
         numberOfValidCases = DSCyclicalCaseNumberOfValidSubcases(aSubcase);
-        if (numberOfValidCases > 0)
+        if (DSDesignSpaceUnstable(aSubcase->internalDesignspace) == true)
+            numberOfValidBlowingCases = DSCyclicalCaseNumberOfValidBlowingSubcases(aSubcase);
+        if (numberOfValidCases + numberOfValidBlowingCases > 0)
                 isValid = true;
 bail:
         return isValid;
 }
-
 
 extern const bool DSCyclicalCaseIsValidAtPoint(const DSCyclicalCase *aSubcase, const DSVariablePool * variablesToFix);
 
@@ -296,6 +447,7 @@ extern const bool DSCyclicalCaseIsValidAtSlice(const DSCyclicalCase *cyclicalCas
 {
         bool isValid = false;
         DSUInteger numberValid;
+        DSUInteger numberBlowingValid = 0;
         DSDesignSpace * ds;
         DSDictionary * validCases;
         if (cyclicalCase == NULL) {
@@ -308,7 +460,9 @@ extern const bool DSCyclicalCaseIsValidAtSlice(const DSCyclicalCase *cyclicalCas
                 goto bail;
         }
         numberValid = DSDesignSpaceNumberOfValidCases(ds);
-        if (numberValid == 0)
+        if (DSDesignSpaceUnstable(ds) == true)
+            numberBlowingValid = DSDictionaryCount(ds->unstableCases);
+        if (numberValid + numberBlowingValid == 0)
                 goto bail;
         if (strict == true)
                 validCases = DSDesignSpaceCalculateAllValidCasesForSlice(ds, lowerBounds, upperBounds);
@@ -361,10 +515,94 @@ bail:
         return caseDictionary;
 }
 
+extern void DSDesignSpaceCalculateAllValidCasesByResolvingCyclicalCasesUnstable (DSDesignSpace *ds,
+                                                                                 DSDictionary *caseDictionary)
+{
+    DSUInteger i, numberBlowingCases, ii, j;
+    DSUnstableCase *uCase;
+    DSCase *aCase;
+    bool strict = true;
+    DSVariablePool *lowerBounds, *upperBounds;
+    
+    
+    // First determine total number of blowing subcases
+    numberBlowingCases = DSDesignSpaceNumberOfValidBlowingCases(ds, true);
+    if (numberBlowingCases == 0)
+        goto bail;
+    
+    // Second loop to generate array of Cases validCasesBlowing.
+    for (i = 0; i < DSDictionaryCount(ds->unstableCases); i++){
+        uCase = DSDictionaryValueForName(ds->unstableCases, ds->unstableCases->names[i]);
+        for (ii = 0; ii < DSDictionaryCount(uCase->ValidCases); ii++){
+            
+                aCase = DSCaseCopy(DSDictionaryValueForName(uCase->ValidCases, uCase->ValidCases->names[ii]));
+            
+                lowerBounds = DSVariablePoolCopy(aCase->Xi);
+                upperBounds = DSVariablePoolCopy(aCase->Xi);
+            
+                for ( j = 0; j < DSVariablePoolNumberOfVariables(lowerBounds); j++){
+                    DSVariablePoolSetValueForVariableWithName(lowerBounds,
+                                                              DSVariablePoolVariableAtIndex(lowerBounds,j)->name,
+                                                              1E-6);
+                    DSVariablePoolSetValueForVariableWithName(upperBounds,
+                                                              DSVariablePoolVariableAtIndex(lowerBounds,j)->name,
+                                                              1E6);
+                }
+                if (DSCaseIsValidAtSlice(aCase, lowerBounds, upperBounds, strict) == true){
+                        DSDictionaryAddValueWithName(caseDictionary, aCase->caseIdentifier, aCase);
+                } else {
+                    DSCaseFree(aCase);
+                }
+                DSVariablePoolFree(lowerBounds);
+                DSVariablePoolFree(upperBounds);
+        }
+    }
+    
+bail:
+    return;
+    
+}
+
+extern void DSDesignSpaceCalculateAllValidCasesForSliceByResolvingCyclicalCasesUnstable (DSDesignSpace *ds,
+                                                                                         DSDictionary *caseDictionary,
+                                                                                         const DSVariablePool * lower,
+                                                                                         const DSVariablePool * upper,
+                                                                                         bool strict)
+{
+    DSUInteger i, numberBlowingCases, ii;
+    DSUnstableCase *uCase;
+    DSCase *aCase;
+//    bool strict = false;
+    
+    
+    // First determine total number of blowing subcases
+    numberBlowingCases = DSDesignSpaceNumberOfValidBlowingCases(ds, strict);
+    if (numberBlowingCases == 0)
+        goto bail;
+    
+    // Second loop to generate array of Cases validCasesBlowing.
+    for (i = 0; i < DSDictionaryCount(ds->unstableCases); i++){
+        uCase = DSDictionaryValueForName(ds->unstableCases, ds->unstableCases->names[i]);
+        for (ii = 0; ii < DSDictionaryCount(uCase->ValidCases); ii++){
+            aCase = DSCaseCopy(DSDictionaryValueForName(uCase->ValidCases, uCase->ValidCases->names[ii]));
+            if (DSCaseIsValidAtSlice(aCase, lower, upper, strict) == true){
+                    DSDictionaryAddValueWithName(caseDictionary, aCase->caseIdentifier, aCase);
+            } else {
+                DSCaseFree(aCase);
+            }
+        }
+    }
+    
+    
+bail:
+    return;
+    
+}
 
 extern DSDictionary * DSCyclicalCaseCalculateAllValidSubcasesForSliceByResolvingCyclicalCases(DSCyclicalCase *cyclicalCase,
                                                                                               const DSVariablePool * lower,
-                                                                                              const DSVariablePool * upper)
+                                                                                              const DSVariablePool * upper,
+                                                                                              bool strict)
 {
         DSDictionary * caseDictionary = NULL;
         if (cyclicalCase == NULL) {
@@ -375,7 +613,7 @@ extern DSDictionary * DSCyclicalCaseCalculateAllValidSubcasesForSliceByResolving
                 DSError(M_DS_VAR_NULL, A_DS_ERROR);
                 goto bail;
         }
-        caseDictionary = DSDesignSpaceCalculateAllValidCasesForSliceByResolvingCyclicalCases(cyclicalCase->internalDesignspace, lower, upper);
+        caseDictionary = DSDesignSpaceCalculateAllValidCasesForSliceByResolvingCyclicalCases(cyclicalCase->internalDesignspace, lower, upper, strict);
 bail:
         return caseDictionary;
 }

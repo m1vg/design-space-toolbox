@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="4a542334-244f-4d47-bdc8-ccfa34738f23" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/../DSUnstableCase.c" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../DSUnstableCase.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/compile_.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/instabilities.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/instabilities_develop.c" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../tests/.idea/misc.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../tests/.idea/modules.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../tests/.idea/tests.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../tests/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../tests/3Cycle_case_23.c" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../tests/3Cycle_dealing_dictionaries.c" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../tests/3Cycle_print_DS_Structures_13Sep_2018.c" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../tests/3Cycle_print_SystemEquations_139_15_7.c" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../tests/3Cycle_print_SystemEquations_Extended.c" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../tests/blowups/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../tests/blowups/compile_.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../tests/blowups/designspacegtest.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../tests/blowups/designspacetest.c" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../tests/blowups/glpk_test/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../tests/blowups/glpk_test/glpk_test_Case8_variability.c" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../tests/blowups/glpk_test/glpk_test_Case8_variabilty_2newconditions.c" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../tests/designspacecyclestest_Miguel.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../DSCase.c" beforeDir="false" afterPath="$PROJECT_DIR$/../DSCase.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../DSCaseLinearProgramming.c" beforeDir="false" afterPath="$PROJECT_DIR$/../DSCaseLinearProgramming.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../DSCyclicalCaseConstruction.c" beforeDir="false" afterPath="$PROJECT_DIR$/../DSCyclicalCaseConstruction.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../DSDesignSpace.c" beforeDir="false" afterPath="$PROJECT_DIR$/../DSDesignSpace.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../DSDesignSpace.h" beforeDir="false" afterPath="$PROJECT_DIR$/../DSDesignSpace.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../DSDesignSpaceParallel.c" beforeDir="false" afterPath="$PROJECT_DIR$/../DSDesignSpaceParallel.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../DSMatrix.h" beforeDir="false" afterPath="$PROJECT_DIR$/../DSMatrix.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../DSMatrix_gsl.c" beforeDir="false" afterPath="$PROJECT_DIR$/../DSMatrix_gsl.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../DSSSystem.c" beforeDir="false" afterPath="$PROJECT_DIR$/../DSSSystem.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../DSSSystem.h" beforeDir="false" afterPath="$PROJECT_DIR$/../DSSSystem.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../DSStd.h" beforeDir="false" afterPath="$PROJECT_DIR$/../DSStd.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../DSTypes.h" beforeDir="false" afterPath="$PROJECT_DIR$/../DSTypes.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../DSVariable.c" beforeDir="false" afterPath="$PROJECT_DIR$/../DSVariable.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../DesignSpaceToolboxV2.xcodeproj/project.pbxproj" beforeDir="false" afterPath="$PROJECT_DIR$/../DesignSpaceToolboxV2.xcodeproj/project.pbxproj" afterDir="false" />
+    </list>
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FUSProjectUsageTrigger">
+    <session id="-568409185">
+      <usages-collector id="statistics.lifecycle.project">
+        <counts>
+          <entry key="project.closed" value="6" />
+          <entry key="project.open.time.0" value="3" />
+          <entry key="project.open.time.1" value="1" />
+          <entry key="project.open.time.3" value="2" />
+          <entry key="project.opened" value="6" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.extensions.open">
+        <counts>
+          <entry key="c" value="7" />
+          <entry key="h" value="5" />
+          <entry key="py" value="6" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.types.open">
+        <counts>
+          <entry key="C++" value="12" />
+          <entry key="Python" value="6" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.extensions.edit">
+        <counts>
+          <entry key="c" value="41904" />
+          <entry key="h" value="954" />
+          <entry key="py" value="98" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.types.edit">
+        <counts>
+          <entry key="C++" value="42858" />
+          <entry key="Python" value="98" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.vcs.git.usages" />
+    </session>
+  </component>
+  <component name="FileEditorManager">
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300" />
+  </component>
+  <component name="FindInProjectRecents">
+    <findStrings>
+      <find>pseudoinverse</find>
+      <find>signature_1</find>
+      <find>DSUnstableCaseConditionsAreValid</find>
+      <find>DSMatrixPseudoInverse</find>
+      <find>DSMatrixSwapRows</find>
+      <find>DSMatrixSwapRowsBack</find>
+      <find>DSMatrixGaussElimination</find>
+      <find>DSBlowUpSignatureForCaseNumber</find>
+      <find>DSCalculateUnstableCase</find>
+      <find>DSDesignSpaceCalculateUnstableCases</find>
+      <find>DSDesignSpaceCalculateUnstableCase</find>
+      <find>dsunstablecaseconditionsarevalid</find>
+      <find>dsUnstableCaseLinearProblemForMatrices</find>
+      <find>dsUnstableCaseLinearProblemForCaseValidity</find>
+      <find>dsUnstableCaseGetAdditionalConstraintMatrices</find>
+      <find>DSUnstableCaseExpandConditionMatrices</find>
+      <find>DSUnstableCaseGetXd_b</find>
+      <find>DSUnstableCaseIdentifyBlowingDependentVariables</find>
+      <find>DSUnstableCasePrintLinearProblem</find>
+      <find>DSUnstableCaseDetermineBlowingBehavior</find>
+      <find>DSUnstableCaseCreateBoundaryMatrices</find>
+      <find>dsUnstableCaseLinearProblemAddEqualityConstraints</find>
+      <find>dsUnstableCaseLinearProblemAddKnifeEdgeConditions</find>
+      <find>DSCaseIsCyclical</find>
+      <find>DSUnstableCaseGetSubSetPseudoInverse</find>
+      <find>equality</find>
+      <find>DSUnstableCaseGetEqualityAndKnife</find>
+      <find>the vertices are</find>
+      <find>the total</find>
+      <find>value is the</find>
+    </findStrings>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
+  <component name="IdeDocumentHistory">
+    <option name="CHANGED_PATHS">
+      <list>
+        <option value="$PROJECT_DIR$/compile_.py" />
+        <option value="$PROJECT_DIR$/instabilities.h" />
+        <option value="$PROJECT_DIR$/instabilities_includedInLibrary/instabilities.h" />
+        <option value="$PROJECT_DIR$/instabilities_develop.c" />
+        <option value="$PROJECT_DIR$/instabilities_includedInLibrary/instabilities_develop.c" />
+      </list>
+    </option>
+  </component>
+  <component name="ProjectFrameBounds" extendedState="6">
+    <option name="width" value="1440" />
+    <option name="height" value="900" />
+  </component>
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectView">
+    <navigator proportions="" version="1">
+      <foldersAlwaysOnTop value="true" />
+    </navigator>
+    <panes>
+      <pane id="ProjectPane">
+        <subPane>
+          <expand>
+            <path>
+              <item name="instabilities" type="b2602c69:ProjectViewProjectNode" />
+              <item name="instabilities" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="instabilities" type="b2602c69:ProjectViewProjectNode" />
+              <item name="instabilities" type="462c0819:PsiDirectoryNode" />
+              <item name="instabilities_includedInLibrary" type="462c0819:PsiDirectoryNode" />
+            </path>
+          </expand>
+          <select />
+        </subPane>
+      </pane>
+      <pane id="Scope" />
+    </panes>
+  </component>
+  <component name="PropertiesComponent">
+    <property name="Git.Branch.Popup.ShowAllRemotes" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+  </component>
+  <component name="RunDashboard">
+    <option name="ruleStates">
+      <list>
+        <RuleState>
+          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
+        </RuleState>
+        <RuleState>
+          <option name="name" value="StatusDashboardGroupingRule" />
+        </RuleState>
+      </list>
+    </option>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="4a542334-244f-4d47-bdc8-ccfa34738f23" name="Default Changelist" comment="" />
+      <created>1541180007681</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1541180007681</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="ToolWindowManager">
+    <frame x="0" y="23" width="1440" height="877" extended-state="6" />
+    <layout>
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.24031007" />
+      <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
+      <window_info id="Favorites" order="2" side_tool="true" />
+      <window_info anchor="bottom" id="Message" order="0" />
+      <window_info anchor="bottom" id="Find" order="1" />
+      <window_info anchor="bottom" id="Run" order="2" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
+      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
+      <window_info anchor="bottom" id="TODO" order="6" />
+      <window_info anchor="bottom" id="Docker" order="7" />
+      <window_info anchor="bottom" id="Version Control" order="8" weight="0.32959184" />
+      <window_info anchor="bottom" id="Event Log" order="9" side_tool="true" />
+      <window_info anchor="bottom" id="Terminal" order="10" visible="true" weight="0.44968152" />
+      <window_info anchor="bottom" id="Python Console" order="11" weight="0.32857144" />
+      <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
+      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
+    </layout>
+  </component>
+  <component name="VcsContentAnnotationSettings">
+    <option name="myLimit" value="2678400000" />
+  </component>
+  <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/../tests/blowups/glpk_test/glpk_test_Case4.c">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/instabilities_includedInLibrary/instabilities_develop.c">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="170">
+          <caret line="71" lean-forward="true" selection-start-line="71" selection-end-line="71" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/instabilities_includedInLibrary/instabilities.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1050">
+          <caret line="70" selection-start-line="70" selection-end-line="70" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/instabilities_includedInLibrary/compile_.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="165">
+          <caret line="11" column="59" selection-start-line="11" selection-start-column="38" selection-end-line="11" selection-end-column="59" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/instabilities.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="240">
+          <caret line="16" column="83" selection-start-line="16" selection-start-column="83" selection-end-line="16" selection-end-column="83" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/instabilities_develop.c">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="150">
+          <caret line="10" column="17" lean-forward="true" selection-start-line="10" selection-start-column="17" selection-end-line="10" selection-end-column="17" />
+          <folding>
+            <marker date="1543969931803" expanded="true" signature="29239:29240" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/compile_.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="240">
+          <caret line="16" lean-forward="true" selection-start-line="16" selection-end-line="16" />
+        </state>
+      </provider>
+    </entry>
+  </component>
+</project>

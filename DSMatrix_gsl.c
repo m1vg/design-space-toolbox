@@ -168,6 +168,134 @@ bail:
 
 
 #if defined(__APPLE__) && defined (__MACH__)
+#pragma mark - Allocation, Free and Initialization functions of matrices of integers
+#endif
+/**
+ * \brief Memory allocation for a DSuIntegerMatrix using calloc.
+ *
+ * \details Creates a new matrix of a particular size.  The matrix that is
+ * allocated has all the values of the matrix defaulted to 0.  The internal
+ * matrix pointer must be set to NULL; otherwise, the size of the matrix
+ * cannot be changed.
+ *
+ * \param rows A DSUInteger with the number of rows in the new matrix.
+ * \param columns A DSUInteger with the number of columns in the new matrix.
+ *
+ * \return If the matrix was created, a new pointer to a DSMatrix is returned.
+ * Otherwise, NULL is returned.
+ *
+ */
+extern DSuIntegerMatrix * DSuIntegerMatrixCalloc(const DSUInteger rows, const DSUInteger columns)
+{
+    DSuIntegerMatrix *aMatrix = NULL;
+    DSUInteger i, **mat = calloc(rows , sizeof(DSUInteger *));
+    
+    if (rows == 0 || columns == 0) {
+        DSError(M_DS_WRONG, A_DS_WARN);
+        goto bail;
+    }
+    aMatrix = DSSecureMalloc(sizeof(DSuIntegerMatrix *)*1);
+    DSMatrixInternalPointer(aMatrix) = NULL;
+    DSMatrixSetRows(aMatrix, rows);
+    DSMatrixSetColumns(aMatrix, columns);
+    for (i = 0; i < rows; i++)
+        mat[i] = calloc(columns, sizeof(DSUInteger));
+    DSMatrixInternalPointer(aMatrix) = mat;
+    
+    if (DSMatrixInternalPointer(aMatrix) == NULL){
+        DSError(M_DS_MALLOC, A_DS_KILLNOW);
+        printf("killing program \n");
+    }
+bail:
+    return aMatrix;
+}
+
+
+extern void DSuIntegerMatrixSetValue(DSuIntegerMatrix *matrix, const DSUInteger row,
+                                     const DSUInteger column, const DSUInteger value)
+{
+        DSUInteger ** mat = DSMatrixInternalPointer(matrix);
+    
+        if (matrix == NULL) {
+            DSError(M_DS_NULL, A_DS_WARN);
+            goto bail;
+        }
+        if (DSMatrixInternalPointer(matrix) == NULL) {
+            DSError(M_DS_MAT_NOINTERNAL, A_DS_WARN);
+            goto bail;
+        }
+        if (row >= DSMatrixRows(matrix) || column >= DSMatrixColumns(matrix)) {
+            DSError(M_DS_MAT_OUTOFBOUNDS, A_DS_ERROR);
+            goto bail;
+        }
+        mat[row][column] = value ;
+bail:
+    return;
+}
+
+extern DSuIntegerMatrix * DSuIntegerMatrixCopy(DSuIntegerMatrix *original){
+    
+        DSuIntegerMatrix * matrix = NULL;
+        DSUInteger col, row;
+    
+        if (original == NULL) {
+            DSError(M_DS_NULL, A_DS_WARN);
+            goto bail;
+        }
+
+        matrix = DSuIntegerMatrixCalloc(DSMatrixRows(original), DSMatrixColumns(original));
+    
+        for (col = 0; col < DSMatrixColumns(original); col++)
+            for (row = 0; row < DSMatrixRows(original); row++)
+                DSMatrixInternalPointer(original)[row][col] = DSMatrixInternalPointer(original)[row][col];
+    
+    bail:
+        return matrix;
+}
+    
+
+
+extern DSUInteger DSuIntegerMatrixValue(const DSuIntegerMatrix *matrix, const DSUInteger row, const DSUInteger column)
+{
+    DSUInteger **mat = DSMatrixInternalPointer(matrix);
+    DSUInteger value = 0;
+    
+    if (matrix == NULL) {
+        DSError(M_DS_NULL, A_DS_WARN);
+        goto bail;
+    }
+    if (DSMatrixInternalPointer(matrix) == NULL) {
+        DSError(M_DS_MAT_NOINTERNAL, A_DS_WARN);
+        goto bail;
+    }
+    if (row >= DSMatrixRows(matrix) || column >= DSMatrixColumns(matrix)) {
+        DSError(M_DS_MAT_OUTOFBOUNDS, A_DS_ERROR);
+        goto bail;
+    }
+    value = mat[row][column];
+bail:
+    return value;
+}
+
+extern void DSuIntegerMatrixFree(DSuIntegerMatrix *matrix)
+{
+    DSUInteger i;
+    DSUInteger **mat = DSMatrixInternalPointer(matrix);
+    if (matrix == NULL) {
+        DSError(M_DS_MAT_NULL, A_DS_FATAL);
+        goto bail;
+    }
+    if (DSMatrixInternalPointer(matrix) != NULL){
+        for (i = 0; i < DSMatrixRows(matrix); i++){
+            DSSecureFree(mat[i]);
+        }
+    }
+    DSSecureFree(matrix);
+bail:
+    return;
+}
+
+#if defined(__APPLE__) && defined (__MACH__)
 #pragma mark - Factory functions
 #endif
 
@@ -610,6 +738,26 @@ extern void DSMatrixSetDoubleValues(DSMatrix *matrix, bool byColumns, DSUInteger
 bail:
         return;
         
+}
+
+extern DSUInteger DSMatrixFirstNonZeroIndexAtRow(const DSMatrix *matrix, const DSUInteger row)
+{
+    DSUInteger index = 65000, column;
+    
+    if(DSMatrixRows(matrix)<row){
+        DSError(M_DS_WRONG ": Row index exceeds number of rows in the matrix.", A_DS_ERROR);
+        goto bail;
+    }
+    for(column = 0; column < DSMatrixColumns(matrix); column++){
+        if (gsl_matrix_get(DSMatrixInternalPointer(matrix), row, column) != 0.0){
+            index = column;
+            break;
+        }
+    }
+    
+bail:
+    
+    return index;
 }
 
 /**
@@ -1165,6 +1313,35 @@ bail:
         return;
 }
 
+extern void DSuIntegerMatrixPrint(DSuIntegerMatrix *matrix)
+{
+    int (*print)(const char *, ...);
+    DSUInteger i, j;
+    if (matrix == NULL) {
+        goto bail;
+    }
+    if (DSPrintf == NULL)
+        print = printf;
+    else
+        print = DSPrintf;
+    for (i = 0; i < DSMatrixRows(matrix); i++) {
+        printf("[");
+        for (j = 0; j < DSMatrixColumns(matrix); j++) {
+            print("%u", DSuIntegerMatrixValue(matrix, i, j),
+                  ((j == DSMatrixColumns(matrix)-1) ? "]" : ", "));
+            if (j == DSMatrixColumns(matrix)-1 && i == DSMatrixRows(matrix)-1) {
+                printf("]\n");
+            } else if (j == DSMatrixColumns(matrix)-1) {
+                printf("],\n");
+            } else {
+                printf(", ");
+            }
+        }
+    }
+bail:
+    return;
+}
+
 #if defined(__APPLE__) && defined (__MACH__)
 #pragma mark - Matrix Property Querying
 #endif
@@ -1379,6 +1556,25 @@ bail:
         return maxValue;
 }
 
+DSUInteger maximumValueIndex(const DSMatrix *matrix, double maximumValue)
+{
+    DSUInteger row=0, index=65000;
+    if (matrix == NULL) {
+        DSError(M_DS_MAT_NULL, A_DS_WARN);
+    }
+    if (DSMatrixInternalPointer(matrix) == NULL) {
+        DSError(M_DS_MAT_NOINTERNAL, A_DS_ERROR);
+    }
+    
+    for(row=0; row<DSMatrixRows(matrix); row++){
+        if( DSMatrixDoubleValue(matrix, row, 0) == maximumValue){
+            index = row;
+            break;
+        }
+    }
+    return index;
+}
+
 #if defined(__APPLE__) && defined (__MACH__)
 #pragma mark - Matrix Operations
 #endif
@@ -1460,6 +1656,46 @@ extern void DSMatrixMultiplyByScalar(DSMatrix *matrix, const double value)
 bail:
         return;
 }
+
+extern DSMatrix * DSMatrixAverage(const DSMatrix *matrix, const bool byRows)
+{
+    DSMatrix *average = NULL;
+    DSUInteger row, col;
+    double val_rows = 0.0, val_col = 0.0;
+    
+    if (matrix == NULL) {
+            DSError(M_DS_MAT_NULL, A_DS_ERROR);
+            goto bail;
+    }
+    
+    if (byRows == true)
+        average = DSMatrixAlloc(DSMatrixRows(matrix), 1);
+    else
+        average = DSMatrixAlloc(1, DSMatrixColumns(matrix));
+    
+    if (byRows == true){
+            for (row=0; row<DSMatrixRows(matrix); row++){
+                    for (col=0; col<DSMatrixColumns(matrix); col++){
+                            val_rows += DSMatrixDoubleValue(matrix, row, col);
+                    }
+                    DSMatrixSetDoubleValue(average, row, 0, val_rows/DSMatrixColumns(matrix));
+                    val_rows = 0;
+            }
+    } else {
+            for (col=0; col<DSMatrixColumns(matrix); col++){
+                    for (row=0; row<DSMatrixRows(matrix); row++){
+                            val_col += DSMatrixDoubleValue(matrix, row, col);
+                    }
+                    DSMatrixSetDoubleValue(average, 0, col, val_col/DSMatrixRows(matrix));
+                    val_col = 0;
+            }
+    }
+    
+    
+bail:
+    return average;
+}
+
 
 #if defined(__APPLE__) && defined (__MACH__)
 #pragma mark Linear Algebra
@@ -1979,6 +2215,170 @@ bail:
         return coefficients;
 }
 
+extern const DSMatrix * DSMatrixPseudoInverse(const DSMatrix *matrix)
+{
+    
+    DSMatrix *pMatrix = NULL;
+    DSInteger n_row = DSMatrixRows(matrix);
+    DSUInteger i;
+    DSMatrix *U, *V, *S, *invS, *trU, *VinvS;  //*trV,
+    DSMatrixArray *array;
+    
+    if (matrix == NULL)
+        goto bail;
+    
+    array = DSMatrixSVD(matrix);
+    
+    // unpack matrices
+    S = DSMatrixArrayMatrix(array, 0);
+    U = DSMatrixArrayMatrix(array, 1);
+    V = DSMatrixArrayMatrix(array, 2);
+    
+    // calculate inverse of S, invS
+    invS = DSMatrixCalloc(n_row, n_row);
+    for (i = 0; i < n_row; i++){
+        if (DSMatrixDoubleValue(S, 0, i) != 0){
+            DSMatrixSetDoubleValue(invS, i, i, 1/DSMatrixDoubleValue(S, 0, i));
+        }
+    }
+ 
+    // Transpose U
+    trU = DSMatrixTranspose(U);
+    
+    // Calculate pseudo inverse of matrix
+    VinvS = DSMatrixByMultiplyingMatrix(V, invS);
+    pMatrix = DSMatrixByMultiplyingMatrix(VinvS, trU);
+    
+    DSMatrixRoundToSignificantFigures(pMatrix, 10);
+    
+    // free matrices
+    if (array != NULL)
+        DSMatrixArrayFree(array);
+    if (invS != NULL)
+        DSMatrixFree(invS);
+    if (trU != NULL)
+        DSMatrixFree(trU);
+    if (VinvS != NULL)
+        DSMatrixFree(VinvS);
+    
+bail:
+    return pMatrix;
+}
+
+DSUInteger * DSMatrixSwapRows(DSMatrix *matrix, DSUInteger rowA, DSUInteger rowB)
+{
+    // This functions swaps two given rows and writes the swapped matrix in *matrix. The function returns
+    // a swappingVector as output that can be used to back swap the matrix.
+    
+    DSUInteger *swappingVector = DSSecureMalloc(sizeof(DSUInteger)*DSMatrixRows(matrix));
+    DSUInteger i;
+    DSMatrixSwitchRows(matrix, rowA, rowB);
+    
+    for(i=0; i<DSMatrixRows(matrix); i++){
+        swappingVector[i] =i;
+    }
+    
+    swappingVector[rowA] = rowB;
+    swappingVector[rowB] = rowA;
+    
+    return swappingVector;
+}
+
+DSMatrix * DSMatrixSwapRowsBack(DSMatrix *matrix, DSUInteger *swappingVector)
+{
+    
+    DSMatrix * back_matrix;
+    back_matrix = DSMatrixSubMatrixIncludingRows(matrix, DSMatrixRows(matrix), swappingVector);
+    
+    return back_matrix;
+}
+
+DSMatrixArray * DSMatrixGaussElimination(const DSMatrix *Ad, const DSMatrix *Ai, const DSMatrix *B)
+{
+    DSUInteger h=0, k=0, i, j, m, n, jj, i_max, *swappingVector=NULL;
+    double f, max_value;
+    DSMatrix *column_k, *rhs, *lhs, *b, *rhs_b, *lhs_b, *b_b;
+    m = DSMatrixRows(Ad);
+    n = DSMatrixColumns(Ad);
+    DSMatrixArray *array = NULL;
+    
+    // make copies of matrices:
+    lhs = DSMatrixCopy(Ad);
+    rhs = DSMatrixCopy(Ai);
+    b = DSMatrixCopy(B);
+    
+    while( h < m && k < n ) {
+        // get k-column
+        column_k = DSMatrixSubMatrixIncludingColumnList(lhs, 1, k);
+        // absolute values
+        DSMatrixApplyFunction(column_k, fabs);
+        // get the max value of that column
+        max_value = maximumValue(column_k, false);
+        // get the index of that value
+        i_max = maximumValueIndex(column_k, max_value);
+        if (column_k != NULL)
+            DSMatrixFree(column_k);
+        if(max_value == 0.0){
+            k = k +1;
+            continue;
+        } else{
+            // swap rows of all three matrices if i_max and h indices differ:
+            if (i_max != h){
+                swappingVector = DSMatrixSwapRows(lhs, i_max, h);
+                DSMatrixSwitchRows(rhs, i_max, h);
+                DSMatrixSwitchRows(b, i_max, h);
+            }
+            for (i=h+1; i<m; i++ ){
+                f = DSMatrixDoubleValue(lhs, i, k) / DSMatrixDoubleValue(lhs, h, k);
+                // fill with zeros
+                DSMatrixSetDoubleValue(lhs, i, k, 0);
+                // for all elements in current row
+                for(j=k+1; j<n; j++){
+                    DSMatrixSetDoubleValue(lhs, i, j, (DSMatrixDoubleValue(lhs, i, j) - DSMatrixDoubleValue(lhs, h, j)*f));
+                }
+                // modify Ai accordingly
+                for(jj=0; jj<DSMatrixColumns(rhs); jj++){
+                    DSMatrixSetDoubleValue(rhs, i, jj, (DSMatrixDoubleValue(rhs, i, jj) - DSMatrixDoubleValue(rhs, h, jj)*f));
+                }
+                // modify B accordingly
+                for(jj=0; jj<DSMatrixColumns(b); jj++){
+                    DSMatrixSetDoubleValue(b, i, jj, (DSMatrixDoubleValue(b, i, jj) - DSMatrixDoubleValue(b, h, jj)*f));
+                }
+            }
+            h++;
+            k++;
+        }
+    }
+    
+    // swap matrices back and delete swappingVector and swapped matrices.
+    if (swappingVector != NULL){
+        
+        lhs_b = DSMatrixSwapRowsBack(lhs, swappingVector);
+        rhs_b = DSMatrixSwapRowsBack(rhs, swappingVector);
+        b_b = DSMatrixSwapRowsBack(b, swappingVector);
+        if (lhs != NULL)
+            DSMatrixFree(lhs);
+        if (rhs != NULL)
+            DSMatrixFree(rhs);
+        if (b != NULL)
+            DSMatrixFree(b);
+        if (swappingVector != NULL)
+            DSSecureFree(swappingVector);
+        
+        array = DSMatrixArrayAlloc();
+        DSMatrixArrayAddMatrix(array, lhs_b);
+        DSMatrixArrayAddMatrix(array, rhs_b);
+        DSMatrixArrayAddMatrix(array, b_b);
+        
+    }else{
+        array = DSMatrixArrayAlloc();
+        DSMatrixArrayAddMatrix(array, lhs);
+        DSMatrixArrayAddMatrix(array, rhs);
+        DSMatrixArrayAddMatrix(array, b);
+    }
+    return array;
+}
+
 extern DSMatrix * DSMatrixUndeterminedCoefficientsRnMatrixForSize(const DSUInteger matrixSize)
 {
         DSMatrix * Sn = NULL;
@@ -2208,4 +2608,58 @@ extern DSMatrix * DSMatrixDecode(size_t length, const void * buffer)
         dsmatrix_message__free_unpacked(message, NULL);
 bail:
         return matrix;
+}
+
+///
+
+extern DSuIntegerMatrixMessage * DSuIntegerMatrixEncode(const DSuIntegerMatrix * matrix)
+{
+    DSuIntegerMatrixMessage * message = NULL;
+    DSUInteger i;
+    if (matrix == NULL) {
+        DSError(M_DS_MAT_NULL, A_DS_ERROR);
+        goto bail;
+    }
+    message = DSSecureMalloc(sizeof(DSMatrixMessage)*1);
+    dsu_integer_matrix_message__init(message);
+    message->rows = DSMatrixRows(matrix);
+    message->columns = DSMatrixColumns(matrix);
+    message->n_values = message->rows*message->columns;
+    message->values = DSSecureMalloc(sizeof(DSUInteger)*message->n_values);
+    for (i = 0; i < message->n_values; i++) {
+        message->values[i] = DSuIntegerMatrixValue(matrix,
+                                                 i / DSMatrixColumns(matrix),
+                                                 i % DSMatrixColumns(matrix));
+    }
+bail:
+    return message;
+}
+
+extern DSuIntegerMatrix * DSuIntegerMatrixFromMatrixMessage(const DSuIntegerMatrixMessage * message)
+{
+    DSuIntegerMatrix * matrix = NULL;
+    DSUInteger i, j;
+    if (message == NULL) {
+        printf("message is NULL\n");
+        goto bail;
+    }
+    matrix = DSuIntegerMatrixCalloc(message->rows, message->columns);
+    for (i = 0; i < DSMatrixRows(matrix); i++) {
+        for (j = 0; j < DSMatrixColumns(matrix); j++) {
+            DSuIntegerMatrixSetValue(matrix, i, j, message->values[i*DSMatrixColumns(matrix)+j]);
+        }
+    }
+bail:
+    return matrix;
+}
+
+extern DSuIntegerMatrix * DSuIntegerMatrixDecode(size_t length, const void * buffer)
+{
+    DSuIntegerMatrix * matrix = NULL;
+    DSuIntegerMatrixMessage * message;
+    message = dsu_integer_matrix_message__unpack(NULL, length, buffer);
+    matrix = DSuIntegerMatrixFromMatrixMessage(message);
+    dsu_integer_matrix_message__free_unpacked(message, NULL);
+bail:
+    return matrix;
 }

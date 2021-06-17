@@ -1,0 +1,1447 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		6719536121B7333E00757B0A /* DSUnstableCase.h in Headers */ = {isa = PBXBuildFile; fileRef = 6719536021B7333E00757B0A /* DSUnstableCase.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		6719536321B73A8D00757B0A /* DSUnstableCase.c in Sources */ = {isa = PBXBuildFile; fileRef = 6719536221B73A8D00757B0A /* DSUnstableCase.c */; };
+		673C223324D377DE006292EC /* lrsrestart.h in Headers */ = {isa = PBXBuildFile; fileRef = 673C223224D377DE006292EC /* lrsrestart.h */; };
+		673C223624D3873D006292EC /* lrsdriver.h in Headers */ = {isa = PBXBuildFile; fileRef = 673C223424D3873C006292EC /* lrsdriver.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		673C223724D3873D006292EC /* lrsdriver.c in Sources */ = {isa = PBXBuildFile; fileRef = 673C223524D3873D006292EC /* lrsdriver.c */; };
+		673C5DC424E62B560070A530 /* DSPopulationDynamics.c in Sources */ = {isa = PBXBuildFile; fileRef = 673C5DC224E62B560070A530 /* DSPopulationDynamics.c */; };
+		673C5DC524E62B560070A530 /* DSPopulationDynamics.h in Headers */ = {isa = PBXBuildFile; fileRef = 673C5DC324E62B560070A530 /* DSPopulationDynamics.h */; };
+		67709E9F24F99E5F00E869F1 /* geom_r.c in Sources */ = {isa = PBXBuildFile; fileRef = 67709E9C24F99E5F00E869F1 /* geom_r.c */; };
+		67709EA024F99E5F00E869F1 /* global_r.c in Sources */ = {isa = PBXBuildFile; fileRef = 67709E9D24F99E5F00E869F1 /* global_r.c */; };
+		67709EA124F99E5F00E869F1 /* geom_r.h in Headers */ = {isa = PBXBuildFile; fileRef = 67709E9E24F99E5F00E869F1 /* geom_r.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		67709EA424F99EE500E869F1 /* io_r.c in Sources */ = {isa = PBXBuildFile; fileRef = 67709EA224F99EE400E869F1 /* io_r.c */; };
+		67709EA524F99EE500E869F1 /* io_r.h in Headers */ = {isa = PBXBuildFile; fileRef = 67709EA324F99EE400E869F1 /* io_r.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		67709EAC24F99F0600E869F1 /* merge_r.c in Sources */ = {isa = PBXBuildFile; fileRef = 67709EA624F99F0500E869F1 /* merge_r.c */; };
+		67709EAD24F99F0600E869F1 /* mem_r.c in Sources */ = {isa = PBXBuildFile; fileRef = 67709EA724F99F0500E869F1 /* mem_r.c */; };
+		67709EAE24F99F0600E869F1 /* libqhull_r.h in Headers */ = {isa = PBXBuildFile; fileRef = 67709EA824F99F0500E869F1 /* libqhull_r.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		67709EAF24F99F0600E869F1 /* mem_r.h in Headers */ = {isa = PBXBuildFile; fileRef = 67709EA924F99F0500E869F1 /* mem_r.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		67709EB024F99F0600E869F1 /* merge_r.h in Headers */ = {isa = PBXBuildFile; fileRef = 67709EAA24F99F0600E869F1 /* merge_r.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		67709EB124F99F0600E869F1 /* libqhull_r.c in Sources */ = {isa = PBXBuildFile; fileRef = 67709EAB24F99F0600E869F1 /* libqhull_r.c */; };
+		67709EB424F99F1900E869F1 /* user_r.c in Sources */ = {isa = PBXBuildFile; fileRef = 67709EB224F99F1900E869F1 /* user_r.c */; };
+		67709EB524F99F1900E869F1 /* user_r.h in Headers */ = {isa = PBXBuildFile; fileRef = 67709EB324F99F1900E869F1 /* user_r.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		67709EB824F99F3000E869F1 /* stat_r.h in Headers */ = {isa = PBXBuildFile; fileRef = 67709EB624F99F3000E869F1 /* stat_r.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		67709EB924F99F3000E869F1 /* stat_r.c in Sources */ = {isa = PBXBuildFile; fileRef = 67709EB724F99F3000E869F1 /* stat_r.c */; };
+		67709EBF24F99F4600E869F1 /* qset_r.c in Sources */ = {isa = PBXBuildFile; fileRef = 67709EBA24F99F4600E869F1 /* qset_r.c */; };
+		67709EC024F99F4600E869F1 /* qhull_ra.h in Headers */ = {isa = PBXBuildFile; fileRef = 67709EBB24F99F4600E869F1 /* qhull_ra.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		67709EC124F99F4600E869F1 /* random_r.c in Sources */ = {isa = PBXBuildFile; fileRef = 67709EBC24F99F4600E869F1 /* random_r.c */; };
+		67709EC224F99F4600E869F1 /* random_r.h in Headers */ = {isa = PBXBuildFile; fileRef = 67709EBD24F99F4600E869F1 /* random_r.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		67709EC324F99F4600E869F1 /* qset_r.h in Headers */ = {isa = PBXBuildFile; fileRef = 67709EBE24F99F4600E869F1 /* qset_r.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		67709EC624F99F5C00E869F1 /* poly_r.c in Sources */ = {isa = PBXBuildFile; fileRef = 67709EC424F99F5C00E869F1 /* poly_r.c */; };
+		67709EC724F99F5C00E869F1 /* poly_r.h in Headers */ = {isa = PBXBuildFile; fileRef = 67709EC524F99F5C00E869F1 /* poly_r.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		67709EC924F9AEA600E869F1 /* geom2_r.c in Sources */ = {isa = PBXBuildFile; fileRef = 67709EC824F9AEA500E869F1 /* geom2_r.c */; };
+		67709ECB24F9AF1200E869F1 /* poly2_r.c in Sources */ = {isa = PBXBuildFile; fileRef = 67709ECA24F9AF1100E869F1 /* poly2_r.c */; };
+		67709ECD24F9AF6300E869F1 /* usermem_r.c in Sources */ = {isa = PBXBuildFile; fileRef = 67709ECC24F9AF6300E869F1 /* usermem_r.c */; };
+		67709ECF24F9AFDC00E869F1 /* userprintf_r.c in Sources */ = {isa = PBXBuildFile; fileRef = 67709ECE24F9AFDC00E869F1 /* userprintf_r.c */; };
+		67709ED624F9CC1600E869F1 /* user_eg2_r.c in Sources */ = {isa = PBXBuildFile; fileRef = 67709ED424F9CC1600E869F1 /* user_eg2_r.c */; };
+		67709ED724F9CC1600E869F1 /* user_eg_r.c in Sources */ = {isa = PBXBuildFile; fileRef = 67709ED524F9CC1600E869F1 /* user_eg_r.c */; };
+		9A0BC2EE14F177470093E52B /* DSDictionary.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A0BC2ED14F177470093E52B /* DSDictionary.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		9A0BC2F114F17A7E0093E52B /* DSDictionary.c in Sources */ = {isa = PBXBuildFile; fileRef = 9A0BC2EF14F177550093E52B /* DSDictionary.c */; };
+		9A1033DF144229BF00C214AF /* DSSymbolicMatrix.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A1033DE144229BF00C214AF /* DSSymbolicMatrix.h */; };
+		9A1033E1144229CD00C214AF /* DSSymbolicMatrix.c in Sources */ = {isa = PBXBuildFile; fileRef = 9A1033E0144229CD00C214AF /* DSSymbolicMatrix.c */; };
+		9A1B18F513F5CD4E00C36E71 /* DSGMASystemParsingAux.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A1B18F413F5CD4E00C36E71 /* DSGMASystemParsingAux.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		9A1B18F913F5CD7500C36E71 /* DSGMASystemParsingAux.c in Sources */ = {isa = PBXBuildFile; fileRef = 9A1B18F813F5CD7500C36E71 /* DSGMASystemParsingAux.c */; };
+		9A1B866017B2CFC90022AE2F /* DSCyclicalCaseConstruction.c in Sources */ = {isa = PBXBuildFile; fileRef = 9A1B865F17B2CFC90022AE2F /* DSCyclicalCaseConstruction.c */; };
+		9A1E1DC01A704F1E00007228 /* designspacetest.c in Sources */ = {isa = PBXBuildFile; fileRef = 9A61FD5417B42B33008D8417 /* designspacetest.c */; };
+		9A1E1DC11A704F3800007228 /* libdesignspace.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9A81B38213A89C31007DADEC /* libdesignspace.dylib */; };
+		9A36BC951400D5E900599A25 /* DSDesignSpaceParallel.c in Sources */ = {isa = PBXBuildFile; fileRef = 9A36BC941400D5E900599A25 /* DSDesignSpaceParallel.c */; };
+		9A36BC981400D5FF00599A25 /* DSDesignSpaceParallel.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A36BC971400D5FF00599A25 /* DSDesignSpaceParallel.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		9A3D588313FAFABD00C32875 /* DSSSystem.c in Sources */ = {isa = PBXBuildFile; fileRef = 9A3D588213FAFABD00C32875 /* DSSSystem.c */; };
+		9A3D588513FAFAD000C32875 /* DSSSystem.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A3D588413FAFAD000C32875 /* DSSSystem.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		9A3D588A13FB01D100C32875 /* DSSSystemGrammar.c in Sources */ = {isa = PBXBuildFile; fileRef = 9A3D588813FB01D100C32875 /* DSSSystemGrammar.c */; };
+		9A3D588B13FB01D100C32875 /* DSSSystemGrammar.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A3D588913FB01D100C32875 /* DSSSystemGrammar.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		9A4CA38418EFDD7000D4F35A /* designspacecycle.1 in CopyFiles */ = {isa = PBXBuildFile; fileRef = 9A4CA38318EFDD7000D4F35A /* designspacecycle.1 */; };
+		9A4CA38A18EFDDA600D4F35A /* designspacecyclestest.c in Sources */ = {isa = PBXBuildFile; fileRef = 9A4CA37A18EFDC9000D4F35A /* designspacecyclestest.c */; };
+		9A4CA38B18EFDDAC00D4F35A /* libglpk.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9A6DB4C31818F9A700C109FF /* libglpk.dylib */; };
+		9A4CA38C18EFDDAF00D4F35A /* libgsl.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9A6DB4C11818F9A200C109FF /* libgsl.dylib */; };
+		9A4CA38D18EFDDB200D4F35A /* libcblas.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9A71F0D813D480890051B472 /* libcblas.dylib */; };
+		9A4CA38E18EFDDB800D4F35A /* libdesignspace.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9A81B38213A89C31007DADEC /* libdesignspace.dylib */; };
+		9A537BB113A9CFE50031378A /* DSMemoryManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A537BB013A9CFE50031378A /* DSMemoryManager.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		9A537BB313A9D04F0031378A /* DSTypes.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A537BB213A9D04F0031378A /* DSTypes.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		9A5833BC139D79170068B6B6 /* DSStd.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A5833BB139D79170068B6B6 /* DSStd.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		9A5D084619DFAECE00A3F0E3 /* DSDataSerialization.pb-c.c in Sources */ = {isa = PBXBuildFile; fileRef = 9A5D084419DFAECE00A3F0E3 /* DSDataSerialization.pb-c.c */; };
+		9A5D084719DFAECE00A3F0E3 /* DSDataSerialization.pb-c.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A5D084519DFAECE00A3F0E3 /* DSDataSerialization.pb-c.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		9A5D084919DFAF2600A3F0E3 /* libprotobuf-c.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9A5D084819DFAF2600A3F0E3 /* libprotobuf-c.1.dylib */; };
+		9A681E6114F303DE0025735D /* DSStack.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A681E6014F303DE0025735D /* DSStack.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		9A68EF5513EC767800FBDDF5 /* DSMatrixTokenizerLex.c in Sources */ = {isa = PBXBuildFile; fileRef = 9A68EF5413EC767700FBDDF5 /* DSMatrixTokenizerLex.c */; };
+		9A68EF6213ECA26F00FBDDF5 /* DSVariableTokenizerLex.c in Sources */ = {isa = PBXBuildFile; fileRef = 9A68EF6113ECA26F00FBDDF5 /* DSVariableTokenizerLex.c */; };
+		9A68EF6C13ECA31900FBDDF5 /* DSVariableTokenizer.c in Sources */ = {isa = PBXBuildFile; fileRef = 9A68EF6B13ECA31900FBDDF5 /* DSVariableTokenizer.c */; };
+		9A68EF6E13ECA32900FBDDF5 /* DSVariableTokenizer.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A68EF6D13ECA32900FBDDF5 /* DSVariableTokenizer.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		9A68EF7213ECAF4200FBDDF5 /* DSVariableGrammar.c in Sources */ = {isa = PBXBuildFile; fileRef = 9A68EF7113ECAF4100FBDDF5 /* DSVariableGrammar.c */; };
+		9A68EF7413ECB03000FBDDF5 /* DSVariableGrammar.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A68EF7313ECB02F00FBDDF5 /* DSVariableGrammar.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		9A6DB4C21818F9A200C109FF /* libgsl.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9A6DB4C11818F9A200C109FF /* libgsl.dylib */; };
+		9A6DB4C41818F9A700C109FF /* libglpk.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9A6DB4C31818F9A700C109FF /* libglpk.dylib */; };
+		9A707C5813F0D0EF00626845 /* DSExpression.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A707C5713F0D0EF00626845 /* DSExpression.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		9A707C5B13F0D0FC00626845 /* DSExpression.c in Sources */ = {isa = PBXBuildFile; fileRef = 9A707C5A13F0D0FC00626845 /* DSExpression.c */; };
+		9A71F0D913D480890051B472 /* libcblas.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9A71F0D813D480890051B472 /* libcblas.dylib */; };
+		9A80B30118F1F6D000667EFC /* DSDesignSpaceConditionGrammar.c in Sources */ = {isa = PBXBuildFile; fileRef = 9A80B2FF18F1F6D000667EFC /* DSDesignSpaceConditionGrammar.c */; };
+		9A80B30218F1F6D000667EFC /* DSDesignSpaceConditionGrammar.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A80B30018F1F6D000667EFC /* DSDesignSpaceConditionGrammar.h */; };
+		9A81B38613A89D38007DADEC /* DSErrors.c in Sources */ = {isa = PBXBuildFile; fileRef = 9A81B38413A89D38007DADEC /* DSErrors.c */; };
+		9A85B47013FF9DFC00EA3795 /* DSDesignSpace.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A85B46F13FF9DFC00EA3795 /* DSDesignSpace.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		9A85B47413FF9E1600EA3795 /* DSDesignSpace.c in Sources */ = {isa = PBXBuildFile; fileRef = 9A85B47313FF9E1600EA3795 /* DSDesignSpace.c */; };
+		9A8BAB6813C63DA20031F387 /* DSIO.c in Sources */ = {isa = PBXBuildFile; fileRef = 9A8BAB6713C63DA10031F387 /* DSIO.c */; };
+		9A96EAEA19E6F35E00F20F96 /* DSCaseOptimizationFunctionGrammar.c in Sources */ = {isa = PBXBuildFile; fileRef = 9A96EAE819E6F35E00F20F96 /* DSCaseOptimizationFunctionGrammar.c */; };
+		9A96EAEB19E6F35E00F20F96 /* DSCaseOptimizationFunctionGrammar.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A96EAE919E6F35E00F20F96 /* DSCaseOptimizationFunctionGrammar.h */; };
+		9A98FC7019F1D04A00D95C47 /* DSCaseLinearProgramming.c in Sources */ = {isa = PBXBuildFile; fileRef = 9A98FC6F19F1D04A00D95C47 /* DSCaseLinearProgramming.c */; };
+		9A9A754413D878990045FDFB /* DSMatrixArray.c in Sources */ = {isa = PBXBuildFile; fileRef = 9A9A754213D878990045FDFB /* DSMatrixArray.c */; };
+		9A9A754513D878990045FDFB /* DSMatrixArray.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A9A754313D878990045FDFB /* DSMatrixArray.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		9AAADB4719E0A03D006AC7F1 /* serializationtest.c in Sources */ = {isa = PBXBuildFile; fileRef = 9AAADB4619E0A03D006AC7F1 /* serializationtest.c */; };
+		9AAADB4819E0A054006AC7F1 /* libdesignspace.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9A81B38213A89C31007DADEC /* libdesignspace.dylib */; };
+		9AB9BE6D14F305C4002D9F43 /* DSStack.c in Sources */ = {isa = PBXBuildFile; fileRef = 9A681E5E14F303C90025735D /* DSStack.c */; };
+		9ABB560714295DFF003D74E2 /* DSCyclicalCase.h in Headers */ = {isa = PBXBuildFile; fileRef = 9ABB560614295DFF003D74E2 /* DSCyclicalCase.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		9ABB560A14295E09003D74E2 /* DSCyclicalCase.c in Sources */ = {isa = PBXBuildFile; fileRef = 9ABB560914295E09003D74E2 /* DSCyclicalCase.c */; };
+		9ABDC42913F1BE8600BC11D7 /* DSExpressionTokenizer.h in Headers */ = {isa = PBXBuildFile; fileRef = 9ABDC42813F1BE8600BC11D7 /* DSExpressionTokenizer.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		9ABDC42B13F1BE9900BC11D7 /* DSExpressionTokenizer.c in Sources */ = {isa = PBXBuildFile; fileRef = 9ABDC42A13F1BE9900BC11D7 /* DSExpressionTokenizer.c */; };
+		9ABDC42F13F1C3C600BC11D7 /* DSExpressionTokenizerLex.c in Sources */ = {isa = PBXBuildFile; fileRef = 9ABDC42E13F1C3C600BC11D7 /* DSExpressionTokenizerLex.c */; };
+		9ABDC43A13F1C73400BC11D7 /* DSExpressionGrammar.c in Sources */ = {isa = PBXBuildFile; fileRef = 9ABDC43813F1C73400BC11D7 /* DSExpressionGrammar.c */; };
+		9ABDC43B13F1C73400BC11D7 /* DSExpressionGrammar.h in Headers */ = {isa = PBXBuildFile; fileRef = 9ABDC43913F1C73400BC11D7 /* DSExpressionGrammar.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		9ABF783E13F0C61700602B4B /* DSGMASystem.c in Sources */ = {isa = PBXBuildFile; fileRef = 9ABF783D13F0C61700602B4B /* DSGMASystem.c */; };
+		9ABF784013F0C62800602B4B /* DSGMASystem.h in Headers */ = {isa = PBXBuildFile; fileRef = 9ABF783F13F0C62800602B4B /* DSGMASystem.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		9AC0E3E513EC72EB0043D9E6 /* DSMatrixTokenizer.h in Headers */ = {isa = PBXBuildFile; fileRef = 9AC0E3E413EC72EB0043D9E6 /* DSMatrixTokenizer.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		9AC0E3E813EC749E0043D9E6 /* DSMatrixTokenizer.c in Sources */ = {isa = PBXBuildFile; fileRef = 9AC0E3E713EC749E0043D9E6 /* DSMatrixTokenizer.c */; };
+		9AC49AB213B53A4500E0E6B8 /* DSIO.h in Headers */ = {isa = PBXBuildFile; fileRef = 9AC49AB113B53A4500E0E6B8 /* DSIO.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		9AC62D1813FDC2CB00523AD7 /* DSCase.h in Headers */ = {isa = PBXBuildFile; fileRef = 9AC62D1713FDC2CB00523AD7 /* DSCase.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		9AC62D1B13FDC2D500523AD7 /* DSCase.c in Sources */ = {isa = PBXBuildFile; fileRef = 9AC62D1A13FDC2D500523AD7 /* DSCase.c */; };
+		9ACB2CFF13A1345F006A5F71 /* DSErrors.h in Headers */ = {isa = PBXBuildFile; fileRef = 9ACB2CFE13A1345F006A5F71 /* DSErrors.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		9ACB2D0313A134CA006A5F71 /* DSMemoryManager.c in Sources */ = {isa = PBXBuildFile; fileRef = 9ACB2D0113A134CA006A5F71 /* DSMemoryManager.c */; };
+		9AD82996188867030015E6BD /* lrslib.c in Sources */ = {isa = PBXBuildFile; fileRef = 9AD82992188867030015E6BD /* lrslib.c */; };
+		9AD82997188867030015E6BD /* lrslib.h in Headers */ = {isa = PBXBuildFile; fileRef = 9AD82993188867030015E6BD /* lrslib.h */; };
+		9AD82998188867030015E6BD /* lrsmp.c in Sources */ = {isa = PBXBuildFile; fileRef = 9AD82994188867030015E6BD /* lrsmp.c */; };
+		9AD82999188867030015E6BD /* lrsmp.h in Headers */ = {isa = PBXBuildFile; fileRef = 9AD82995188867030015E6BD /* lrsmp.h */; };
+		9AD8299B188867780015E6BD /* DSNVertexEnumeration.c in Sources */ = {isa = PBXBuildFile; fileRef = 9AD8299A188867780015E6BD /* DSNVertexEnumeration.c */; };
+		9AD8299D18889C720015E6BD /* DSNVertexEnumeration.h in Headers */ = {isa = PBXBuildFile; fileRef = 9AD8299C1888678C0015E6BD /* DSNVertexEnumeration.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		9AE49FD913F5A4EC00C7A478 /* DSGMASystemGrammar.c in Sources */ = {isa = PBXBuildFile; fileRef = 9AE49FD713F5A4EC00C7A478 /* DSGMASystemGrammar.c */; };
+		9AE49FDA13F5A4EC00C7A478 /* DSGMASystemGrammar.h in Headers */ = {isa = PBXBuildFile; fileRef = 9AE49FD813F5A4EC00C7A478 /* DSGMASystemGrammar.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		9AE7759D140DAA8900F77747 /* DSVertices.h in Headers */ = {isa = PBXBuildFile; fileRef = 9AE7759C140DAA8900F77747 /* DSVertices.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		9AE7759F140DAB8800F77747 /* DSVertices.c in Sources */ = {isa = PBXBuildFile; fileRef = 9AE7759E140DAB8800F77747 /* DSVertices.c */; };
+		9AFD4D5113B6FFD8001FCEC9 /* DSVariable.c in Sources */ = {isa = PBXBuildFile; fileRef = 9AFD4D4F13B6FFD8001FCEC9 /* DSVariable.c */; };
+		9AFD4D5213B6FFD8001FCEC9 /* DSVariable.h in Headers */ = {isa = PBXBuildFile; fileRef = 9AFD4D5013B6FFD8001FCEC9 /* DSVariable.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		9AFD4D5B13B706F6001FCEC9 /* DSMatrix_gsl.c in Sources */ = {isa = PBXBuildFile; fileRef = 9AFD4D5913B706F6001FCEC9 /* DSMatrix_gsl.c */; };
+		9AFD4D5C13B706F6001FCEC9 /* DSMatrix.h in Headers */ = {isa = PBXBuildFile; fileRef = 9AFD4D5A13B706F6001FCEC9 /* DSMatrix.h */; settings = {ATTRIBUTES = (Public, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		9A1E1DBE1A704F1100007228 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9A5833AB139D78A80068B6B6 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9A5833B3139D78A80068B6B6;
+			remoteInfo = designspace;
+		};
+		9A4CA38818EFDD7E00D4F35A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9A5833AB139D78A80068B6B6 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9A5833B3139D78A80068B6B6;
+			remoteInfo = designspace;
+		};
+		9AAADB4919E0A4E6006AC7F1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9A5833AB139D78A80068B6B6 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9A5833B3139D78A80068B6B6;
+			remoteInfo = designspace;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		9A1E1DB51A704F0100007228 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+		9A4CA37D18EFDD6F00D4F35A /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+				9A4CA38418EFDD7000D4F35A /* designspacecycle.1 in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+		9AAADB3C19E09FFC006AC7F1 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		6719536021B7333E00757B0A /* DSUnstableCase.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DSUnstableCase.h; sourceTree = "<group>"; };
+		6719536221B73A8D00757B0A /* DSUnstableCase.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = DSUnstableCase.c; sourceTree = "<group>"; };
+		673C223224D377DE006292EC /* lrsrestart.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = lrsrestart.h; sourceTree = "<group>"; };
+		673C223424D3873C006292EC /* lrsdriver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = lrsdriver.h; sourceTree = "<group>"; };
+		673C223524D3873D006292EC /* lrsdriver.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = lrsdriver.c; sourceTree = "<group>"; };
+		673C5DC224E62B560070A530 /* DSPopulationDynamics.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = DSPopulationDynamics.c; sourceTree = "<group>"; };
+		673C5DC324E62B560070A530 /* DSPopulationDynamics.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSPopulationDynamics.h; sourceTree = "<group>"; };
+		67709E9C24F99E5F00E869F1 /* geom_r.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = geom_r.c; sourceTree = "<group>"; };
+		67709E9D24F99E5F00E869F1 /* global_r.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = global_r.c; sourceTree = "<group>"; };
+		67709E9E24F99E5F00E869F1 /* geom_r.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = geom_r.h; sourceTree = "<group>"; };
+		67709EA224F99EE400E869F1 /* io_r.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = io_r.c; sourceTree = "<group>"; };
+		67709EA324F99EE400E869F1 /* io_r.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = io_r.h; sourceTree = "<group>"; };
+		67709EA624F99F0500E869F1 /* merge_r.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = merge_r.c; sourceTree = "<group>"; };
+		67709EA724F99F0500E869F1 /* mem_r.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mem_r.c; sourceTree = "<group>"; };
+		67709EA824F99F0500E869F1 /* libqhull_r.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = libqhull_r.h; sourceTree = "<group>"; };
+		67709EA924F99F0500E869F1 /* mem_r.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mem_r.h; sourceTree = "<group>"; };
+		67709EAA24F99F0600E869F1 /* merge_r.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = merge_r.h; sourceTree = "<group>"; };
+		67709EAB24F99F0600E869F1 /* libqhull_r.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = libqhull_r.c; sourceTree = "<group>"; };
+		67709EB224F99F1900E869F1 /* user_r.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = user_r.c; sourceTree = "<group>"; };
+		67709EB324F99F1900E869F1 /* user_r.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = user_r.h; sourceTree = "<group>"; };
+		67709EB624F99F3000E869F1 /* stat_r.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = stat_r.h; sourceTree = "<group>"; };
+		67709EB724F99F3000E869F1 /* stat_r.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = stat_r.c; sourceTree = "<group>"; };
+		67709EBA24F99F4600E869F1 /* qset_r.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = qset_r.c; sourceTree = "<group>"; };
+		67709EBB24F99F4600E869F1 /* qhull_ra.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = qhull_ra.h; sourceTree = "<group>"; };
+		67709EBC24F99F4600E869F1 /* random_r.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = random_r.c; sourceTree = "<group>"; };
+		67709EBD24F99F4600E869F1 /* random_r.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = random_r.h; sourceTree = "<group>"; };
+		67709EBE24F99F4600E869F1 /* qset_r.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = qset_r.h; sourceTree = "<group>"; };
+		67709EC424F99F5C00E869F1 /* poly_r.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = poly_r.c; sourceTree = "<group>"; };
+		67709EC524F99F5C00E869F1 /* poly_r.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = poly_r.h; sourceTree = "<group>"; };
+		67709EC824F9AEA500E869F1 /* geom2_r.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = geom2_r.c; sourceTree = "<group>"; };
+		67709ECA24F9AF1100E869F1 /* poly2_r.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = poly2_r.c; sourceTree = "<group>"; };
+		67709ECC24F9AF6300E869F1 /* usermem_r.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = usermem_r.c; sourceTree = "<group>"; };
+		67709ECE24F9AFDC00E869F1 /* userprintf_r.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = userprintf_r.c; sourceTree = "<group>"; };
+		67709ED424F9CC1600E869F1 /* user_eg2_r.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = user_eg2_r.c; sourceTree = "<group>"; };
+		67709ED524F9CC1600E869F1 /* user_eg_r.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = user_eg_r.c; sourceTree = "<group>"; };
+		9A0BC2ED14F177470093E52B /* DSDictionary.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSDictionary.h; sourceTree = "<group>"; };
+		9A0BC2EF14F177550093E52B /* DSDictionary.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = DSDictionary.c; sourceTree = "<group>"; };
+		9A0C3A7613F4627100B5561A /* DSGMASystemGrammar.y */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.yacc; path = DSGMASystemGrammar.y; sourceTree = "<group>"; };
+		9A1033DE144229BF00C214AF /* DSSymbolicMatrix.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSSymbolicMatrix.h; sourceTree = "<group>"; };
+		9A1033E0144229CD00C214AF /* DSSymbolicMatrix.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = DSSymbolicMatrix.c; sourceTree = "<group>"; };
+		9A1B18F413F5CD4E00C36E71 /* DSGMASystemParsingAux.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSGMASystemParsingAux.h; sourceTree = "<group>"; };
+		9A1B18F813F5CD7500C36E71 /* DSGMASystemParsingAux.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = DSGMASystemParsingAux.c; sourceTree = "<group>"; };
+		9A1B865F17B2CFC90022AE2F /* DSCyclicalCaseConstruction.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; path = DSCyclicalCaseConstruction.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		9A1E1DB71A704F0100007228 /* designspacebasic */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = designspacebasic; sourceTree = BUILT_PRODUCTS_DIR; };
+		9A36BC941400D5E900599A25 /* DSDesignSpaceParallel.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = DSDesignSpaceParallel.c; sourceTree = "<group>"; };
+		9A36BC971400D5FF00599A25 /* DSDesignSpaceParallel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSDesignSpaceParallel.h; sourceTree = "<group>"; };
+		9A3D588213FAFABD00C32875 /* DSSSystem.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = DSSSystem.c; sourceTree = "<group>"; };
+		9A3D588413FAFAD000C32875 /* DSSSystem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSSSystem.h; sourceTree = "<group>"; };
+		9A3D588713FB008800C32875 /* DSSSystemGrammar.y */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.yacc; path = DSSSystemGrammar.y; sourceTree = "<group>"; };
+		9A3D588813FB01D100C32875 /* DSSSystemGrammar.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = DSSSystemGrammar.c; sourceTree = "<group>"; };
+		9A3D588913FB01D100C32875 /* DSSSystemGrammar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSSSystemGrammar.h; sourceTree = "<group>"; };
+		9A47FEA913DCBBCC00E2100C /* DSErrorCriteria.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = DSErrorCriteria.txt; sourceTree = "<group>"; };
+		9A4CA37A18EFDC9000D4F35A /* designspacecyclestest.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = designspacecyclestest.c; path = ../tests/designspacecyclestest.c; sourceTree = "<group>"; };
+		9A4CA37F18EFDD6F00D4F35A /* designspacecycle */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = designspacecycle; sourceTree = BUILT_PRODUCTS_DIR; };
+		9A4CA38318EFDD7000D4F35A /* designspacecycle.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = designspacecycle.1; sourceTree = "<group>"; };
+		9A537BB013A9CFE50031378A /* DSMemoryManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSMemoryManager.h; sourceTree = "<group>"; };
+		9A537BB213A9D04F0031378A /* DSTypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = DSTypes.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
+		9A5833BB139D79170068B6B6 /* DSStd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = DSStd.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
+		9A5D084419DFAECE00A3F0E3 /* DSDataSerialization.pb-c.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = "DSDataSerialization.pb-c.c"; sourceTree = "<group>"; };
+		9A5D084519DFAECE00A3F0E3 /* DSDataSerialization.pb-c.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "DSDataSerialization.pb-c.h"; sourceTree = "<group>"; };
+		9A5D084819DFAF2600A3F0E3 /* libprotobuf-c.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libprotobuf-c.1.dylib"; path = "../../../../../usr/local/lib/libprotobuf-c.1.dylib"; sourceTree = "<group>"; };
+		9A5D084A19DFC57200A3F0E3 /* changelog */ = {isa = PBXFileReference; lastKnownFileType = text; path = changelog; sourceTree = "<group>"; };
+		9A61FD5417B42B33008D8417 /* designspacetest.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = designspacetest.c; path = tests/designspacetest.c; sourceTree = "<group>"; };
+		9A681E5E14F303C90025735D /* DSStack.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = DSStack.c; sourceTree = "<group>"; };
+		9A681E6014F303DE0025735D /* DSStack.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSStack.h; sourceTree = "<group>"; };
+		9A68EF5413EC767700FBDDF5 /* DSMatrixTokenizerLex.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = DSMatrixTokenizerLex.c; sourceTree = "<group>"; };
+		9A68EF6113ECA26F00FBDDF5 /* DSVariableTokenizerLex.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = DSVariableTokenizerLex.c; sourceTree = "<group>"; };
+		9A68EF6B13ECA31900FBDDF5 /* DSVariableTokenizer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = DSVariableTokenizer.c; sourceTree = "<group>"; };
+		9A68EF6D13ECA32900FBDDF5 /* DSVariableTokenizer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSVariableTokenizer.h; sourceTree = "<group>"; };
+		9A68EF7113ECAF4100FBDDF5 /* DSVariableGrammar.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = DSVariableGrammar.c; sourceTree = "<group>"; };
+		9A68EF7313ECB02F00FBDDF5 /* DSVariableGrammar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSVariableGrammar.h; sourceTree = "<group>"; };
+		9A691ED419DC623600C2CB59 /* DSDataSerialization.proto */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = DSDataSerialization.proto; sourceTree = "<group>"; };
+		9A6DB4C11818F9A200C109FF /* libgsl.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libgsl.dylib; path = ../../../../../../usr/local/lib/libgsl.dylib; sourceTree = "<group>"; };
+		9A6DB4C31818F9A700C109FF /* libglpk.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libglpk.dylib; path = ../../../../../../usr/local/lib/libglpk.dylib; sourceTree = "<group>"; };
+		9A707C5713F0D0EF00626845 /* DSExpression.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSExpression.h; sourceTree = "<group>"; };
+		9A707C5A13F0D0FC00626845 /* DSExpression.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = DSExpression.c; sourceTree = "<group>"; };
+		9A71F0D813D480890051B472 /* libcblas.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libcblas.dylib; path = usr/lib/libcblas.dylib; sourceTree = SDKROOT; };
+		9A80B2FE18F1F3E700667EFC /* DSDesignSpaceConditionGrammar.y */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.yacc; path = DSDesignSpaceConditionGrammar.y; sourceTree = "<group>"; };
+		9A80B2FF18F1F6D000667EFC /* DSDesignSpaceConditionGrammar.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = DSDesignSpaceConditionGrammar.c; sourceTree = "<group>"; };
+		9A80B30018F1F6D000667EFC /* DSDesignSpaceConditionGrammar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSDesignSpaceConditionGrammar.h; sourceTree = "<group>"; };
+		9A81B38213A89C31007DADEC /* libdesignspace.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libdesignspace.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
+		9A81B38413A89D38007DADEC /* DSErrors.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = DSErrors.c; sourceTree = "<group>"; };
+		9A85B46F13FF9DFC00EA3795 /* DSDesignSpace.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSDesignSpace.h; sourceTree = "<group>"; };
+		9A85B47313FF9E1600EA3795 /* DSDesignSpace.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; path = DSDesignSpace.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		9A8BAB6713C63DA10031F387 /* DSIO.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = DSIO.c; sourceTree = "<group>"; };
+		9A8C2F3215F6D672009B6323 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
+		9A96EAE619E6F35000F20F96 /* DSCaseOptimizationFunctionGrammar.y */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.yacc; path = DSCaseOptimizationFunctionGrammar.y; sourceTree = "<group>"; };
+		9A96EAE819E6F35E00F20F96 /* DSCaseOptimizationFunctionGrammar.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = DSCaseOptimizationFunctionGrammar.c; sourceTree = "<group>"; };
+		9A96EAE919E6F35E00F20F96 /* DSCaseOptimizationFunctionGrammar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSCaseOptimizationFunctionGrammar.h; sourceTree = "<group>"; };
+		9A98FC6F19F1D04A00D95C47 /* DSCaseLinearProgramming.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = DSCaseLinearProgramming.c; sourceTree = "<group>"; };
+		9A9A754213D878990045FDFB /* DSMatrixArray.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = DSMatrixArray.c; sourceTree = "<group>"; };
+		9A9A754313D878990045FDFB /* DSMatrixArray.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSMatrixArray.h; sourceTree = "<group>"; };
+		9AAADB3E19E09FFC006AC7F1 /* designspaceserialization */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = designspaceserialization; sourceTree = BUILT_PRODUCTS_DIR; };
+		9AAADB4619E0A03D006AC7F1 /* serializationtest.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = serializationtest.c; sourceTree = "<group>"; };
+		9ABB560614295DFF003D74E2 /* DSCyclicalCase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = DSCyclicalCase.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
+		9ABB560914295E09003D74E2 /* DSCyclicalCase.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; path = DSCyclicalCase.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		9ABDC42813F1BE8600BC11D7 /* DSExpressionTokenizer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSExpressionTokenizer.h; sourceTree = "<group>"; };
+		9ABDC42A13F1BE9900BC11D7 /* DSExpressionTokenizer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = DSExpressionTokenizer.c; sourceTree = "<group>"; };
+		9ABDC42C13F1BF4400BC11D7 /* DSExpressionGrammar.l */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lex; path = DSExpressionGrammar.l; sourceTree = "<group>"; };
+		9ABDC42E13F1C3C600BC11D7 /* DSExpressionTokenizerLex.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = DSExpressionTokenizerLex.c; sourceTree = "<group>"; };
+		9ABDC43413F1C5C100BC11D7 /* DSExpressionGrammar.y */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.yacc; path = DSExpressionGrammar.y; sourceTree = "<group>"; };
+		9ABDC43813F1C73400BC11D7 /* DSExpressionGrammar.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = DSExpressionGrammar.c; sourceTree = "<group>"; };
+		9ABDC43913F1C73400BC11D7 /* DSExpressionGrammar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSExpressionGrammar.h; sourceTree = "<group>"; };
+		9ABF783D13F0C61700602B4B /* DSGMASystem.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = DSGMASystem.c; sourceTree = "<group>"; };
+		9ABF783F13F0C62800602B4B /* DSGMASystem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSGMASystem.h; sourceTree = "<group>"; };
+		9ABF784613F0CC4300602B4B /* DSVariableGrammar.l */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lex; path = DSVariableGrammar.l; sourceTree = "<group>"; };
+		9ABF784713F0CC4300602B4B /* DSVariableGrammar.y */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.yacc; path = DSVariableGrammar.y; sourceTree = "<group>"; };
+		9AC0E3E413EC72EB0043D9E6 /* DSMatrixTokenizer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSMatrixTokenizer.h; sourceTree = "<group>"; };
+		9AC0E3E713EC749E0043D9E6 /* DSMatrixTokenizer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = DSMatrixTokenizer.c; sourceTree = "<group>"; };
+		9AC49AB113B53A4500E0E6B8 /* DSIO.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSIO.h; sourceTree = "<group>"; };
+		9AC62D1713FDC2CB00523AD7 /* DSCase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSCase.h; sourceTree = "<group>"; };
+		9AC62D1A13FDC2D500523AD7 /* DSCase.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; path = DSCase.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		9ACB2CFE13A1345F006A5F71 /* DSErrors.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSErrors.h; sourceTree = "<group>"; };
+		9ACB2D0113A134CA006A5F71 /* DSMemoryManager.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = DSMemoryManager.c; sourceTree = "<group>"; };
+		9AD27CDD19DD154800049AF9 /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		9AD82992188867030015E6BD /* lrslib.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = lrslib.c; sourceTree = "<group>"; };
+		9AD82993188867030015E6BD /* lrslib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = lrslib.h; sourceTree = "<group>"; };
+		9AD82994188867030015E6BD /* lrsmp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = lrsmp.c; sourceTree = "<group>"; };
+		9AD82995188867030015E6BD /* lrsmp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = lrsmp.h; sourceTree = "<group>"; };
+		9AD8299A188867780015E6BD /* DSNVertexEnumeration.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = DSNVertexEnumeration.c; sourceTree = "<group>"; };
+		9AD8299C1888678C0015E6BD /* DSNVertexEnumeration.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DSNVertexEnumeration.h; sourceTree = "<group>"; };
+		9ADADD5B13EB467B00A2062D /* DSMatrixGrammar.l */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.lex; path = DSMatrixGrammar.l; sourceTree = "<group>"; };
+		9AE49FD713F5A4EC00C7A478 /* DSGMASystemGrammar.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = DSGMASystemGrammar.c; sourceTree = "<group>"; };
+		9AE49FD813F5A4EC00C7A478 /* DSGMASystemGrammar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSGMASystemGrammar.h; sourceTree = "<group>"; };
+		9AE7759C140DAA8900F77747 /* DSVertices.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSVertices.h; sourceTree = "<group>"; };
+		9AE7759E140DAB8800F77747 /* DSVertices.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = DSVertices.c; sourceTree = "<group>"; };
+		9AFD4D4F13B6FFD8001FCEC9 /* DSVariable.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = DSVariable.c; sourceTree = "<group>"; };
+		9AFD4D5013B6FFD8001FCEC9 /* DSVariable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSVariable.h; sourceTree = "<group>"; };
+		9AFD4D5913B706F6001FCEC9 /* DSMatrix_gsl.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = DSMatrix_gsl.c; sourceTree = "<group>"; };
+		9AFD4D5A13B706F6001FCEC9 /* DSMatrix.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSMatrix.h; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		9A1E1DB41A704F0100007228 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9A1E1DC11A704F3800007228 /* libdesignspace.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9A4CA37C18EFDD6F00D4F35A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9A4CA38B18EFDDAC00D4F35A /* libglpk.dylib in Frameworks */,
+				9A4CA38C18EFDDAF00D4F35A /* libgsl.dylib in Frameworks */,
+				9A4CA38D18EFDDB200D4F35A /* libcblas.dylib in Frameworks */,
+				9A4CA38E18EFDDB800D4F35A /* libdesignspace.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9A5833B1139D78A80068B6B6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9A5D084919DFAF2600A3F0E3 /* libprotobuf-c.1.dylib in Frameworks */,
+				9A6DB4C41818F9A700C109FF /* libglpk.dylib in Frameworks */,
+				9A6DB4C21818F9A200C109FF /* libgsl.dylib in Frameworks */,
+				9A71F0D913D480890051B472 /* libcblas.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9AAADB3B19E09FFC006AC7F1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9AAADB4819E0A054006AC7F1 /* libdesignspace.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		673C5DB924E4835A0070A530 /* Population Dynamics */ = {
+			isa = PBXGroup;
+			children = (
+				673C5DC224E62B560070A530 /* DSPopulationDynamics.c */,
+				673C5DC324E62B560070A530 /* DSPopulationDynamics.h */,
+			);
+			name = "Population Dynamics";
+			sourceTree = "<group>";
+		};
+		67709E6524F97E5F00E869F1 /* Qhull Test */ = {
+			isa = PBXGroup;
+			children = (
+				67709ED524F9CC1600E869F1 /* user_eg_r.c */,
+				67709ED424F9CC1600E869F1 /* user_eg2_r.c */,
+			);
+			name = "Qhull Test";
+			sourceTree = "<group>";
+		};
+		67709E9B24F99E3900E869F1 /* Qhull Library */ = {
+			isa = PBXGroup;
+			children = (
+				67709ECE24F9AFDC00E869F1 /* userprintf_r.c */,
+				67709ECC24F9AF6300E869F1 /* usermem_r.c */,
+				67709ECA24F9AF1100E869F1 /* poly2_r.c */,
+				67709EC824F9AEA500E869F1 /* geom2_r.c */,
+				67709EC424F99F5C00E869F1 /* poly_r.c */,
+				67709EC524F99F5C00E869F1 /* poly_r.h */,
+				67709EBB24F99F4600E869F1 /* qhull_ra.h */,
+				67709EBA24F99F4600E869F1 /* qset_r.c */,
+				67709EBE24F99F4600E869F1 /* qset_r.h */,
+				67709EBC24F99F4600E869F1 /* random_r.c */,
+				67709EBD24F99F4600E869F1 /* random_r.h */,
+				67709EB724F99F3000E869F1 /* stat_r.c */,
+				67709EB624F99F3000E869F1 /* stat_r.h */,
+				67709EB224F99F1900E869F1 /* user_r.c */,
+				67709EB324F99F1900E869F1 /* user_r.h */,
+				67709EAB24F99F0600E869F1 /* libqhull_r.c */,
+				67709EA824F99F0500E869F1 /* libqhull_r.h */,
+				67709EA724F99F0500E869F1 /* mem_r.c */,
+				67709EA924F99F0500E869F1 /* mem_r.h */,
+				67709EA624F99F0500E869F1 /* merge_r.c */,
+				67709EAA24F99F0600E869F1 /* merge_r.h */,
+				67709EA224F99EE400E869F1 /* io_r.c */,
+				67709EA324F99EE400E869F1 /* io_r.h */,
+				67709E9C24F99E5F00E869F1 /* geom_r.c */,
+				67709E9E24F99E5F00E869F1 /* geom_r.h */,
+				67709E9D24F99E5F00E869F1 /* global_r.c */,
+			);
+			name = "Qhull Library";
+			sourceTree = "<group>";
+		};
+		9A0701F31404226B00096159 /* Design Space thread pool */ = {
+			isa = PBXGroup;
+			children = (
+				9A36BC971400D5FF00599A25 /* DSDesignSpaceParallel.h */,
+				9A36BC941400D5E900599A25 /* DSDesignSpaceParallel.c */,
+			);
+			name = "Design Space thread pool";
+			sourceTree = "<group>";
+		};
+		9A0BC2EC14F176D90093E52B /* DSDictionary */ = {
+			isa = PBXGroup;
+			children = (
+				9A0BC2ED14F177470093E52B /* DSDictionary.h */,
+				9A0BC2EF14F177550093E52B /* DSDictionary.c */,
+			);
+			name = DSDictionary;
+			sourceTree = "<group>";
+		};
+		9A1033DC1442299800C214AF /* Symbolic Matrix */ = {
+			isa = PBXGroup;
+			children = (
+				9A1033DE144229BF00C214AF /* DSSymbolicMatrix.h */,
+				9A1033E0144229CD00C214AF /* DSSymbolicMatrix.c */,
+			);
+			name = "Symbolic Matrix";
+			sourceTree = "<group>";
+		};
+		9A1E1DB21A704EDE00007228 /* Basic Test */ = {
+			isa = PBXGroup;
+			children = (
+				9A61FD5417B42B33008D8417 /* designspacetest.c */,
+			);
+			name = "Basic Test";
+			sourceTree = "<group>";
+		};
+		9A3D587D13FAFA6300C32875 /* GMA */ = {
+			isa = PBXGroup;
+			children = (
+				9ABF783F13F0C62800602B4B /* DSGMASystem.h */,
+				9ABF783D13F0C61700602B4B /* DSGMASystem.c */,
+				9ABF784413F0CBE100602B4B /* GMA Parsing */,
+			);
+			name = GMA;
+			sourceTree = "<group>";
+		};
+		9A3D588013FAFA7900C32875 /* S-System */ = {
+			isa = PBXGroup;
+			children = (
+				9A3D588413FAFAD000C32875 /* DSSSystem.h */,
+				9A3D588213FAFABD00C32875 /* DSSSystem.c */,
+				9A3D588613FB005000C32875 /* SSystem Parsing */,
+			);
+			name = "S-System";
+			sourceTree = "<group>";
+		};
+		9A3D588113FAFA7C00C32875 /* Cases */ = {
+			isa = PBXGroup;
+			children = (
+				9AC62D1713FDC2CB00523AD7 /* DSCase.h */,
+				6719536021B7333E00757B0A /* DSUnstableCase.h */,
+				6719536221B73A8D00757B0A /* DSUnstableCase.c */,
+				9AC62D1A13FDC2D500523AD7 /* DSCase.c */,
+				9A98FC6F19F1D04A00D95C47 /* DSCaseLinearProgramming.c */,
+				67709E9B24F99E3900E869F1 /* Qhull Library */,
+				9A96EAE019E6F14F00F20F96 /* Powerlaw Parsing */,
+				9AD82991188866DC0015E6BD /* Vertex Enumeration (LRS) */,
+			);
+			name = Cases;
+			sourceTree = "<group>";
+		};
+		9A3D588613FB005000C32875 /* SSystem Parsing */ = {
+			isa = PBXGroup;
+			children = (
+				9A3D588913FB01D100C32875 /* DSSSystemGrammar.h */,
+				9A3D588813FB01D100C32875 /* DSSSystemGrammar.c */,
+				9A3D588713FB008800C32875 /* DSSSystemGrammar.y */,
+			);
+			name = "SSystem Parsing";
+			sourceTree = "<group>";
+		};
+		9A47FEAA13DCBBDE00E2100C /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				9A47FEA913DCBBCC00E2100C /* DSErrorCriteria.txt */,
+				9AD27CDD19DD154800049AF9 /* LICENSE */,
+				9A5D084A19DFC57200A3F0E3 /* changelog */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
+		9A4CA38018EFDD6F00D4F35A /* designspacecycle */ = {
+			isa = PBXGroup;
+			children = (
+				9A4CA37A18EFDC9000D4F35A /* designspacecyclestest.c */,
+				9A4CA38318EFDD7000D4F35A /* designspacecycle.1 */,
+			);
+			path = designspacecycle;
+			sourceTree = "<group>";
+		};
+		9A5833A9139D78A80068B6B6 = {
+			isa = PBXGroup;
+			children = (
+				9A5D084819DFAF2600A3F0E3 /* libprotobuf-c.1.dylib */,
+				9A6DB4C31818F9A700C109FF /* libglpk.dylib */,
+				9A6DB4C11818F9A200C109FF /* libgsl.dylib */,
+				9A71F0D813D480890051B472 /* libcblas.dylib */,
+				9A5833BB139D79170068B6B6 /* DSStd.h */,
+				9A8C2F3215F6D672009B6323 /* Makefile */,
+				9A47FEAA13DCBBDE00E2100C /* Resources */,
+				9AFD4D5F13B70985001FCEC9 /* Source Files */,
+				9A61FD5517B43119008D8417 /* Tests */,
+				9A5833B5139D78A80068B6B6 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		9A5833B5139D78A80068B6B6 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				9A81B38213A89C31007DADEC /* libdesignspace.dylib */,
+				9A4CA37F18EFDD6F00D4F35A /* designspacecycle */,
+				9AAADB3E19E09FFC006AC7F1 /* designspaceserialization */,
+				9A1E1DB71A704F0100007228 /* designspacebasic */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		9A61FD5517B43119008D8417 /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				67709E6524F97E5F00E869F1 /* Qhull Test */,
+				9A1E1DB21A704EDE00007228 /* Basic Test */,
+				9AAADB4519E0A018006AC7F1 /* Serialization Test */,
+				9A4CA38018EFDD6F00D4F35A /* designspacecycle */,
+			);
+			name = Tests;
+			sourceTree = "<group>";
+		};
+		9A681E5D14F303B20025735D /* Stack */ = {
+			isa = PBXGroup;
+			children = (
+				9A681E6014F303DE0025735D /* DSStack.h */,
+				9A681E5E14F303C90025735D /* DSStack.c */,
+			);
+			name = Stack;
+			sourceTree = "<group>";
+		};
+		9A6885C21545BBB1002847E4 /* Subcases */ = {
+			isa = PBXGroup;
+			children = (
+				9ABB560614295DFF003D74E2 /* DSCyclicalCase.h */,
+				9ABB560914295E09003D74E2 /* DSCyclicalCase.c */,
+				9A1B865F17B2CFC90022AE2F /* DSCyclicalCaseConstruction.c */,
+			);
+			name = Subcases;
+			sourceTree = "<group>";
+		};
+		9A68EF5D13EC9FEE00FBDDF5 /* Matrix Parsing */ = {
+			isa = PBXGroup;
+			children = (
+				9AC0E3E413EC72EB0043D9E6 /* DSMatrixTokenizer.h */,
+				9AC0E3E713EC749E0043D9E6 /* DSMatrixTokenizer.c */,
+				9A68EF5413EC767700FBDDF5 /* DSMatrixTokenizerLex.c */,
+				9ADADD5B13EB467B00A2062D /* DSMatrixGrammar.l */,
+			);
+			name = "Matrix Parsing";
+			sourceTree = "<group>";
+		};
+		9A68EF5E13ECA01100FBDDF5 /* Variable Pool Parsing */ = {
+			isa = PBXGroup;
+			children = (
+				9A68EF6D13ECA32900FBDDF5 /* DSVariableTokenizer.h */,
+				9A68EF6B13ECA31900FBDDF5 /* DSVariableTokenizer.c */,
+				9A68EF6113ECA26F00FBDDF5 /* DSVariableTokenizerLex.c */,
+				9A68EF7313ECB02F00FBDDF5 /* DSVariableGrammar.h */,
+				9A68EF7113ECAF4100FBDDF5 /* DSVariableGrammar.c */,
+				9ABF784613F0CC4300602B4B /* DSVariableGrammar.l */,
+				9ABF784713F0CC4300602B4B /* DSVariableGrammar.y */,
+			);
+			name = "Variable Pool Parsing";
+			sourceTree = "<group>";
+		};
+		9A691ED319DC61FB00C2CB59 /* Serialization */ = {
+			isa = PBXGroup;
+			children = (
+				9A5D084419DFAECE00A3F0E3 /* DSDataSerialization.pb-c.c */,
+				9A5D084519DFAECE00A3F0E3 /* DSDataSerialization.pb-c.h */,
+				9A691ED419DC623600C2CB59 /* DSDataSerialization.proto */,
+			);
+			name = Serialization;
+			sourceTree = "<group>";
+		};
+		9A80B2FD18F1F32500667EFC /* Design Space Additional Constraints */ = {
+			isa = PBXGroup;
+			children = (
+				9A80B30018F1F6D000667EFC /* DSDesignSpaceConditionGrammar.h */,
+				9A80B2FF18F1F6D000667EFC /* DSDesignSpaceConditionGrammar.c */,
+				9A80B2FE18F1F3E700667EFC /* DSDesignSpaceConditionGrammar.y */,
+			);
+			name = "Design Space Additional Constraints";
+			sourceTree = "<group>";
+		};
+		9A85B46D13FF9DC800EA3795 /* Design Space */ = {
+			isa = PBXGroup;
+			children = (
+				9A8CD55114EF892C00818727 /* Numerical Design Space */,
+			);
+			name = "Design Space";
+			sourceTree = "<group>";
+		};
+		9A8CD54F14EF88E700818727 /* Numerical GMA/SSystem/Cases */ = {
+			isa = PBXGroup;
+			children = (
+				9A6885C21545BBB1002847E4 /* Subcases */,
+				9A3D588113FAFA7C00C32875 /* Cases */,
+				9A3D588013FAFA7900C32875 /* S-System */,
+				9A3D587D13FAFA6300C32875 /* GMA */,
+			);
+			name = "Numerical GMA/SSystem/Cases";
+			sourceTree = "<group>";
+		};
+		9A8CD55014EF890400818727 /* Symbolic GMA/SSystem/Cases */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = "Symbolic GMA/SSystem/Cases";
+			sourceTree = "<group>";
+		};
+		9A8CD55114EF892C00818727 /* Numerical Design Space */ = {
+			isa = PBXGroup;
+			children = (
+				9A85B46F13FF9DFC00EA3795 /* DSDesignSpace.h */,
+				9A85B47313FF9E1600EA3795 /* DSDesignSpace.c */,
+				9A80B2FD18F1F32500667EFC /* Design Space Additional Constraints */,
+				9A0701F31404226B00096159 /* Design Space thread pool */,
+			);
+			name = "Numerical Design Space";
+			sourceTree = "<group>";
+		};
+		9A9433A01427195800399C34 /* Double matrices */ = {
+			isa = PBXGroup;
+			children = (
+				9AFD4D5A13B706F6001FCEC9 /* DSMatrix.h */,
+				9AFD4D5913B706F6001FCEC9 /* DSMatrix_gsl.c */,
+				9A68EF5D13EC9FEE00FBDDF5 /* Matrix Parsing */,
+				9A9A754313D878990045FDFB /* DSMatrixArray.h */,
+				9A9A754213D878990045FDFB /* DSMatrixArray.c */,
+			);
+			name = "Double matrices";
+			sourceTree = "<group>";
+		};
+		9A9433A21427196F00399C34 /* Complex matrices */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = "Complex matrices";
+			sourceTree = "<group>";
+		};
+		9A96EAE019E6F14F00F20F96 /* Powerlaw Parsing */ = {
+			isa = PBXGroup;
+			children = (
+				9A96EAE919E6F35E00F20F96 /* DSCaseOptimizationFunctionGrammar.h */,
+				9A96EAE819E6F35E00F20F96 /* DSCaseOptimizationFunctionGrammar.c */,
+				9A96EAE619E6F35000F20F96 /* DSCaseOptimizationFunctionGrammar.y */,
+			);
+			name = "Powerlaw Parsing";
+			sourceTree = "<group>";
+		};
+		9AAADB4519E0A018006AC7F1 /* Serialization Test */ = {
+			isa = PBXGroup;
+			children = (
+				9AAADB4619E0A03D006AC7F1 /* serializationtest.c */,
+			);
+			name = "Serialization Test";
+			sourceTree = "<group>";
+		};
+		9ABDC42613F1BE1000BC11D7 /* Expression */ = {
+			isa = PBXGroup;
+			children = (
+				9A707C5713F0D0EF00626845 /* DSExpression.h */,
+				9A707C5A13F0D0FC00626845 /* DSExpression.c */,
+				9ABDC42713F1BE2200BC11D7 /* Expression Parsing */,
+			);
+			name = Expression;
+			sourceTree = "<group>";
+		};
+		9ABDC42713F1BE2200BC11D7 /* Expression Parsing */ = {
+			isa = PBXGroup;
+			children = (
+				9ABDC42813F1BE8600BC11D7 /* DSExpressionTokenizer.h */,
+				9ABDC42A13F1BE9900BC11D7 /* DSExpressionTokenizer.c */,
+				9ABDC42E13F1C3C600BC11D7 /* DSExpressionTokenizerLex.c */,
+				9ABDC43913F1C73400BC11D7 /* DSExpressionGrammar.h */,
+				9ABDC43813F1C73400BC11D7 /* DSExpressionGrammar.c */,
+				9ABDC42C13F1BF4400BC11D7 /* DSExpressionGrammar.l */,
+				9ABDC43413F1C5C100BC11D7 /* DSExpressionGrammar.y */,
+			);
+			name = "Expression Parsing";
+			sourceTree = "<group>";
+		};
+		9ABF783813F0C1D800602B4B /* GMA, SSystem and Cases */ = {
+			isa = PBXGroup;
+			children = (
+				9A8CD55014EF890400818727 /* Symbolic GMA/SSystem/Cases */,
+				9A8CD54F14EF88E700818727 /* Numerical GMA/SSystem/Cases */,
+			);
+			name = "GMA, SSystem and Cases";
+			sourceTree = "<group>";
+		};
+		9ABF784413F0CBE100602B4B /* GMA Parsing */ = {
+			isa = PBXGroup;
+			children = (
+				9A1B18F413F5CD4E00C36E71 /* DSGMASystemParsingAux.h */,
+				9A1B18F813F5CD7500C36E71 /* DSGMASystemParsingAux.c */,
+				9AE49FD813F5A4EC00C7A478 /* DSGMASystemGrammar.h */,
+				9AE49FD713F5A4EC00C7A478 /* DSGMASystemGrammar.c */,
+				9A0C3A7613F4627100B5561A /* DSGMASystemGrammar.y */,
+			);
+			name = "GMA Parsing";
+			sourceTree = "<group>";
+		};
+		9ACB57D013F09947006B6758 /* Variables and Variable Pools */ = {
+			isa = PBXGroup;
+			children = (
+				9AFD4D5013B6FFD8001FCEC9 /* DSVariable.h */,
+				9AFD4D4F13B6FFD8001FCEC9 /* DSVariable.c */,
+				9A68EF5E13ECA01100FBDDF5 /* Variable Pool Parsing */,
+			);
+			name = "Variables and Variable Pools";
+			sourceTree = "<group>";
+		};
+		9ACB57D113F09969006B6758 /* Matrices */ = {
+			isa = PBXGroup;
+			children = (
+				9A1033DC1442299800C214AF /* Symbolic Matrix */,
+				9A9433A01427195800399C34 /* Double matrices */,
+				9A9433A21427196F00399C34 /* Complex matrices */,
+			);
+			name = Matrices;
+			sourceTree = "<group>";
+		};
+		9AD82991188866DC0015E6BD /* Vertex Enumeration (LRS) */ = {
+			isa = PBXGroup;
+			children = (
+				9AD82992188867030015E6BD /* lrslib.c */,
+				9AD82993188867030015E6BD /* lrslib.h */,
+				673C223524D3873D006292EC /* lrsdriver.c */,
+				9AD82994188867030015E6BD /* lrsmp.c */,
+				673C223424D3873C006292EC /* lrsdriver.h */,
+				673C223224D377DE006292EC /* lrsrestart.h */,
+				9AD82995188867030015E6BD /* lrsmp.h */,
+				9AD8299C1888678C0015E6BD /* DSNVertexEnumeration.h */,
+				9AD8299A188867780015E6BD /* DSNVertexEnumeration.c */,
+			);
+			name = "Vertex Enumeration (LRS)";
+			sourceTree = "<group>";
+		};
+		9AE7759A140DAA5A00F77747 /* Vertices */ = {
+			isa = PBXGroup;
+			children = (
+				9AE7759C140DAA8900F77747 /* DSVertices.h */,
+				9AE7759E140DAB8800F77747 /* DSVertices.c */,
+			);
+			name = Vertices;
+			sourceTree = "<group>";
+		};
+		9AFD4D5D13B70915001FCEC9 /* Support Data Functions */ = {
+			isa = PBXGroup;
+			children = (
+				9A0BC2EC14F176D90093E52B /* DSDictionary */,
+				9ACB57D013F09947006B6758 /* Variables and Variable Pools */,
+				9ACB57D113F09969006B6758 /* Matrices */,
+				9ABDC42613F1BE1000BC11D7 /* Expression */,
+				9A681E5D14F303B20025735D /* Stack */,
+				9AE7759A140DAA5A00F77747 /* Vertices */,
+			);
+			name = "Support Data Functions";
+			sourceTree = "<group>";
+		};
+		9AFD4D5E13B70942001FCEC9 /* Basic Data and functions */ = {
+			isa = PBXGroup;
+			children = (
+				9A537BB213A9D04F0031378A /* DSTypes.h */,
+				9AC49AB113B53A4500E0E6B8 /* DSIO.h */,
+				9A8BAB6713C63DA10031F387 /* DSIO.c */,
+				9ACB2CFE13A1345F006A5F71 /* DSErrors.h */,
+				9A81B38413A89D38007DADEC /* DSErrors.c */,
+				9A537BB013A9CFE50031378A /* DSMemoryManager.h */,
+				9ACB2D0113A134CA006A5F71 /* DSMemoryManager.c */,
+			);
+			name = "Basic Data and functions";
+			sourceTree = "<group>";
+		};
+		9AFD4D5F13B70985001FCEC9 /* Source Files */ = {
+			isa = PBXGroup;
+			children = (
+				673C5DB924E4835A0070A530 /* Population Dynamics */,
+				9AFD4D5E13B70942001FCEC9 /* Basic Data and functions */,
+				9AFD4D5D13B70915001FCEC9 /* Support Data Functions */,
+				9ABF783813F0C1D800602B4B /* GMA, SSystem and Cases */,
+				9A85B46D13FF9DC800EA3795 /* Design Space */,
+				9A691ED319DC61FB00C2CB59 /* Serialization */,
+			);
+			name = "Source Files";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		9A5833B2139D78A80068B6B6 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9A5833BC139D79170068B6B6 /* DSStd.h in Headers */,
+				9ACB2CFF13A1345F006A5F71 /* DSErrors.h in Headers */,
+				9A537BB113A9CFE50031378A /* DSMemoryManager.h in Headers */,
+				9A537BB313A9D04F0031378A /* DSTypes.h in Headers */,
+				9AC49AB213B53A4500E0E6B8 /* DSIO.h in Headers */,
+				9AFD4D5213B6FFD8001FCEC9 /* DSVariable.h in Headers */,
+				9AFD4D5C13B706F6001FCEC9 /* DSMatrix.h in Headers */,
+				9A9A754513D878990045FDFB /* DSMatrixArray.h in Headers */,
+				9ABF784013F0C62800602B4B /* DSGMASystem.h in Headers */,
+				9A707C5813F0D0EF00626845 /* DSExpression.h in Headers */,
+				9A3D588513FAFAD000C32875 /* DSSSystem.h in Headers */,
+				9AC62D1813FDC2CB00523AD7 /* DSCase.h in Headers */,
+				9A85B47013FF9DFC00EA3795 /* DSDesignSpace.h in Headers */,
+				67709EC024F99F4600E869F1 /* qhull_ra.h in Headers */,
+				9A5D084719DFAECE00A3F0E3 /* DSDataSerialization.pb-c.h in Headers */,
+				67709EA124F99E5F00E869F1 /* geom_r.h in Headers */,
+				67709EC224F99F4600E869F1 /* random_r.h in Headers */,
+				67709EB524F99F1900E869F1 /* user_r.h in Headers */,
+				67709EAF24F99F0600E869F1 /* mem_r.h in Headers */,
+				67709EB824F99F3000E869F1 /* stat_r.h in Headers */,
+				67709EA524F99EE500E869F1 /* io_r.h in Headers */,
+				67709EC324F99F4600E869F1 /* qset_r.h in Headers */,
+				67709EB024F99F0600E869F1 /* merge_r.h in Headers */,
+				67709EC724F99F5C00E869F1 /* poly_r.h in Headers */,
+				67709EAE24F99F0600E869F1 /* libqhull_r.h in Headers */,
+				9AE7759D140DAA8900F77747 /* DSVertices.h in Headers */,
+				9AD8299D18889C720015E6BD /* DSNVertexEnumeration.h in Headers */,
+				673C223624D3873D006292EC /* lrsdriver.h in Headers */,
+				6719536121B7333E00757B0A /* DSUnstableCase.h in Headers */,
+				9ABB560714295DFF003D74E2 /* DSCyclicalCase.h in Headers */,
+				9A0BC2EE14F177470093E52B /* DSDictionary.h in Headers */,
+				9A681E6114F303DE0025735D /* DSStack.h in Headers */,
+				9AC0E3E513EC72EB0043D9E6 /* DSMatrixTokenizer.h in Headers */,
+				9A68EF6E13ECA32900FBDDF5 /* DSVariableTokenizer.h in Headers */,
+				9A68EF7413ECB03000FBDDF5 /* DSVariableGrammar.h in Headers */,
+				9ABDC42913F1BE8600BC11D7 /* DSExpressionTokenizer.h in Headers */,
+				9ABDC43B13F1C73400BC11D7 /* DSExpressionGrammar.h in Headers */,
+				9AE49FDA13F5A4EC00C7A478 /* DSGMASystemGrammar.h in Headers */,
+				9A1B18F513F5CD4E00C36E71 /* DSGMASystemParsingAux.h in Headers */,
+				9A3D588B13FB01D100C32875 /* DSSSystemGrammar.h in Headers */,
+				9A36BC981400D5FF00599A25 /* DSDesignSpaceParallel.h in Headers */,
+				9A96EAEB19E6F35E00F20F96 /* DSCaseOptimizationFunctionGrammar.h in Headers */,
+				9AD82997188867030015E6BD /* lrslib.h in Headers */,
+				9AD82999188867030015E6BD /* lrsmp.h in Headers */,
+				9A80B30218F1F6D000667EFC /* DSDesignSpaceConditionGrammar.h in Headers */,
+				673C5DC524E62B560070A530 /* DSPopulationDynamics.h in Headers */,
+				673C223324D377DE006292EC /* lrsrestart.h in Headers */,
+				9A1033DF144229BF00C214AF /* DSSymbolicMatrix.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		9A1E1DB61A704F0100007228 /* designspacebasic */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9A1E1DBB1A704F0100007228 /* Build configuration list for PBXNativeTarget "designspacebasic" */;
+			buildPhases = (
+				9A1E1DB31A704F0100007228 /* Sources */,
+				9A1E1DB41A704F0100007228 /* Frameworks */,
+				9A1E1DB51A704F0100007228 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				9A1E1DBF1A704F1100007228 /* PBXTargetDependency */,
+			);
+			name = designspacebasic;
+			productName = designspacebasic;
+			productReference = 9A1E1DB71A704F0100007228 /* designspacebasic */;
+			productType = "com.apple.product-type.tool";
+		};
+		9A4CA37E18EFDD6F00D4F35A /* designspacecycle */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9A4CA38518EFDD7000D4F35A /* Build configuration list for PBXNativeTarget "designspacecycle" */;
+			buildPhases = (
+				9A4CA37B18EFDD6F00D4F35A /* Sources */,
+				9A4CA37C18EFDD6F00D4F35A /* Frameworks */,
+				9A4CA37D18EFDD6F00D4F35A /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				9A4CA38918EFDD7E00D4F35A /* PBXTargetDependency */,
+			);
+			name = designspacecycle;
+			productName = designspacecycle;
+			productReference = 9A4CA37F18EFDD6F00D4F35A /* designspacecycle */;
+			productType = "com.apple.product-type.tool";
+		};
+		9A5833B3139D78A80068B6B6 /* designspace */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9A5833B8139D78A80068B6B6 /* Build configuration list for PBXNativeTarget "designspace" */;
+			buildPhases = (
+				9A5833B0139D78A80068B6B6 /* Sources */,
+				9A5833B1139D78A80068B6B6 /* Frameworks */,
+				9A5833B2139D78A80068B6B6 /* Headers */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = designspace;
+			productName = DesignSpaceToolboxV2;
+			productReference = 9A81B38213A89C31007DADEC /* libdesignspace.dylib */;
+			productType = "com.apple.product-type.library.dynamic";
+		};
+		9AAADB3D19E09FFC006AC7F1 /* designspaceserialization */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9AAADB4419E09FFD006AC7F1 /* Build configuration list for PBXNativeTarget "designspaceserialization" */;
+			buildPhases = (
+				9AAADB3A19E09FFC006AC7F1 /* Sources */,
+				9AAADB3B19E09FFC006AC7F1 /* Frameworks */,
+				9AAADB3C19E09FFC006AC7F1 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				9AAADB4A19E0A4E6006AC7F1 /* PBXTargetDependency */,
+			);
+			name = designspaceserialization;
+			productName = designspaceserialization;
+			productReference = 9AAADB3E19E09FFC006AC7F1 /* designspaceserialization */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		9A5833AB139D78A80068B6B6 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0600;
+				TargetAttributes = {
+					9A1E1DB61A704F0100007228 = {
+						CreatedOnToolsVersion = 6.1.1;
+					};
+					9AAADB3D19E09FFC006AC7F1 = {
+						CreatedOnToolsVersion = 6.0.1;
+					};
+				};
+			};
+			buildConfigurationList = 9A5833AE139D78A80068B6B6 /* Build configuration list for PBXProject "DesignSpaceToolboxV2" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				English,
+				en,
+			);
+			mainGroup = 9A5833A9139D78A80068B6B6;
+			productRefGroup = 9A5833B5139D78A80068B6B6 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				9A5833B3139D78A80068B6B6 /* designspace */,
+				9A4CA37E18EFDD6F00D4F35A /* designspacecycle */,
+				9AAADB3D19E09FFC006AC7F1 /* designspaceserialization */,
+				9A1E1DB61A704F0100007228 /* designspacebasic */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		9A1E1DB31A704F0100007228 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9A1E1DC01A704F1E00007228 /* designspacetest.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9A4CA37B18EFDD6F00D4F35A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9A4CA38A18EFDDA600D4F35A /* designspacecyclestest.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9A5833B0139D78A80068B6B6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9AB9BE6D14F305C4002D9F43 /* DSStack.c in Sources */,
+				9AD8299B188867780015E6BD /* DSNVertexEnumeration.c in Sources */,
+				67709E9F24F99E5F00E869F1 /* geom_r.c in Sources */,
+				9A0BC2F114F17A7E0093E52B /* DSDictionary.c in Sources */,
+				9ACB2D0313A134CA006A5F71 /* DSMemoryManager.c in Sources */,
+				9A81B38613A89D38007DADEC /* DSErrors.c in Sources */,
+				67709EA424F99EE500E869F1 /* io_r.c in Sources */,
+				67709EBF24F99F4600E869F1 /* qset_r.c in Sources */,
+				9AFD4D5113B6FFD8001FCEC9 /* DSVariable.c in Sources */,
+				67709EAD24F99F0600E869F1 /* mem_r.c in Sources */,
+				9AFD4D5B13B706F6001FCEC9 /* DSMatrix_gsl.c in Sources */,
+				9A5D084619DFAECE00A3F0E3 /* DSDataSerialization.pb-c.c in Sources */,
+				67709EB924F99F3000E869F1 /* stat_r.c in Sources */,
+				9A80B30118F1F6D000667EFC /* DSDesignSpaceConditionGrammar.c in Sources */,
+				67709ED624F9CC1600E869F1 /* user_eg2_r.c in Sources */,
+				67709EC124F99F4600E869F1 /* random_r.c in Sources */,
+				9AD82998188867030015E6BD /* lrsmp.c in Sources */,
+				9A8BAB6813C63DA20031F387 /* DSIO.c in Sources */,
+				9A9A754413D878990045FDFB /* DSMatrixArray.c in Sources */,
+				9AC0E3E813EC749E0043D9E6 /* DSMatrixTokenizer.c in Sources */,
+				67709EAC24F99F0600E869F1 /* merge_r.c in Sources */,
+				67709EB124F99F0600E869F1 /* libqhull_r.c in Sources */,
+				9A68EF5513EC767800FBDDF5 /* DSMatrixTokenizerLex.c in Sources */,
+				9A68EF6213ECA26F00FBDDF5 /* DSVariableTokenizerLex.c in Sources */,
+				9AD82996188867030015E6BD /* lrslib.c in Sources */,
+				67709EA024F99E5F00E869F1 /* global_r.c in Sources */,
+				9A96EAEA19E6F35E00F20F96 /* DSCaseOptimizationFunctionGrammar.c in Sources */,
+				67709ECF24F9AFDC00E869F1 /* userprintf_r.c in Sources */,
+				9A68EF6C13ECA31900FBDDF5 /* DSVariableTokenizer.c in Sources */,
+				9A68EF7213ECAF4200FBDDF5 /* DSVariableGrammar.c in Sources */,
+				6719536321B73A8D00757B0A /* DSUnstableCase.c in Sources */,
+				9ABF783E13F0C61700602B4B /* DSGMASystem.c in Sources */,
+				9A707C5B13F0D0FC00626845 /* DSExpression.c in Sources */,
+				9ABDC42B13F1BE9900BC11D7 /* DSExpressionTokenizer.c in Sources */,
+				67709EC624F99F5C00E869F1 /* poly_r.c in Sources */,
+				9ABDC42F13F1C3C600BC11D7 /* DSExpressionTokenizerLex.c in Sources */,
+				9A98FC7019F1D04A00D95C47 /* DSCaseLinearProgramming.c in Sources */,
+				9ABDC43A13F1C73400BC11D7 /* DSExpressionGrammar.c in Sources */,
+				9AE49FD913F5A4EC00C7A478 /* DSGMASystemGrammar.c in Sources */,
+				67709ECB24F9AF1200E869F1 /* poly2_r.c in Sources */,
+				9A1B18F913F5CD7500C36E71 /* DSGMASystemParsingAux.c in Sources */,
+				9A3D588313FAFABD00C32875 /* DSSSystem.c in Sources */,
+				9A3D588A13FB01D100C32875 /* DSSSystemGrammar.c in Sources */,
+				9AC62D1B13FDC2D500523AD7 /* DSCase.c in Sources */,
+				9A85B47413FF9E1600EA3795 /* DSDesignSpace.c in Sources */,
+				67709ECD24F9AF6300E869F1 /* usermem_r.c in Sources */,
+				9A36BC951400D5E900599A25 /* DSDesignSpaceParallel.c in Sources */,
+				67709ED724F9CC1600E869F1 /* user_eg_r.c in Sources */,
+				673C223724D3873D006292EC /* lrsdriver.c in Sources */,
+				9AE7759F140DAB8800F77747 /* DSVertices.c in Sources */,
+				673C5DC424E62B560070A530 /* DSPopulationDynamics.c in Sources */,
+				67709EC924F9AEA600E869F1 /* geom2_r.c in Sources */,
+				9ABB560A14295E09003D74E2 /* DSCyclicalCase.c in Sources */,
+				67709EB424F99F1900E869F1 /* user_r.c in Sources */,
+				9A1033E1144229CD00C214AF /* DSSymbolicMatrix.c in Sources */,
+				9A1B866017B2CFC90022AE2F /* DSCyclicalCaseConstruction.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9AAADB3A19E09FFC006AC7F1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9AAADB4719E0A03D006AC7F1 /* serializationtest.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		9A1E1DBF1A704F1100007228 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 9A5833B3139D78A80068B6B6 /* designspace */;
+			targetProxy = 9A1E1DBE1A704F1100007228 /* PBXContainerItemProxy */;
+		};
+		9A4CA38918EFDD7E00D4F35A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 9A5833B3139D78A80068B6B6 /* designspace */;
+			targetProxy = 9A4CA38818EFDD7E00D4F35A /* PBXContainerItemProxy */;
+		};
+		9AAADB4A19E0A4E6006AC7F1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 9A5833B3139D78A80068B6B6 /* designspace */;
+			targetProxy = 9AAADB4919E0A4E6006AC7F1 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		9A1E1DBC1A704F0100007228 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		9A1E1DBD1A704F0100007228 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		9A4CA38618EFDD7000D4F35A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				LIBRARY_SEARCH_PATHS = /usr/local/lib;
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		9A4CA38718EFDD7000D4F35A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				LIBRARY_SEARCH_PATHS = /usr/local/lib;
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		9A5833B6139D78A80068B6B6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = DEBUG;
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = "";
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				NEW_SETTING = "";
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = (
+					"-I/usr/local/include/",
+					"-L/usr/local/lib/",
+					"-D__GSL__",
+					"-lgsl",
+				);
+				SDKROOT = macosx;
+				USER_HEADER_SEARCH_PATHS = "";
+			};
+			name = Debug;
+		};
+		9A5833B7139D78A80068B6B6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = "";
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				NEW_SETTING = "";
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = (
+					"-I/usr/local/include/",
+					"-L/usr/local/lib/",
+					"-D__GSL__",
+					"-lgsl",
+				);
+				SDKROOT = macosx;
+				USER_HEADER_SEARCH_PATHS = "";
+			};
+			name = Release;
+		};
+		9A5833B9139D78A80068B6B6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = x86_64;
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = NO;
+				EXECUTABLE_PREFIX = lib;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
+				GCC_WARN_UNUSED_FUNCTION = NO;
+				HEADER_SEARCH_PATHS = /usr/local/include/;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)\"",
+					/usr/local/lib/,
+				);
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = (
+					"-I/usr/local/include/",
+					"-L/usr/local/lib/",
+					"-D__GSL__",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		9A5833BA139D78A80068B6B6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = x86_64;
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				EXECUTABLE_PREFIX = lib;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
+				GCC_WARN_UNUSED_FUNCTION = NO;
+				HEADER_SEARCH_PATHS = /usr/local/include/;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)\"",
+					/usr/local/lib/,
+				);
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = (
+					"-I/usr/local/include/",
+					"-L/usr/local/lib/",
+					"-D__GSL__",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		9AAADB4219E09FFD006AC7F1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		9AAADB4319E09FFD006AC7F1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		9A1E1DBB1A704F0100007228 /* Build configuration list for PBXNativeTarget "designspacebasic" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9A1E1DBC1A704F0100007228 /* Debug */,
+				9A1E1DBD1A704F0100007228 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9A4CA38518EFDD7000D4F35A /* Build configuration list for PBXNativeTarget "designspacecycle" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9A4CA38618EFDD7000D4F35A /* Debug */,
+				9A4CA38718EFDD7000D4F35A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9A5833AE139D78A80068B6B6 /* Build configuration list for PBXProject "DesignSpaceToolboxV2" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9A5833B6139D78A80068B6B6 /* Debug */,
+				9A5833B7139D78A80068B6B6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9A5833B8139D78A80068B6B6 /* Build configuration list for PBXNativeTarget "designspace" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9A5833B9139D78A80068B6B6 /* Debug */,
+				9A5833BA139D78A80068B6B6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9AAADB4419E09FFD006AC7F1 /* Build configuration list for PBXNativeTarget "designspaceserialization" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9AAADB4219E09FFD006AC7F1 /* Debug */,
+				9AAADB4319E09FFD006AC7F1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 9A5833AB139D78A80068B6B6 /* Project object */;
+}

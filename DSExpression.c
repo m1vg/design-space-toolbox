@@ -43,7 +43,7 @@
 #include "DSMatrix.h"
 
 #define DS_EXPRESSION_CONSTANT_BRANCH_INDEX     0
-#define DS_EXPRESSION_STRING_INIT_LENGTH        1000
+#define DS_EXPRESSION_STRING_INIT_LENGTH        10000 // Default value is 1000
 
 static void dsExpressionToStringAdditionOperator(const DSExpression *current, char ** string, DSUInteger *length);
 
@@ -213,7 +213,7 @@ extern DSExpression * DSExpressionByParsingString(const char *string)
         }
         if (strlen(string) == 0) {
                 DSError(M_DS_WRONG ": String to parse is empty", A_DS_WARN);
-                goto bail;                
+                goto bail;
         }
         tokens = DSExpressionTokenizeString(string);
         if (tokens == NULL) {
@@ -245,7 +245,7 @@ extern DSExpression * DSExpressionByParsingString(const char *string)
         else
                 DSExpressionFree(parsed.root);
 bail:
-        return root;  
+        return root;
 }
 
 extern DSExpression * DSExpressionAddExpressions(DSExpression *lvalue, DSExpression *rvalue)
@@ -1153,7 +1153,7 @@ extern char * DSExpressionAsString(const DSExpression *expression)
         DSUInteger length = DS_EXPRESSION_STRING_INIT_LENGTH;
         char * string = NULL;
         if (expression == NULL) {
-                DSError(M_DS_NULL ": Node to print is nil", A_DS_ERROR);
+                DSError(M_DS_NULL ": Node to print is null", A_DS_ERROR);
                 goto bail;
         }
         string = DSSecureCalloc(sizeof(char), length);
@@ -1318,7 +1318,7 @@ extern void DSExpressionPrint(const DSExpression *expression)
 {
         char *string = NULL;
         if (expression == NULL) {
-                DSError(M_DS_NULL ": Node to print is nil", A_DS_ERROR);
+                DSError(M_DS_NULL ": Node to print is null", A_DS_ERROR);
                 goto bail;
         }
         string = DSExpressionAsString(expression);

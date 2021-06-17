@@ -37,6 +37,7 @@
 #include "DSGMASystem.h"
 #include "DSSSystem.h"
 #include "DSCase.h"
+#include "DSUnstableCase.h"
 #include "DSCyclicalCase.h"
 #include "DSMatrix.h"
 
@@ -394,6 +395,8 @@ extern void * DSParallelWorkerValidityForSliceResolveCycles(void * pthread_struc
         const char ** subcaseNames;
         DSVariablePool * lower, *upper;
         DSDictionary * subcaseDictionary;
+        DSUInteger strict_int;
+        bool strict;
         if (pthread_struct == NULL) {
                 DSError(M_DS_NULL ": Parallel worker data is NULL", A_DS_ERROR);
                 goto bail;
@@ -421,6 +424,11 @@ extern void * DSParallelWorkerValidityForSliceResolveCycles(void * pthread_struc
         }
         lower = pdata->functionArguments[0];
         upper = pdata->functionArguments[1];
+        strict_int = *((DSUInteger *)pdata->functionArguments[2]);
+        if (strict_int == 0)
+            strict = false;
+        else
+            strict = true;
         if (lower == NULL || upper == NULL) {
                 DSError(M_DS_VAR_NULL, A_DS_ERROR);
                 goto bail;
@@ -444,7 +452,8 @@ extern void * DSParallelWorkerValidityForSliceResolveCycles(void * pthread_struc
                         DSCaseFree(aCase);
                         subcaseDictionary = DSCyclicalCaseCalculateAllValidSubcasesForSliceByResolvingCyclicalCases((DSCyclicalCase *)cyclicalCase,
                                                                                                                     lower,
-                                                                                                                    upper);
+                                                                                                                    upper,
+                                                                                                                     strict);
                         if (subcaseDictionary == NULL) {
                                 continue;
                         }
@@ -455,7 +464,7 @@ extern void * DSParallelWorkerValidityForSliceResolveCycles(void * pthread_struc
                                 DSDictionaryAddValueWithName((DSDictionary*)pdata->returnPointer, subcaseString, DSDictionaryValueForName(subcaseDictionary, subcaseNames[j]));
                         }
                         DSDictionaryFree(subcaseDictionary);
-                } else if (DSCaseIsValidAtSlice(aCase, lower, upper, true) == true) {
+                } else if (DSCaseIsValidAtSlice(aCase, lower, upper, strict) == true) {
                         DSDictionaryAddValueWithName((DSDictionary*)pdata->returnPointer, nameString, aCase);
                 } else {
                         DSCaseFree(aCase);

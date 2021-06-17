@@ -1,0 +1,81 @@
+dependencies: \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/DSMatrix_gsl.c \
+  /usr/local/include/gsl/gsl_linalg.h /usr/local/include/gsl/gsl_mode.h \
+  /usr/local/include/gsl/gsl_inline.h \
+  /usr/local/include/gsl/gsl_permutation.h \
+  /usr/local/include/gsl/gsl_types.h /usr/local/include/gsl/gsl_errno.h \
+  /usr/local/include/gsl/gsl_check_range.h \
+  /usr/local/include/gsl/gsl_vector.h \
+  /usr/local/include/gsl/gsl_vector_complex_long_double.h \
+  /usr/local/include/gsl/gsl_complex.h \
+  /usr/local/include/gsl/gsl_vector_long_double.h \
+  /usr/local/include/gsl/gsl_block_long_double.h \
+  /usr/local/include/gsl/gsl_vector_complex.h \
+  /usr/local/include/gsl/gsl_block_complex_long_double.h \
+  /usr/local/include/gsl/gsl_vector_complex_double.h \
+  /usr/local/include/gsl/gsl_vector_double.h \
+  /usr/local/include/gsl/gsl_block_double.h \
+  /usr/local/include/gsl/gsl_block_complex_double.h \
+  /usr/local/include/gsl/gsl_vector_complex_float.h \
+  /usr/local/include/gsl/gsl_vector_float.h \
+  /usr/local/include/gsl/gsl_block_float.h \
+  /usr/local/include/gsl/gsl_block_complex_float.h \
+  /usr/local/include/gsl/gsl_vector_ulong.h \
+  /usr/local/include/gsl/gsl_block_ulong.h \
+  /usr/local/include/gsl/gsl_vector_long.h \
+  /usr/local/include/gsl/gsl_block_long.h \
+  /usr/local/include/gsl/gsl_vector_uint.h \
+  /usr/local/include/gsl/gsl_block_uint.h \
+  /usr/local/include/gsl/gsl_vector_int.h \
+  /usr/local/include/gsl/gsl_block_int.h \
+  /usr/local/include/gsl/gsl_vector_ushort.h \
+  /usr/local/include/gsl/gsl_block_ushort.h \
+  /usr/local/include/gsl/gsl_vector_short.h \
+  /usr/local/include/gsl/gsl_block_short.h \
+  /usr/local/include/gsl/gsl_vector_uchar.h \
+  /usr/local/include/gsl/gsl_block_uchar.h \
+  /usr/local/include/gsl/gsl_vector_char.h \
+  /usr/local/include/gsl/gsl_block_char.h \
+  /usr/local/include/gsl/gsl_matrix.h \
+  /usr/local/include/gsl/gsl_matrix_complex_long_double.h \
+  /usr/local/include/gsl/gsl_blas_types.h \
+  /usr/local/include/gsl/gsl_cblas.h \
+  /usr/local/include/gsl/gsl_matrix_complex_double.h \
+  /usr/local/include/gsl/gsl_matrix_complex_float.h \
+  /usr/local/include/gsl/gsl_matrix_long_double.h \
+  /usr/local/include/gsl/gsl_matrix_double.h \
+  /usr/local/include/gsl/gsl_matrix_float.h \
+  /usr/local/include/gsl/gsl_matrix_ulong.h \
+  /usr/local/include/gsl/gsl_matrix_long.h \
+  /usr/local/include/gsl/gsl_matrix_uint.h \
+  /usr/local/include/gsl/gsl_matrix_int.h \
+  /usr/local/include/gsl/gsl_matrix_ushort.h \
+  /usr/local/include/gsl/gsl_matrix_short.h \
+  /usr/local/include/gsl/gsl_matrix_uchar.h \
+  /usr/local/include/gsl/gsl_matrix_char.h \
+  /usr/local/include/gsl/gsl_math.h /usr/local/include/gsl/gsl_sys.h \
+  /usr/local/include/gsl/gsl_machine.h \
+  /usr/local/include/gsl/gsl_precision.h \
+  /usr/local/include/gsl/gsl_nan.h /usr/local/include/gsl/gsl_pow_int.h \
+  /usr/local/include/gsl/gsl_minmax.h /usr/local/include/gsl/gsl_blas.h \
+  /usr/local/include/gsl/gsl_eigen.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/DSMatrix.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/DSTypes.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/DSDataSerialization.pb-c.h \
+  /usr/local/include/protobuf-c/protobuf-c.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/qhull_ra.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/libqhull_r.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/user_r.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/mem_r.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/qset_r.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/stat_r.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/random_r.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/geom_r.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/merge_r.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/poly_r.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/io_r.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/DSErrors.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/DSIO.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/DSMemoryManager.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/DSMatrixArray.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/DSMatrixTokenizer.h

@@ -1,6 +1,6 @@
-# Makefile for the Design Space Toolbox V2 C library
+# Makefile for the Design Space Toolbox V3 C library
 # Created for compilation on Unix-like environments.
-# The dependencies for the Design Space Toolbox V2 
+# The dependencies for the Design Space Toolbox V3 
 # are the following:
 #      (1)  The GNU Linear Programming Kit (modified for re-enterability).
 #      (2)  The GNU Scientific Library

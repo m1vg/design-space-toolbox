@@ -31,6 +31,7 @@
 #include <glpk.h>
 #include "DSMemoryManager.h"
 #include "DSCase.h"
+#include "DSUnstableCase.h"
 #include "DSVariable.h"
 #include "DSGMASystem.h"
 #include "DSSSystem.h"
@@ -87,12 +88,24 @@ extern DSCase * DSCaseCopy(const DSCase * aCase)
         newCase = DSCaseAlloc();
         DSCaseSSys(newCase) = DSSSystemCopy(DSCaseSSystem(aCase));
         DSCaseNum(newCase) = DSCaseNum(aCase);
-        numberOfEquations = DSCaseNumberOfEquations(aCase);
+        numberOfEquations = DSCaseNumberOfEquations(aCase) + aCase->numberInheritedConservations;
         if (DSCaseSig(aCase) != NULL) {
                 DSCaseSig(newCase) = DSSecureCalloc(sizeof(DSUInteger), numberOfEquations*2);
                 for (i = 0; i < numberOfEquations*2; i++) {
                         DSCaseSig(newCase)[i] = DSCaseSig(aCase)[i];
                 }
+        }
+        if (DSCase3Sig(aCase) != NULL) {
+            DSCase3Sig(newCase) = DSSecureCalloc(sizeof(DSUInteger), numberOfEquations*3);
+            for (i = 0; i < numberOfEquations*3; i++) {
+                DSCase3Sig(newCase)[i] = DSCase3Sig(aCase)[i];
+            }
+        }
+        if (DSCaseSigCons(aCase) != NULL){
+            numberOfEquations = DSCaseNumberOfConservations(aCase) + DSCaseNumberOfEquations(aCase);
+            DSCaseSigCons(newCase) = DSSecureCalloc(sizeof(DSUInteger), numberOfEquations*2);
+            for (i = 0; i< numberOfEquations*2; i++)
+                DSCaseSigCons(newCase)[i] = DSCaseSigCons(aCase)[i];
         }
         if (DSCaseCd(aCase) != NULL)
                 DSCaseCd(newCase) = DSMatrixCopy(DSCaseCd(aCase));
@@ -107,6 +120,7 @@ extern DSCase * DSCaseCopy(const DSCase * aCase)
         newCase->Xd = DSSSystemXd(DSCaseSSys(newCase));
         newCase->Xi = DSSSystemXi(DSCaseSSys(newCase));
         newCase->Xd_a =DSSSystemXd_a(DSCaseSSys(newCase));
+        newCase->numberInheritedConservations = aCase->numberInheritedConservations;
         DSCaseId(newCase) = strdup(DSCaseId(aCase));
 bail:
         return newCase;
@@ -125,12 +139,19 @@ extern void DSCaseFree(DSCase * aCase)
                 DSVariablePoolSetReadWriteAdd((DSVariablePool *)aCase->Xi);
                 DSVariablePoolSetReadWriteAdd((DSVariablePool *)aCase->Xd);
                 DSVariablePoolSetReadWriteAdd((DSVariablePool *)aCase->Xd_a);
-                DSVariablePoolFree((DSVariablePool *)aCase->Xi);
-                DSVariablePoolFree((DSVariablePool *)aCase->Xd);
-                DSVariablePoolFree((DSVariablePool *)aCase->Xd_a);
+                if (aCase->Xi != NULL)
+                    DSVariablePoolFree((DSVariablePool *)aCase->Xi);
+                if (aCase->Xd != NULL)
+                    DSVariablePoolFree((DSVariablePool *)aCase->Xd);
+                if (aCase->Xd_a != NULL)
+                    DSVariablePoolFree((DSVariablePool *)aCase->Xd_a);
         }
         if (DSCaseSig(aCase) != NULL)
                 DSSecureFree(DSCaseSig(aCase));
+        if (DSCase3Sig(aCase) != NULL)
+                DSSecureFree(DSCase3Sig(aCase));
+        if (DSCaseSigCons(aCase) != NULL)
+            DSSecureFree(DSCaseSigCons(aCase));
         if (DSCaseCd(aCase) != NULL)
                 DSMatrixFree(DSCaseCd(aCase));
         if (DSCaseCi(aCase) != NULL)
@@ -143,10 +164,27 @@ extern void DSCaseFree(DSCase * aCase)
                 DSMatrixFree(DSCaseU(aCase));
         if (DSCaseId(aCase) != NULL)
                 DSSecureFree(DSCaseId(aCase));
-        DSSecureFree(aCase);
+        if ((DSCase *)aCase != NULL)
+            DSSecureFree(aCase);
 bail:
         return;
 }
+
+extern void DSCaseVolumeFree(DSCaseVolume *caseVolume){
+    
+    if (caseVolume == NULL) {
+            DSError(M_DS_CASE_NULL, A_DS_ERROR);
+            goto bail;
+    }
+    
+    if (caseVolume->vertices != NULL)
+        DSMatrixFree(caseVolume->vertices);
+    DSSecureFree(caseVolume);
+    
+bail:
+    return;
+}
+
 
 #if defined (__APPLE__) && defined (__MACH__)
 #pragma mark - Factory functions
@@ -231,7 +269,6 @@ static void dsCaseCreateBoundaryMatrices(DSCase *aCase)
         }
         B = DSSSystemB(DSCaseSSys(aCase));
         numberOfXi =DSVariablePoolNumberOfVariables(DSCaseXi(aCase));
-        
         W = DSMatrixByMultiplyingMatrix(DSCaseCd(aCase), DSSSystemM(DSCaseSSys(aCase)));
         DSCaseZeta(aCase) = DSMatrixByMultiplyingMatrix(W, B);
         DSMatrixAddByMatrix(DSCaseZeta(aCase), DSCaseDelta(aCase));
@@ -336,6 +373,16 @@ static void dsCaseCreateConditionMatrices(DSCase *aCase, const DSGMASystem * gma
                         l++;
                 }
         }
+//        printf("Reporting from within funciton dsCaseCreateConditionMatrices! \n");
+//        printf("Matrix Delta is: \n");
+//        DSMatrixPrint(DSCaseDelta(aCase));
+//
+//        printf("Matrix Cd is: \n");
+//        DSMatrixPrint(DSCaseCd(aCase));
+//
+//        printf("Matrix Ci is: \n");
+//        DSMatrixPrint(DSCaseCi(aCase));
+    
 bail:
         return;
 }
@@ -457,10 +504,627 @@ bail:
         return;
 }
 
-extern DSCase * DSCaseWithTermsFromDesignSpace(const DSDesignSpace * ds, const DSUInteger * termArray, const char * prefix)
+static void dsSSystemSolveEquations(DSSSystem *ssys)
+{
+    DSMatrix *M, *Ad;
+    if (ssys == NULL) {
+        DSError(M_DS_NULL ": S-System being modified is NULL", A_DS_ERROR);
+        goto bail;
+    }
+    DSSSystemSetIsSingular(ssys, true);
+    Ad = DSMatrixBySubstractingMatrix(ssys->Gd, ssys->Hd);
+    M = DSMatrixInverse(Ad);
+    if (M != NULL) {
+        DSSSystemSetIsSingular(ssys, false);
+        ssys->M = M;
+    }
+    DSMatrixFree(Ad);
+bail:
+    return;
+}
+
+static void dsSSystemReshapeMatrices(DSSSystem *ssys, DSUInteger numberOfAssociatedVariables , DSUInteger numberOfConservations,
+                                     DSUInteger *variables_to_delete, DSUInteger *conservation_indices, DSDictionary *swap)
+
+
+{
+    
+        DSMatrix *alpha_temp = NULL, *beta_temp = NULL, *Gd_temp = NULL;
+        DSMatrix *Gi_temp = NULL, *Hd_temp = NULL, *Hi_temp = NULL;
+        DSUInteger i, col1, col2;
+    
+        // Delete Rows contained in variables_to_delete of all matrices! For matrices Gd and Hd also delete columns of Xcn
+        if (ssys->alpha != NULL){
+            alpha_temp = DSMatrixSubMatrixExcludingRows(ssys->alpha, numberOfConservations, variables_to_delete);
+            DSMatrixFree(ssys->alpha);
+            ssys->alpha = alpha_temp;
+        }
+    
+        if (ssys->beta != NULL){
+            beta_temp = DSMatrixSubMatrixExcludingRows(ssys->beta, numberOfConservations, variables_to_delete);
+            DSMatrixFree(ssys->beta);
+            ssys->beta = beta_temp;
+        }
+    
+        // Matrices Gd need to be treated in a special way!
+        if (ssys->Gd != NULL){
+            // We first switch colums corresponding to realationships Xc <-> X1. These relationships are contained in swap dictionary
+            for (i=0; i<DSDictionaryCount(swap); i++){
+                col1 = DSVariablePoolIndexOfVariableWithName(ssys->Xd, DSDictionaryNames(swap)[i]);
+                col2 = DSVariablePoolIndexOfVariableWithName(ssys->Xd, DSDictionaryValueForName(swap, DSDictionaryNames(swap)[i]));
+                DSMatrixSwitchColumns(ssys->Gd, col1, col2);
+            }
+            Gd_temp = DSMatrixSubMatrixExcludingRowsAndColumns(ssys->Gd, numberOfAssociatedVariables , numberOfAssociatedVariables, variables_to_delete, variables_to_delete);
+            DSMatrixFree(ssys->Gd);
+            ssys->Gd = Gd_temp;
+        }
+    
+        if (ssys->Gi != NULL){
+            Gi_temp = DSMatrixSubMatrixExcludingRows(ssys->Gi, numberOfConservations, variables_to_delete);
+            DSMatrixFree(ssys->Gi);
+            ssys->Gi = Gi_temp;
+        }
+    
+        // Matrices Hd need to be treated in a special way!
+        if (ssys->Hd != NULL){
+            // We first switch colums corresponding to realationships Xc <-> X1. These relationships are contained in swap dictionary
+            for (i=0; i<DSDictionaryCount(swap); i++){
+                col1 = DSVariablePoolIndexOfVariableWithName(ssys->Xd, DSDictionaryNames(swap)[i]);
+                col2 = DSVariablePoolIndexOfVariableWithName(ssys->Xd, DSDictionaryValueForName(swap, DSDictionaryNames(swap)[i]));
+                DSMatrixSwitchColumns(ssys->Hd, col1, col2);
+            }
+            Hd_temp = DSMatrixSubMatrixExcludingRowsAndColumns(ssys->Hd, numberOfAssociatedVariables , numberOfAssociatedVariables, variables_to_delete, variables_to_delete);
+            DSMatrixFree(ssys->Hd);
+            ssys->Hd = Hd_temp;
+        }
+    
+        if (ssys->Hi != NULL){
+            Hi_temp = DSMatrixSubMatrixExcludingRows(ssys->Hi, numberOfConservations, variables_to_delete);
+            DSMatrixFree(ssys->Hi);
+            ssys->Hi = Hi_temp;
+        }
+    
+    
+}
+
+static void dsSSystemReshapeVariablePools(DSSSystem * ssys, const DSDesignSpace *ds,
+                                          const DSDictionary * variables_to_delete_dic,
+                                          const DSDictionary * conservation_variables_dic)
+{
+    
+    // Now re-shape variable pools. For each Xci, do:
+    // Eliminate Xci from Xd
+    // Change identity of associated Xd from Xd_t to Xd_a. Add that Xd to Xd_a_c
+    
+    // The idea would be to loop over ssys->Xd and then create new pools depending on the existence of that certain variable on either dictionary.
+    
+    // todo: check memory management of Xd and corresponding sub-pools!. SSystem should delete these pools!
+    
+    DSVariablePool *Xd_gma = ds->gma->Xd;
+    DSVariablePool *Xd_a_gma = ds->gma->Xd_a;
+    DSVariablePool *Xd_new = NULL;
+    DSVariablePool *Xd_t_new = NULL;
+    DSVariablePool *Xd_a_new = NULL;
+    DSVariablePool *Xd_a_c = NULL;
+    DSUInteger i, count=0;
+    const char ** variableNames = NULL;
+    const char *associatedVariable = NULL;
+    
+    variableNames = DSVariablePoolAllVariableNames(Xd_gma);
+    Xd_new = DSVariablePoolAlloc();
+    Xd_t_new = DSVariablePoolAlloc();
+    Xd_a_new = DSVariablePoolAlloc();
+    Xd_a_c = DSVariablePoolAlloc();
+    
+    
+    //    printf("dictionary variables_to_delete_dic contains following variables: \n");
+    //    DSDictionaryPrint(variables_to_delete_dic);
+    //    printf("Showing %u names saved in variables_to_delete_dic : \n ", DSDictionaryCount(variables_to_delete_dic));
+    //    for(i=0; i<DSDictionaryCount(variables_to_delete_dic); i++){
+    //        printf(" %s \n", DSDictionaryNames(variables_to_delete_dic)[i]);
+    //    }
+    
+    
+    
+    //    printf("dictionary conservation_variables_dic contains following variables: \n");
+    //    DSDictionaryPrint(conservation_variables_dic);
+    //    printf("Showing %u names saved in conservation_variables_dic : \n ", DSDictionaryCount(conservation_variables_dic));
+    //    for(i=0; i<DSDictionaryCount(conservation_variables_dic); i++){
+    //        printf(" %s \n", DSDictionaryNames(conservation_variables_dic)[i]);
+    //    }
+    
+    
+    
+    // loop over Xd_gma and populate Xd_new
+    for (i=0; i<DSVariablePoolNumberOfVariables(Xd_gma); i++){
+        
+        //        printf("Analyzing variable with name %s .. \n ",variableNames[i] );
+        
+        if( DSDictionaryValueForName(variables_to_delete_dic, variableNames[i]) != NULL ){
+            //            printf("Skipping variable %s \n", variableNames[i]);
+            continue;
+        }
+        
+        if( DSDictionaryValueForName(conservation_variables_dic, variableNames[i]) != NULL ){
+            // if variable is a conservation variable, add associated variable to the dictionary Xc --> X1
+            associatedVariable = DSDictionaryValueForName(conservation_variables_dic, variableNames[i]);
+            
+            if (DSVariablePoolHasVariableWithName(Xd_new, associatedVariable) == false){
+                DSVariablePoolAddVariableWithName(Xd_new, associatedVariable);
+                
+            }
+            continue;
+        }
+        //        printf("About to add variable %s without any check \n", variableNames[i] );
+        DSVariablePoolAddVariableWithName(Xd_new, variableNames[i]);
+        if (DSVariablePoolHasVariableWithName(Xd_a_gma, variableNames[i]) == false){
+            DSVariablePoolSetValueForVariableWithName(Xd_new, variableNames[i], count);
+            count++;
+        }
+        
+    }
+    if (variableNames != NULL)
+        DSSecureFree(variableNames);
+    
+    // First assign true Xd_a from Xd_a_gma to Xd_a_new.
+    // Loop over Xd_a_gma and assign to Xd_a_new only if variable is not present in dictionary "conservation_variables_dic"
+    variableNames = DSVariablePoolAllVariableNames(Xd_a_gma);
+    for (i=0; i<DSVariablePoolNumberOfVariables(Xd_a_gma); i++ ){
+        if (DSDictionaryValueForName(conservation_variables_dic, variableNames[i]) == NULL)
+            DSVariablePoolAddVariableWithName(Xd_a_new, variableNames[i]);
+    }
+    if (variableNames != NULL)
+        DSSecureFree(variableNames);
+    
+    // now loop over the newly created Xd_new and assign each variable to either Xd_t_new or Xd_a_new.
+    // Assign variable to Xd_a_new if variable is present in dictionary "variables_to_delete_dic", else to Xd_t only if variable is not present in Xd_a_new already
+    variableNames = DSVariablePoolAllVariableNames(Xd_new);
+    for (i=0; i<DSVariablePoolNumberOfVariables(Xd_new); i++){
+        
+        if (DSDictionaryValueForName(variables_to_delete_dic, variableNames[i]) != NULL){
+            DSVariablePoolAddVariableWithName(Xd_a_new, variableNames[i]);
+            DSVariablePoolAddVariableWithName(Xd_a_c, variableNames[i]);
+        } else {
+            if (DSVariablePoolHasVariableWithName(Xd_t_new, variableNames[i]) == false && DSVariablePoolHasVariableWithName(Xd_a_gma, variableNames[i]) == false )
+                DSVariablePoolAddVariableWithName(Xd_t_new, variableNames[i]);
+        }
+    }
+    if (variableNames != NULL)
+        DSSecureFree(variableNames);
+    
+    // now let's print results!
+    //    printf("Xd_gma is: \n");
+    //    DSVariablePoolPrint(Xd_gma);
+    //    printf("Xd_new is: \n");
+    //    DSVariablePoolPrint(Xd_new);
+    //
+    //    printf("Xd_t_gma is: \n");
+    //    DSVariablePoolPrint(ds->gma->Xd_t);
+    //    printf("Xd_t_new is: \n");
+    //    DSVariablePoolPrint(Xd_t_new);
+    //
+    //    printf("Xd_a_gma is: \n");
+    //    DSVariablePoolPrint(ds->gma->Xd_a);
+    //    printf("Xd_a_new is: \n");
+    //    DSVariablePoolPrint(Xd_a_new);
+    
+    // and now let's assign the newly created pools to the ssystem
+    ssys->Xd = Xd_new;
+    ssys->Xd_t = Xd_t_new;
+    ssys->Xd_a = Xd_a_new;
+    ssys->Xd_a_c = Xd_a_c;
+    DSSSystemSetShouldFreeXd(ssys, true);
+    
+    
+}
+
+static void dsSSystemReshapeVariablePools_future(DSSSystem * ssys, const DSDesignSpace *ds,
+                                          const DSDictionary * variables_to_delete_dic,
+                                          const DSDictionary * conservation_variables_dic,
+                                          char * conservedKey)
+{
+    
+        // Now re-shape variable pools. For each Xci, do:
+        // Eliminate Xci from Xd
+        // Change identity of associated Xd from Xd_t to Xd_a. Add that Xd to Xd_a_c
+        // The idea would be to loop over ssys->Xd and then create new pools depending on the existence of that certain variable on either dictionary.
+    
+        DSVariablePool *Xd_gma = ds->gma->Xd;
+        DSVariablePool *Xd_a_gma = ds->gma->Xd_a;
+        DSVariablePool *Xd_new = NULL;
+        DSVariablePool *Xd_t_new = NULL;
+        DSVariablePool *Xd_a_new = NULL;
+        DSVariablePool *Xd_a_c = NULL;
+        DSUInteger i, count=0;
+        const char ** variableNames = NULL;
+        const char *associatedVariable = NULL;
+    
+        if (DSDictionaryValueForName(ds->Xd_dic, conservedKey) != NULL ||
+            DSDictionaryValueForName(ds->Xd_t_dic, conservedKey) != NULL ||
+            DSDictionaryValueForName(ds->Xd_a_dic, conservedKey) != NULL ||
+            DSDictionaryValueForName(ds->Xd_a_c_dic, conservedKey) != NULL)
+            goto bail;
+    
+        variableNames = DSVariablePoolAllVariableNames(Xd_gma);
+        Xd_new = DSVariablePoolAlloc();
+        Xd_t_new = DSVariablePoolAlloc();
+        Xd_a_new = DSVariablePoolAlloc();
+        Xd_a_c = DSVariablePoolAlloc();
+    
+        // loop over Xd_gma and populate Xd_new
+        for (i=0; i<DSVariablePoolNumberOfVariables(Xd_gma); i++){
+                if( DSDictionaryValueForName(variables_to_delete_dic, variableNames[i]) != NULL ){
+                    continue;
+                }
+            
+                if( DSDictionaryValueForName(conservation_variables_dic, variableNames[i]) != NULL ){
+                        // if variable is a conservation variable, add associated variable to the dictionary Xc --> X1
+                    associatedVariable = DSDictionaryValueForName(conservation_variables_dic, variableNames[i]);
+                    if (DSVariablePoolHasVariableWithName(Xd_new, associatedVariable) == false){
+                                DSVariablePoolAddVariableWithName(Xd_new, associatedVariable);
+
+                    }
+                    continue;
+                }
+                DSVariablePoolAddVariableWithName(Xd_new, variableNames[i]);
+                if (DSVariablePoolHasVariableWithName(Xd_a_gma, variableNames[i]) == false){
+                    DSVariablePoolSetValueForVariableWithName(Xd_new, variableNames[i], count);
+                    count++;
+                }
+            
+        }
+        if (variableNames != NULL)
+            DSSecureFree(variableNames);
+    
+        // First assign true Xd_a from Xd_a_gma to Xd_a_new.
+        // Loop over Xd_a_gma and assign to Xd_a_new only if variable is not present in dictionary "conservation_variables_dic"
+        variableNames = DSVariablePoolAllVariableNames(Xd_a_gma);
+        for (i=0; i<DSVariablePoolNumberOfVariables(Xd_a_gma); i++ ){
+                if (DSDictionaryValueForName(conservation_variables_dic, variableNames[i]) == NULL)
+                    DSVariablePoolAddVariableWithName(Xd_a_new, variableNames[i]);
+        }
+        if (variableNames != NULL)
+            DSSecureFree(variableNames);
+    
+        // now loop over the newly created Xd_new and assign each variable to either Xd_t_new or Xd_a_new.
+        // Assign variable to Xd_a_new if variable is present in dictionary "variables_to_delete_dic", else to Xd_t only if variable is not present in Xd_a_new already
+        variableNames = DSVariablePoolAllVariableNames(Xd_new);
+        for (i=0; i<DSVariablePoolNumberOfVariables(Xd_new); i++){
+            
+                if (DSDictionaryValueForName(variables_to_delete_dic, variableNames[i]) != NULL){
+                    DSVariablePoolAddVariableWithName(Xd_a_new, variableNames[i]);
+                    DSVariablePoolAddVariableWithName(Xd_a_c, variableNames[i]);
+                } else {
+                        if (DSVariablePoolHasVariableWithName(Xd_t_new, variableNames[i]) == false && DSVariablePoolHasVariableWithName(Xd_a_gma, variableNames[i]) == false )
+                                DSVariablePoolAddVariableWithName(Xd_t_new, variableNames[i]);
+                }
+        }
+        if (variableNames != NULL)
+            DSSecureFree(variableNames);
+    
+//    if (DSDictionaryValueForName(ds->Xd_dic, conservedKey) == NULL ||
+//        DSDictionaryValueForName(ds->Xd_t_dic, conservedKey) == NULL ||
+//        DSDictionaryValueForName(ds->Xd_a_dic, conservedKey) == NULL ||
+//        DSDictionaryValueForName(ds->Xd_a_c_dic, conservedKey) == NULL){
+    
+                DSDictionaryAddValueWithName(ds->Xd_dic, conservedKey, Xd_new);
+                DSDictionaryAddValueWithName(ds->Xd_t_dic, conservedKey, Xd_t_new);
+                DSDictionaryAddValueWithName(ds->Xd_a_dic, conservedKey, Xd_a_new);
+                DSDictionaryAddValueWithName(ds->Xd_a_c_dic, conservedKey, Xd_a_c);
+//    } else{
+//                DSVariablePoolFree(Xd_new);
+//                DSVariablePoolFree(Xd_t_new);
+//                DSVariablePoolFree(Xd_a_new);
+//                DSVariablePoolFree(Xd_a_c);
+//    }
+    
+bail:
+    
+    ssys->Xd = DSDictionaryValueForName(ds->Xd_dic, conservedKey);
+    ssys->Xd_t = DSDictionaryValueForName(ds->Xd_t_dic, conservedKey);
+    ssys->Xd_a = DSDictionaryValueForName(ds->Xd_a_dic, conservedKey);
+    ssys->Xd_a_c = DSDictionaryValueForName(ds->Xd_a_c_dic, conservedKey);
+
+}
+
+static void dSCaseReshapeConditionMatrices(DSCase *aCase, DSUInteger numberOfAssociatedVariables,
+                                           DSUInteger *variables_to_delete, DSDictionary *swap)
+{
+    // this function is used to reshape one of the condition matrices aCase->Cd. The modification consist on first swapping colums associated in Xc <-> X1 and then deleting colums associated with  associated variables contained in *variables_to_delete.
+    
+        DSUInteger i, col1, col2;
+        DSSSystem *ssys = aCase->ssys;
+        DSMatrix * Cd_new;
+    
+        //swap
+        for (i=0; i<DSDictionaryCount(swap); i++){
+            col1 = DSVariablePoolIndexOfVariableWithName(ssys->Xd, DSDictionaryNames(swap)[i]);
+            col2 = DSVariablePoolIndexOfVariableWithName(ssys->Xd, DSDictionaryValueForName(swap, DSDictionaryNames(swap)[i]));
+            DSMatrixSwitchColumns(aCase->Cd, col1, col2);
+        }
+    
+        //delete columns
+        Cd_new = DSMatrixSubMatrixExcludingColumns(aCase->Cd, numberOfAssociatedVariables, variables_to_delete);
+        DSMatrixFree(aCase->Cd);
+        aCase->Cd = Cd_new;
+    
+}
+
+static void dSCaseAdjustCaseSignature(DSCase *aCase,
+                                      DSUInteger numberOfAssociatedVariables, DSUInteger *variables_to_delete)
+{
+    // First copy aCase->signature into aCase->conserved_sig and then modify it
+    // Set 0 for all indices contained in variables_to_delete.
+
+    
+        DSUInteger ii, index;
+        DSUInteger numberOfEquations;
+    
+        if (DSCaseSig(aCase) == NULL)
+        goto bail;
+    
+        if (DSCase3Sig(aCase) != NULL)
+        {
+            goto bail;
+        } else {
+                numberOfEquations = DSCaseNumberOfConservations(aCase) + DSCaseNumberOfEquations(aCase);
+                DSCaseSigCons(aCase) = DSSecureCalloc(sizeof(DSUInteger), numberOfEquations*2);
+                for (ii = 0; ii< numberOfEquations*2; ii++)
+                    DSCaseSigCons(aCase)[ii] = DSCaseSig(aCase)[ii];
+            
+                for (ii=0; ii<numberOfAssociatedVariables; ii++){
+                    index = variables_to_delete[ii];
+                    DSCaseSigCons(aCase)[2*index] = 0;
+                    DSCaseSigCons(aCase)[2*index + 1] = 0;
+                }
+        }
+    
+    bail:
+        return;
+    
+}
+
+
+static void dsSSystemIntegrateConservedRelationships(DSCase *aCase, const DSDesignSpace *ds)
+{
+        // This function should help re-shape the matrices of the S-system so that auxiliary variables
+        // can be sucessfully merged. Matrices that need to be re-shaped are Alpha, Beta, Gd, Hd, Gi, Hi.
+        // The number of conservation relationships is contained in ds->numberOfConservations. The conservation
+        // relationships correspond to the last n equations, being n = ds->numberOfConservations.
+        // Conservation relationships have been saved till this point as Xd_a variables.
+        // The idea of this function is to: a) reshape matrices and b) reshape variable pools.
+    
+
+        DSSSystem *ssys = aCase->ssys;
+        DSUInteger *conservation_indices = NULL, *variables_to_delete = NULL;
+        DSUInteger numberOfConservations, i, conservation_indx, associated_indx, numberOfAssociatedVariables = 0;
+        DSVariablePool * Xd = ssys->Xd;
+        DSMatrix *Hd = ssys->Hd;
+        char conservedVar[100], *associatedVar, conservedKey[1000], buff[10];
+        DSDictionary *variables_to_delete_dic = NULL, *conservation_variables_dic = NULL;
+    
+        if (DSDesignSpaceConserved(ds) == false){
+            aCase->ssys->numberOfConservations = 0;
+            goto bail;
+        }
+    
+        if (aCase->ssys == NULL)
+            goto bail;
+    
+        aCase->ssys->numberOfConservations = ds->numberOfConservations;
+        DSSSystemSetIsConserved(aCase->ssys, true);
+    
+        variables_to_delete_dic = DSDictionaryAlloc();
+        conservation_variables_dic = DSDictionaryAlloc();
+        numberOfConservations = ds->numberOfConservations;
+    
+        // find indices for conservation variables Xc1, Xc2,.., Xcn
+        // find indices of rows of matrices that need to be deleted. Check for non-zero values in Matrix Hd
+        conservation_indices = DSSecureMalloc(sizeof(DSUInteger)*numberOfConservations);
+        variables_to_delete = DSSecureMalloc(sizeof(DSUInteger)*numberOfConservations);
+        for (i=0; i<numberOfConservations; i++){
+                sprintf(conservedVar, "Xc%u", i+1);
+                conservation_indx = DSVariablePoolIndexOfVariableWithName(Xd, conservedVar);
+                associated_indx = DSMatrixFirstNonZeroIndexAtRow(Hd, conservation_indx);
+                if (associated_indx == 65000 ){
+                    char error[1000];
+                    sprintf(error, "Parsing Error in Conservation Eqn. # %u"": It must be a f() of variables with a differential equation", i+1);
+                    DSError(error, A_DS_ERROR);
+                    goto bail;
+                }
+                if (i==0)
+                    sprintf(conservedKey, "%u%u", DSCaseSignature(aCase)[2*conservation_indx],
+                                                  DSCaseSignature(aCase)[2*conservation_indx + 1]);
+                else{
+                    sprintf(buff, "%u%u", DSCaseSignature(aCase)[2*conservation_indx],
+                            DSCaseSignature(aCase)[2*conservation_indx + 1]);
+                    strcat(conservedKey, buff);
+                }
+                associatedVar = DSVariablePoolVariableAtIndex(Xd, associated_indx)->name;
+                DSDictionaryAddValueWithName(conservation_variables_dic, conservedVar, associatedVar);
+                if (DSDictionaryValueForName(variables_to_delete_dic, associatedVar) == NULL){
+                        DSDictionaryAddValueWithName(variables_to_delete_dic, associatedVar, (void*)1);
+                        variables_to_delete[numberOfAssociatedVariables] = associated_indx;
+                        numberOfAssociatedVariables++;
+                }
+                conservation_indices[i] = conservation_indx;
+        }
+        if (numberOfConservations != numberOfAssociatedVariables ){
+            DSSSystemSetIsConserved(aCase->ssys, false);
+            aCase->ssys->numberOfConservations = 0;
+            goto bail;
+        }
+    
+        dsSSystemReshapeMatrices(ssys, numberOfAssociatedVariables ,
+                                 numberOfConservations, variables_to_delete, conservation_indices,
+                                 conservation_variables_dic);
+        dSCaseReshapeConditionMatrices(aCase, numberOfAssociatedVariables, variables_to_delete,     conservation_variables_dic);
+//        dsSSystemReshapeVariablePools_future(ssys, ds, variables_to_delete_dic, conservation_variables_dic, conservedKey);
+            dsSSystemReshapeVariablePools(ssys, ds, variables_to_delete_dic, conservation_variables_dic);
+    
+        if (DSDesignSpaceCyclical(ds) == false)
+            dSCaseAdjustCaseSignature(aCase, numberOfAssociatedVariables, variables_to_delete);
+        dsSSystemSolveEquations(ssys);
+    
+        aCase->Xi = DSSSystemXi(DSCaseSSys(aCase));
+        aCase->Xd = DSSSystemXd(DSCaseSSys(aCase));
+        aCase->Xd_a = DSSSystemXd_a(DSCaseSSys(aCase));
+    
+    bail:
+        if (variables_to_delete_dic != NULL)
+            DSDictionaryFree(variables_to_delete_dic);
+        if (conservation_variables_dic != NULL)
+            DSDictionaryFree(conservation_variables_dic);
+        if (variables_to_delete != NULL)
+            DSSecureFree(variables_to_delete);
+        if (conservation_indices != NULL)
+            DSSecureFree(conservation_indices);
+
+        return;
+}
+
+static void dsSubCaseSignatureProcessLocationThreeDigitMatrices(DSuIntegerMatrix *location,
+                                                                DSuIntegerMatrix *three_digit,
+                                                                DSUInteger *parentSignature,
+                                                                DSUInteger numberCycles,
+                                                                DSUInteger numberInheritedConservations,
+                                                                DSUInteger numberOfEqutions,
+                                                                bool print)
+{
+    
+    // This function should modify integer matrices *location and *three_digit. The number of modifications is dictated by the number of inherited conservations and by the location of the conservations. This location can be extracted from the parentSignature. A triplet of zeros symbolize the location of a conservation.
+    
+    DSUInteger * conservations_location = NULL;
+    DSUInteger i, ii, count = 0, increase_location, increase_three_digit, value_location, value_three_digit;
+    
+    conservations_location = DSSecureCalloc(sizeof(DSUInteger), numberInheritedConservations);
+    
+    // Generate conservations_location containing indices for the location of the conservations.
+    for (i = 0; i < numberOfEqutions; i++){
+        if (parentSignature[3*i] == 0 && parentSignature[3*i + 1] == 0 && parentSignature[3*i + 2] == 0){
+            conservations_location[count] = i;
+            count++;
+        }
+    }
+    
+    // loop over location and three_digit and modify if conservations are located before cycles.
+    for (i = 0; i < numberCycles; i++){
+            increase_location = 0;
+            increase_three_digit = 0;
+        
+            for (ii = 0; ii<numberInheritedConservations; ii++){
+                if(conservations_location[ii] <= DSuIntegerMatrixValue(location, i, 0))
+                    increase_location++;
+                if(conservations_location[ii] <= DSuIntegerMatrixValue(three_digit, i, 0))
+                    increase_three_digit++;
+            }
+        
+            // loc: add the number of conservations before loc.
+            // three_digit: add the number of conservations before loc to the first column.
+            value_location = DSuIntegerMatrixValue(location, i, 0) + increase_location;
+            value_three_digit = DSuIntegerMatrixValue(three_digit, i, 0) + increase_three_digit;
+            DSuIntegerMatrixSetValue(location, i, 0, value_location);
+            DSuIntegerMatrixSetValue(three_digit, i, 0, value_three_digit);
+    }
+    
+    if (conservations_location != NULL)
+        DSSecureFree(conservations_location);
+    
+    return;
+}
+
+
+
+extern void DSSubCaseGenerate3dSignature(const DSDesignSpace *ds, DSCase *aCase, DSuIntegerMatrix *three_digit, DSuIntegerMatrix *location){
+    
+        DSUInteger numberOfEquations, numberCycles;
+        DSUInteger ii, loc;
+        numberOfEquations = DSGMASystemNumberOfEquations(DSDesignSpaceGMASystem(ds)) + ds->numberInheritedConservations;
+
+        if (DSDesignSpaceCyclical(ds) == true && ds->parent3DigitsSignature != NULL && three_digit != NULL) {
+            numberCycles = ds->extensionData->numberCycles;
+            // we first copy the 3d signature from the parent design space.
+            aCase->signature_3d = DSSecureCalloc(sizeof(DSUInteger), numberOfEquations*3);
+            for (ii = 0; ii< numberOfEquations*3; ii++){
+                aCase->signature_3d[ii] = ds->parent3DigitsSignature[ii];
+            }
+            
+//            if ( strcmp(ds->casePrefix, "2818_9" ) == 0){
+//                dsCaseCalculateCaseNumber(aCase, DSDesignSpaceGMASystem(ds), endian);
+//                if(aCase->caseNumber == 3){
+//                    printf("Reporting from function DSSubCaseGenerate3dSignature for case 2818_9_3 \n");
+////                    printf("The signature inherideted from the parent is: ");
+////                    for (ii = 0; ii < numberOfEquations*3; ii++){
+////                        printf("%u", aCase->signature_3d[ii]);
+////                        if((ii+1)%3 == 0)
+////                            printf("  ");
+////                    }
+//                    printf("\n");
+//                    printf("The location matrix is: \n");
+//                    DSuIntegerMatrixPrint(location);
+//                    printf("The three_digit matrix is: \n");
+//                    DSuIntegerMatrixPrint(three_digit);
+//                }
+//            }
+            
+            if(ds->numberInheritedConservations != 0)
+                dsSubCaseSignatureProcessLocationThreeDigitMatrices(location, three_digit,
+                                                                    aCase->signature_3d, numberCycles,
+                                                                    ds->numberInheritedConservations,
+                                                                    numberOfEquations, false);
+            
+//            if ( strcmp(ds->casePrefix, "2818_9" ) == 0){
+//                if(aCase->caseNumber == 3){
+//                    printf("Reporting from function DSSubCaseGenerate3dSignature for case 2818_9_3. After \n");
+//                    printf("\n");
+//                    printf("The location matrix is: \n");
+//                    DSuIntegerMatrixPrint(location);
+//                    printf("The three_digit matrix is: \n");
+//                    DSuIntegerMatrixPrint(three_digit);
+//                }
+//            }
+            
+            // then we use information located in *three_digit and *location to modify that signature.
+            for (ii = 0; ii < numberCycles; ii++ ){
+                loc = DSuIntegerMatrixValue(location, ii, 0);
+                aCase->signature_3d[loc*3] = DSuIntegerMatrixValue(three_digit, ii, 0) + 1;
+                aCase->signature_3d[loc*3 + 1] = DSuIntegerMatrixValue(three_digit, ii, 1) + 1;
+                aCase->signature_3d[loc*3 + 2] = DSuIntegerMatrixValue(three_digit, ii, 2) + 1;
+            }
+            
+            
+//            if ( strcmp(ds->casePrefix, "513" ) == 0){
+//                printf("The signature after modification is: ");
+//                for (ii = 0; ii < numberOfEquations*3; ii++){
+//                    printf("%u", aCase->signature_3d[ii]);
+//                    if((ii+1)%3 == 0)
+//                    printf("  ");
+//                }
+//                printf("\n");
+//            }
+            
+            
+            DSuIntegerMatrixFree(location);
+            DSuIntegerMatrixFree(three_digit);
+        } else {
+            if(three_digit != NULL)
+                DSuIntegerMatrixFree(three_digit);
+            if(location != NULL)
+                DSuIntegerMatrixFree(location);
+        }
+}
+
+extern DSCase * DSCaseWithTermsFromDesignSpace(const DSDesignSpace * ds,
+                                               const DSUInteger * termArray,
+                                               const char * prefix)
 {
         DSCase *aCase = NULL;
         DSUInteger i, term1, term2, numberOfEquations;
+        DSUnstableCase * uCase = NULL;
+        char name[1000];
+        DSUInteger numberCycles;
+        DSuIntegerMatrix *three_digit = NULL, *location = NULL;
+    
         if (ds == NULL) {
                 DSError(M_DS_NULL ": Template GMA to make S-System is NULL", A_DS_ERROR);
                 goto bail;
@@ -470,32 +1134,65 @@ extern DSCase * DSCaseWithTermsFromDesignSpace(const DSDesignSpace * ds, const D
                 goto bail;
         }
         aCase = DSCaseAlloc();
-        DSCaseSSys(aCase) = DSSSystemWithTermsFromGMA(DSDesignSpaceGMASystem(ds), termArray);
+        numberOfEquations = DSGMASystemNumberOfEquations(DSDesignSpaceGMASystem(ds));
+        if (DSDesignSpaceCyclical(ds) == true) {
+            numberCycles = ds->extensionData->numberCycles;
+            three_digit = DSuIntegerMatrixCalloc(numberCycles, 3);
+            location = DSuIntegerMatrixCalloc(numberCycles, 1);
+            DSCaseSSys(aCase) = DSSSystemWithTermsFromGMACyclical(ds, termArray, three_digit, location);
+            aCase->numberInheritedConservations = ds->numberInheritedConservations;
+        }else{
+            DSCaseSSys(aCase) = DSSSystemWithTermsFromGMA(DSDesignSpaceGMASystem(ds), termArray);
+            aCase->numberInheritedConservations = 0;
+        }
         aCase->Xi = DSSSystemXi(DSCaseSSys(aCase));
         aCase->Xd = DSSSystemXd(DSCaseSSys(aCase));
         aCase->Xd_a = DSSSystemXd_a(DSCaseSSys(aCase));
-        numberOfEquations = DSGMASystemNumberOfEquations(DSDesignSpaceGMASystem(ds));
         DSCaseSig(aCase) = DSSecureMalloc(sizeof(DSUInteger)*(2*numberOfEquations));
-//        DSCaseSSys(aCase)->fluxDictionary = DSDesignSpaceCycleDictionaryForSignature(ds, termArray);
-//        DSDictionaryPrintWithFunction(DSCaseSSys(aCase)->fluxDictionary, DSExpressionPrint);
         for (i = 0; i < 2*numberOfEquations; i+=2) {
-                term1 = termArray[i];
-                term2 = termArray[i+1];
-                DSCaseSig(aCase)[i] = term1;
-                DSCaseSig(aCase)[i+1] = term2;
-                if (term1 > DSGMASystemSignature(DSDesignSpaceGMASystem(ds))[i] || term2 > DSGMASystemSignature(DSDesignSpaceGMASystem(ds))[i+1])
-                        break;
-                if (term1 <= 0 || term2 <= 0)
-                        break;
+            term1 = termArray[i];
+            term2 = termArray[i+1];
+            DSCaseSig(aCase)[i] = term1;
+            DSCaseSig(aCase)[i+1] = term2;
+            if (term1 > DSGMASystemSignature(DSDesignSpaceGMASystem(ds))[i] || term2 > DSGMASystemSignature(DSDesignSpaceGMASystem(ds))[i+1])
+                break;
+            if (term1 <= 0 || term2 <= 0)
+                break;
         }
+        DSSubCaseGenerate3dSignature(ds, aCase, three_digit, location);
         if (i == 2*numberOfEquations) {
                 dsCaseCreateConditionMatrices(aCase, DSDesignSpaceGMASystem(ds));
                 dsCaseAppendDesignSpaceConditions(aCase, ds);
-                dsCaseCreateBoundaryMatrices(aCase);
                 dsCaseCalculateCaseNumber(aCase, DSDesignSpaceGMASystem(ds), endian);
-                dsCaseCalculateCaseIdentifier(aCase, DSDesignSpaceGMASystem(ds), endian, DSDesignSpaceCasePrefix(ds));
+                dsSSystemIntegrateConservedRelationships(aCase, ds);
+                dsCaseCreateBoundaryMatrices(aCase);
+//                dsCaseCalculateCaseNumber(aCase, DSDesignSpaceGMASystem(ds), endian);
+                dsCaseCalculateCaseIdentifier(aCase, DSDesignSpaceGMASystem(ds),
+                                              endian, DSDesignSpaceCasePrefix(ds));
+//                printf("Conservation relationships integrated for case identifier %s \n", aCase->caseIdentifier);
+                sprintf(name, "%i", aCase->caseNumber);
+                if (DSSSystemHasSolution(DSCaseSSys(aCase)) == false &&
+                    DSDesignSpaceUnstable(ds) == true &&
+                    DSDictionaryValueForName(ds->unstableCases, name) == NULL) {
+                    
+                        if (DSuCaseIsValid(aCase, true) == true){
+                                
+                                uCase = DSUnstableCaseAddBoundaryMatrices(aCase, ds);
+                                // Now save uCase in the dictionary DSDesignSpace->unstableCases
+                                if (DSDictionaryValueForName(ds->unstableCases, name) == NULL){
+                                        DSDictionaryAddValueWithName(ds->unstableCases, name, uCase);
+                                }else{
+                                    if (uCase != NULL )
+                                        DSuCaseFree(uCase);
+                                }
+                            
+                                DSSSystemSetIsUnstable((DSSSystem *)DSCaseSSystem(aCase), true);
+                        }
+                    
+                }
         } else {
-                DSCaseFree(aCase);
+                if (aCase != NULL)
+                    DSCaseFree(aCase);
                 aCase = NULL;
         }
 bail:
@@ -530,6 +1227,31 @@ extern const DSUInteger DSCaseNumberOfEquations(const DSCase *aCase)
 bail:
         return numberOfEquations;
 }
+
+extern const DSUInteger DSCaseNumberOfConservations(const DSCase *aCase)
+{
+    DSUInteger numberOfConservations = 0;
+    if (aCase == NULL) {
+        DSError(M_DS_CASE_NULL, A_DS_ERROR);
+        goto bail;
+    }
+    numberOfConservations = DSSSystemNumberOfConservations(DSCaseSSys(aCase));
+bail:
+    return numberOfConservations;
+}
+
+extern const DSUInteger DSCaseNumberOfInheritedConservations(const DSCase *aCase)
+{
+    DSUInteger numberOfInheritedConservations = 0;
+    if (aCase == NULL) {
+        DSError(M_DS_CASE_NULL, A_DS_ERROR);
+        goto bail;
+    }
+    numberOfInheritedConservations = aCase->numberInheritedConservations;
+bail:
+    return numberOfInheritedConservations;
+}
+
 
 extern DSExpression ** DSCaseEquations(const DSCase *aCase)
 {
@@ -684,6 +1406,10 @@ extern DSExpression ** DSCaseConditions(const DSCase *aCase)
                 DSError(M_DS_CASE_NULL, A_DS_ERROR);
                 goto bail;
         }
+    
+        if (DSCaseDelta(aCase) == NULL || DSCaseCi(aCase) == NULL || DSCaseCd(aCase) == NULL)
+            goto bail;
+
         numberOfConditions = DSMatrixRows(DSCaseCd(aCase));
         if (numberOfConditions == 0) {
                 DSError("Case being accessed has no conditions", A_DS_ERROR);
@@ -1091,6 +1817,38 @@ extern DSMatrix * DSCaseDoubleValueBoundariesAtPoint(const DSCase * aCase, const
         return values;
 }
 
+extern DSMatrix * DSCaseDoubleValueBoundariesAtPointSortXi(const DSCase * aCase,
+                                                           const DSVariablePool * point)
+{
+    DSMatrix * values = NULL;
+    DSVariablePool *Xi0 = NULL;
+    DSUInteger i;
+    const DSSSystem *ssys = DSCaseSSystem(aCase);
+    const char *name;
+    
+    if (DSVariablePoolNumberOfVariables(ssys->Xi) != 0) {
+        Xi0 = DSVariablePoolAlloc();
+        for (i=0; i < DSVariablePoolNumberOfVariables(ssys->Xi); i++) {
+            name =  DSVariableName(DSVariablePoolAllVariables(ssys->Xi)[i]);
+            DSVariablePoolAddVariableWithName(Xi0, name);
+            if (DSVariablePoolHasVariableWithName(point, name) == false) {
+                DSVariablePoolFree(Xi0);
+                goto bail;
+            }
+            DSVariablePoolSetValueForVariableWithName(Xi0,
+                                                      name,
+                                                      log10(DSVariableValue(DSVariablePoolVariableWithName(point, name))));
+        }
+        values = DSCaseDoubleValueBoundariesAtPoint(aCase, Xi0);
+        DSVariablePoolFree(Xi0);
+    } else {
+        values = DSMatrixCopy(DSCaseZeta(aCase));
+    }
+    
+bail:
+    return values;
+}
+
 
 extern const DSVariablePool * DSCaseXd(const DSCase * aCase)
 {
@@ -1364,6 +2122,7 @@ extern DSUInteger * DSCaseSignatureForCaseNumber(const DSUInteger caseNumber, co
                 goto bail;
         }
         if (caseNumber > DSGMASystemNumberOfCases(gma)) {
+            printf("The case number you are trying to access is %u and the number of cases is %u \n", caseNumber, DSGMASystemNumberOfCases(gma) );
                 DSError(M_DS_WRONG ": Case number is out of bounds", A_DS_ERROR);
                 goto bail;
         }
@@ -1388,6 +2147,100 @@ extern DSUInteger * DSCaseSignatureForCaseNumber(const DSUInteger caseNumber, co
 bail:
         return signature;
 }
+
+extern const DSUIntegerVector * DSCaseGetSignatureNeighbors(const DSCase *aCase, const DSDesignSpace *ds)
+{
+    
+    DSUInteger *neighbors_array = NULL, *case_sig = NULL, *neighbors_array_aux = NULL, *neighbor_sig = NULL;
+    const DSUInteger * system_sig = NULL;
+    DSUInteger max_nr_neighbors = 0, neighbor = 0, i, j, caseNr;
+    DSCase *aNeighbor = NULL;
+    const DSGMASystem *gma = DSDesignSpaceGMASystem(ds);
+    DSUIntegerVector *neighbors_vector = NULL;
+    
+    caseNr = DSCaseNumber(aCase);
+    
+    /* Calculate the maximal number of neighbors  */
+    system_sig = DSGMASystemSignature(gma);
+    case_sig = DSCaseSignatureForCaseNumber(caseNr, gma);
+    for(i=0; i<DSVariablePoolNumberOfVariables(DSGMASystemXd(gma))*2; i++){
+        max_nr_neighbors += system_sig[i] - 1;
+    }
+        
+    /* Allocate auxiliary vector to store integers for neighbors */
+    neighbors_array_aux = DSSecureMalloc(sizeof(DSUInteger)*max_nr_neighbors);
+    
+    /* Generate neighbors*/
+    for(i=0; i<DSVariablePoolNumberOfVariables(DSGMASystemXd(gma))*2; i++){
+        
+            for (j=1; j<=system_sig[i]; j++){
+                    
+                    if (case_sig[i] == j){
+                        continue;
+                    }
+                    else{
+                        neighbor_sig = DSCaseSignatureForCaseNumber(caseNr, gma);
+                        neighbor_sig[i] = j;
+                        
+                        /* Create Neighbor case and see if it is valid. If valid, save and increase neighbor counter  */
+                        aNeighbor = DSDesignSpaceCaseWithCaseSignature(ds, neighbor_sig);
+                        if (DSCaseIsValid(aNeighbor, true) == true){
+                            neighbors_array_aux[neighbor] = DSCaseNumber(aNeighbor);
+                            neighbor++;
+                        }
+                        if (neighbor_sig != NULL)
+                            DSSecureFree(neighbor_sig);
+                        if (aNeighbor != NULL)
+                            DSCaseFree(aNeighbor);
+                    }
+            }
+    }
+    
+    if (neighbor == 0)
+        goto bail;
+    
+    /* Allocate vector to store neighbors and delete variables */
+    neighbors_array = DSSecureMalloc(sizeof(DSUInteger)*neighbor);
+    neighbors_vector = DSSecureMalloc(sizeof(DSUIntegerVector));
+    for (i=0; i<neighbor; i++){
+        neighbors_array[i] = neighbors_array_aux[i];
+    }
+    neighbors_vector->vector = neighbors_array;
+    neighbors_vector->dimension = neighbor;
+    
+bail:
+    if (neighbors_array_aux != NULL)
+        DSSecureFree(neighbors_array_aux);
+    
+    return neighbors_vector;
+}
+
+extern DSUInteger DSUIntegerVectorDimension(const DSUIntegerVector *aVector)
+{
+    DSUInteger dimension = 0;
+    
+    if (aVector == NULL)
+        goto bail;
+    
+    dimension = aVector->dimension;
+    
+bail:
+    return dimension;
+}
+
+extern DSUInteger DSUIntegerVectorValueAtIndex(const DSUIntegerVector *aVector, const DSUInteger index)
+{
+    DSUInteger value = 0;
+    
+    if (aVector == NULL || aVector == NULL)
+        goto bail;
+    
+    value = aVector->vector[index];
+    
+bail:
+    return value;
+}
+
 
 extern const DSUInteger DSCaseNumberForSignature(const DSUInteger * signature, const DSGMASystem * gma)
 {
@@ -1427,18 +2280,59 @@ extern char * DSCaseSignatureToString(const DSCase *aCase)
 {
         char temp[100];
         char * string = NULL;
-        DSUInteger i;
+        char space[50];
+        DSUInteger i, numberOfEquations;
+        numberOfEquations = DSCaseNumberOfConservations(aCase) + DSCaseNumberOfEquations(aCase) + DSCaseNumberOfInheritedConservations(aCase);
+    
+//        if (strcmp(aCase->caseIdentifier, "6917_25_5") == 0 )
+//        printf("Number of equations for case %u is %u. Number of equations is %u, number of conservations is %u, number of inherited conservations is %u \n", aCase->caseNumber, numberOfEquations, DSCaseNumberOfEquations(aCase), DSCaseNumberOfConservations(aCase),aCase->numberInheritedConservations );
+    
         if (aCase == NULL) {
                 DSError(M_DS_CASE_NULL, A_DS_ERROR);
                 goto bail;
         }
-        string = DSSecureCalloc(sizeof(char), 5*DSCaseNumberOfEquations(aCase));
-        for (i = 0; i < 2*DSCaseNumberOfEquations(aCase); i++) {
-                if (DSCaseSig(aCase)[i] >= 10)
-                        sprintf(temp, "(%i)", DSCaseSig(aCase)[i]);
-                else
-                        sprintf(temp, "%i", DSCaseSig(aCase)[i]);
-                strncat(string, temp, 100-strlen(string));
+        string = DSSecureCalloc(sizeof(char), 5*numberOfEquations);
+        strcpy(space, "  ");
+        if (DSCaseSigCons(aCase) != NULL){
+                    for (i = 0; i < 2*numberOfEquations; i++) {
+                        if (DSCaseSigCons(aCase)[i] >= 10)
+                            sprintf(temp, "(%i)", DSCaseSigCons(aCase)[i]);
+                        else
+                            sprintf(temp, "%i", DSCaseSigCons(aCase)[i]);
+                        strncat(string, temp, 100-strlen(string));
+                        if ((i+1)%2 == 0)
+                            strncat(string, space, 100-strlen(space));
+                    }
+                    goto bail;
+        }else if (DSCase3Sig(aCase) == NULL){
+                    for (i = 0; i < 2*numberOfEquations; i++) {
+                            if (DSCaseSig(aCase)[i] >= 10)
+                                    sprintf(temp, "(%i)", DSCaseSig(aCase)[i]);
+                            else
+                                    sprintf(temp, "%i", DSCaseSig(aCase)[i]);
+                            strncat(string, temp, 100-strlen(string));
+                            if ((i+1)%2 == 0)
+                                strncat(string, space, 100-strlen(space));
+                    }
+        } else {
+                    for (i = 0; i < 3*numberOfEquations; i++) {
+                        if (DSCase3Sig(aCase)[i] >= 10){
+                                if (DSCase3Sig(aCase)[i] != 0){
+                                    sprintf(temp, "(%i)", DSCase3Sig(aCase)[i]);
+                                } else
+                                    continue;
+                        } else {
+                            if (DSCase3Sig(aCase)[i] != 0){
+                                    sprintf(temp, "%i", DSCase3Sig(aCase)[i]);
+                            }else if ((i+2)%3 == 0 || (i+1)%3 == 0){
+                                sprintf(temp, "%i", DSCase3Sig(aCase)[i]);
+                            } else
+                                continue;
+                        }
+                        strncat(string, temp, 100-strlen(string));
+                        if ((i+1)%3 == 0)
+                            strncat(string, space, 100-strlen(space));
+                    }
         }
 bail:
         return string;
@@ -1634,7 +2528,8 @@ bail:
 extern DSCaseMessage * DSCaseEncode(const DSCase * aCase)
 {
         DSCaseMessage * message = NULL;
-        DSUInteger i;
+        DSUInteger i, numberOfEquations;
+        numberOfEquations = DSCaseNumberOfEquations(aCase) + DSCaseNumberOfConservations(aCase) + DSCaseNumberOfInheritedConservations(aCase);
         if (aCase == NULL) {
                 DSError(M_DS_CASE_NULL, A_DS_ERROR);
                 goto bail;
@@ -1645,11 +2540,17 @@ extern DSCaseMessage * DSCaseEncode(const DSCase * aCase)
         message->casenumber = DSCaseNumber(aCase);
         message->cd = DSMatrixEncode(DSCaseCd(aCase));
         message->ci = DSMatrixEncode(DSCaseCi(aCase));
-        message->n_signature = DSCaseNumberOfEquations(aCase)*2;
+        message->n_signature = numberOfEquations*2;
         message->signature = DSSecureMalloc(sizeof(DSUInteger)*message->n_signature);
         message->delta = DSMatrixEncode(DSCaseDelta(aCase));
-        for (i = 0; i < DSCaseNumberOfEquations(aCase)*2; i++) {
+        for (i = 0; i < numberOfEquations*2; i++) {
                 message->signature[i] = DSCaseSignature(aCase)[i];
+        }
+        if (aCase->signature_3d != NULL){
+                message->n_signature_3d = numberOfEquations*3;
+                message->signature_3d = DSSecureMalloc(sizeof(DSUInteger)*message->n_signature_3d);
+                for (i = 0; i< message->n_signature_3d; i++)
+                    message->signature_3d[i] = DSCase3Sig(aCase)[i];
         }
         if (DSSSystemHasSolution(DSCaseSSystem(aCase))) {
                 message->u = DSMatrixEncode(DSCaseU(aCase));
@@ -1659,6 +2560,16 @@ extern DSCaseMessage * DSCaseEncode(const DSCase * aCase)
                 message->zeta = NULL;
         }
         message->caseidentifier = strdup(DSCaseId(aCase));
+        if(aCase->conserved_sig != NULL){
+            message->n_conserved_sig = numberOfEquations*2;
+            message->conserved_sig = DSSecureMalloc(sizeof(DSUInteger)*message->n_conserved_sig);
+            for (i = 0; i < message->n_conserved_sig; i++) {
+                message->conserved_sig[i] = DSCaseSigCons(aCase)[i];
+            }
+        }
+        message->has_numberinheritedconservations = true;
+        message->numberinheritedconservations = DSCaseNumberOfInheritedConservations(aCase);
+    
 bail:
         return message;
 }
@@ -1691,7 +2602,21 @@ extern DSCase * DSCaseFromCaseMessage(const DSCaseMessage * message)
         for (i = 0; i < message->n_signature; i++) {
                 aCase->signature[i] = message->signature[i];
         }
+        if (message->signature_3d != NULL){
+                aCase->signature_3d = DSSecureMalloc(sizeof(DSUInteger)*message->n_signature_3d);
+                for (i = 0; i < message->n_signature_3d; i++) {
+                        aCase->signature_3d[i] = message->signature_3d[i];
+                }
+        }
+        if (message->conserved_sig != NULL){
+            aCase->conserved_sig = DSSecureMalloc(sizeof(DSUInteger)*message->n_conserved_sig);
+            for (i = 0; i < message->n_conserved_sig; i++) {
+                aCase->conserved_sig[i] = message->conserved_sig[i];
+            }
+        }
         DSCaseId(aCase) = strdup(message->caseidentifier);
+        aCase->numberInheritedConservations = message->numberinheritedconservations;
+    
 bail:
         return aCase;
 }
@@ -1703,13 +2628,9 @@ extern DSCase * DSCaseDecode(size_t length, const void * buffer)
         message = dscase_message__unpack(NULL, length, buffer);
         aCase = DSCaseFromCaseMessage(message);
         dscase_message__free_unpacked(message, NULL);
-bail:
+//bail:
         return aCase;
 }
-
-
-
-
 
 extern DSDesignSpace * DSCaseEigenSubspaces(const DSCase * aCase)
 {

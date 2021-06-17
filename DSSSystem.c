@@ -35,6 +35,7 @@
 #include "DSMemoryManager.h"
 #include "DSVariable.h"
 #include "DSSSystem.h"
+#include "DSUnstableCase.h"
 #include "DSExpression.h"
 #include "DSExpressionTokenizer.h"
 #include "DSSSystemGrammar.h"
@@ -42,6 +43,7 @@
 #include "DSMatrix.h"
 #include "DSMatrixArray.h"
 #include "DSGMASystem.h"
+#include <gsl/gsl_matrix_double.h>
 
 /**
  * \defgroup DSSSysACCESSORS
@@ -58,6 +60,8 @@
 #define DSSSysXd(x)                       ((x)->Xd)
 #define DSSSysXd_a(x)                     ((x)->Xd_a)
 #define DSSSysXd_t(x)                     ((x)->Xd_t)
+#define DSSSysXd_b(x)                     ((x)->Xd_b)
+#define DSSSysXd_a_c(x)                   ((x)->Xd_a_c)
 #define DSSSysAlpha(x)                    ((x)->alpha)
 #define DSSSysBeta(x)                     ((x)->beta)
 #define DSSSysGd(x)                       ((x)->Gd)
@@ -110,6 +114,10 @@ extern DSSSystem * DSSSystemCopy(const DSSSystem * original)
         DSSSysXd(newSSys) = DSVariablePoolCopy(DSSSystemXd(original));
         DSSSysXd_t(newSSys) = DSVariablePoolCopy(DSSSystemXd_t(original));
         DSSSysXd_a(newSSys) = DSVariablePoolCopy(DSSSystemXd_a(original));
+        if (DSSSysXd_b(original) != NULL)
+            DSSSysXd_b(newSSys) = DSVariablePoolCopy(DSSSystemXd_b(original));
+        if (DSSSysXd_a_c(original) != NULL)
+            DSSSysXd_a_c(newSSys) = DSVariablePoolCopy(DSSSystemXd_a_c(original));
         DSSSysXi(newSSys) = DSVariablePoolCopy(DSSSystemXi(original));
         DSSSystemSetShouldFreeXd(newSSys, true);
         DSSSystemSetShouldFreeXi(newSSys, true);
@@ -120,6 +128,11 @@ extern DSSSystem * DSSSystemCopy(const DSSSystem * original)
         DSSSysAlpha(newSSys) = DSMatrixCopy(DSSSysAlpha(original));
         DSSSysBeta(newSSys) = DSMatrixCopy(DSSSysBeta(original));
         DSSSystemSetIsSingular(newSSys, DSSSystemIsSingular(original));
+        DSSSystemSetIsUnstable(newSSys, DSSSystemIsUnstable(original));
+        DSSSystemSetIsConserved(newSSys, DSSSystemIsConserved(original));
+        if (DSSSystemIsConserved(newSSys) == true){
+            newSSys->numberOfConservations = original->numberOfConservations;
+        }
         if (DSSSystemIsSingular(newSSys) == false) {
                 DSSSysM(newSSys) = DSMatrixCopy(DSSSysM(original));
         }
@@ -143,6 +156,14 @@ extern void DSSSystemFree(DSSSystem * sys)
                 if (DSSSysXd_a(sys) != NULL) {
                         DSVariablePoolSetReadWriteAdd(DSSSysXd_a(sys));
                         DSVariablePoolFree(DSSSysXd_a(sys));
+                }
+                if (DSSSysXd_b(sys) != NULL) {
+                    DSVariablePoolSetReadWriteAdd(DSSSysXd_b(sys));
+                    DSVariablePoolFree(DSSSysXd_b(sys));
+                }
+                if (DSSSysXd_a_c(sys) != NULL) {
+                    DSVariablePoolSetReadWriteAdd(DSSSysXd_a_c(sys));
+                    DSVariablePoolFree(DSSSysXd_a_c(sys));
                 }
         }
         if (DSSSystemShouldFreeXi(sys) == true) {
@@ -721,6 +742,7 @@ static void dsSSystemMatricesByPartitioningAuxiliaryVariables(const DSSSystem * 
         DSMatrixFree(temp);
         *ADat = DSMatrixSubMatrixExcludingColumns(Ad_a, DSVariablePoolNumberOfVariables(Xd_a), indices);
         *ADaa = DSMatrixSubMatrixIncludingColumns(Ad_a, DSVariablePoolNumberOfVariables(Xd_a), indices);
+    
         DSMatrixFree(Ad_a);
         DSSecureFree(indices);
 bail:
@@ -785,8 +807,8 @@ static DSSSystem * dsSSystemDSSSystemByRemovingAlgebraicConstraintsInternal(cons
                                                                             const DSMatrix * MB_a)
 {
         DSSSystem * collapsedSSystem = NULL;
-        DSMatrix *Kd, *Ki, *Kd_t, *Kd_a, *a, *LHS, *RHS;
-        DSUInteger i, * indices, auxiliary_count;
+        DSMatrix *Kd, *Ki, *Kd_t, *Kd_a, *a, *LHS, *RHS, *temp;
+        DSUInteger i, * indices = NULL, auxiliary_count, ii;
         const DSVariablePool * Xd_t, *Xd_a, *Xd;
         if (originalSSystem == NULL) {
                 DSError(M_DS_SSYS_NULL, A_DS_ERROR);
@@ -822,9 +844,13 @@ static DSSSystem * dsSSystemDSSSystemByRemovingAlgebraicConstraintsInternal(cons
         DSSSysXd(collapsedSSystem) = DSVariablePoolCopy(Xd_t);
         DSSSysXd_t(collapsedSSystem) = DSVariablePoolCopy(Xd_t);
         DSSSysXd_a(collapsedSSystem) = DSVariablePoolAlloc();
+        if (DSSSysXd_b(originalSSystem) != NULL)
+            DSSSysXd_b(collapsedSSystem) = DSVariablePoolCopy(DSSSystemXd_b(originalSSystem));
         DSSSysXi(collapsedSSystem) = DSVariablePoolCopy(DSSSystemXi(originalSSystem));
         DSSSystemSetShouldFreeXd(collapsedSSystem, true);
         DSSSystemSetShouldFreeXi(collapsedSSystem, true);
+        DSSSystemSetIsUnstable(collapsedSSystem, DSSSystemIsUnstable(originalSSystem));
+        DSSSystemSetIsConserved(collapsedSSystem, DSSSystemIsConserved(originalSSystem));
         for (i = 0; i < 2; i++) {
                 if (i == 0) {
                         Kd = (DSMatrix *)DSMatrixSubMatrixExcludingRows(DSSSystemGd(originalSSystem),
@@ -846,7 +872,8 @@ static DSSSystem * dsSSystemDSSSystemByRemovingAlgebraicConstraintsInternal(cons
                 
                 Kd_t = DSMatrixSubMatrixExcludingColumns(Kd, auxiliary_count, indices);
                 Kd_a = DSMatrixSubMatrixIncludingColumns(Kd, auxiliary_count, indices);
-                
+                DSMatrixFree(Kd);
+            
                 LHS = Kd_t;
                 RHS = DSMatrixByMultiplyingMatrix(Kd_a, MAd_at);
                 Kd_t = DSMatrixByAddingMatrix(LHS, RHS);
@@ -860,11 +887,20 @@ static DSSSystem * dsSSystemDSSSystemByRemovingAlgebraicConstraintsInternal(cons
                 DSMatrixFree(RHS);
                 
                 LHS = a;
+                temp = DSMatrixByMultiplyingScalar(Kd_a, -1);
+                DSMatrixFree(Kd_a);
+                Kd_a = temp;
+                // transform matrix LHS to logarithmic coordinates
+                for (ii=0; ii<DSMatrixRows(LHS); ii++ )
+                    DSMatrixSetDoubleValue(LHS, ii, 0, log10(DSMatrixDoubleValue(LHS, ii, 0)));
                 RHS = DSMatrixByMultiplyingMatrix(Kd_a, MB_a);
+                DSMatrixFree(Kd_a);
                 a = DSMatrixByAddingMatrix(LHS, RHS);
+                // transform a back into cartesian coordinates
+                for (ii=0; ii<DSMatrixRows(a); ii++ )
+                    DSMatrixSetDoubleValue(a, ii, 0, pow(10, DSMatrixDoubleValue(a, ii, 0)));
                 DSMatrixFree(LHS);
                 DSMatrixFree(RHS);
-                
                 if (i == 0) {
                         DSSSysGd(collapsedSSystem) = Kd_t;
                         DSSSysGi(collapsedSSystem) = Ki;
@@ -875,6 +911,7 @@ static DSSSystem * dsSSystemDSSSystemByRemovingAlgebraicConstraintsInternal(cons
                         DSSSysBeta(collapsedSSystem) = a;
                 }
         }
+        DSSecureFree(indices);
         dsSSystemSolveEquations(collapsedSSystem);
 bail:
         return collapsedSSystem;
@@ -1161,6 +1198,609 @@ bail:
         return ssys;
 }
 
+
+static void dsSSystemAssignMatricesCyclicalCase(DSSSystem * ssys,
+                                                const DSSSystem * originalSsys,
+                                                DSGMASystem *gma, DSUInteger term1,
+                                                DSUInteger term2, double factor, DSUInteger i,
+                                                DSUInteger dependent_pool_index, bool set_special)
+
+{
+    
+        DSUInteger j;
+        DSUInteger numberOfEquations = DSGMASystemNumberOfEquations(gma);
+        DSUInteger numberOfXi = DSVariablePoolNumberOfVariables(DSSSysXi(ssys));
+    
+    
+    if (set_special == true){
+    
+        // If the outlet reaction does not correspond to the main variable and it is secondary (or not)
+        // First we assign the original Alphas and Betas to the mainCycleVariable
+    
+        DSMatrixSetDoubleValue(DSSSysAlpha(ssys), i/2, 0,
+                               DSMatrixDoubleValue(DSSSystemAlpha(originalSsys), i/2, 0));
+        DSMatrixSetDoubleValue(DSSSysBeta(ssys), i/2, 0,
+                               DSMatrixDoubleValue(DSSSystemBeta(originalSsys), i/2, 0));
+    
+        // Then we assign values for Alpha und Betas from the first equation to the equation defined by term2
+        DSMatrixSetDoubleValue(DSSSysAlpha(ssys),dependent_pool_index, 0,
+                               DSMatrixDoubleValue(DSGMASystemAlpha(gma), i/2, term1-1)*factor);
+        DSMatrixSetDoubleValue(DSSSysBeta(ssys), dependent_pool_index, 0,
+                               DSMatrixDoubleValue(DSGMASystemBeta(gma), i/2, term2-1)*factor);
+        // Now assign Gd and Hd. Let's first assign values to the equation of the mainCycleVariable (from original S-System)
+        for (j = 0; j < numberOfEquations; j++) {
+            DSMatrixSetDoubleValue(DSSSysGd(ssys), i/2, j,
+                                   DSMatrixDoubleValue(DSSSystemGd(originalSsys), i/2, j));
+            DSMatrixSetDoubleValue(DSSSysHd(ssys), i/2, j,
+                                   DSMatrixDoubleValue(DSSSystemHd(originalSsys),i/2, j));
+            // And now let's assign the dominat term of the maincyclevariable equation to the corresponding outlet reaction
+            DSMatrixSetDoubleValue(DSSSysGd(ssys),dependent_pool_index, j,
+                                   DSMatrixArrayDoubleWithIndices(DSGMASystemGd(gma), i/2, term1-1, j));
+            DSMatrixSetDoubleValue(DSSSysHd(ssys),dependent_pool_index, j,
+                                   DSMatrixArrayDoubleWithIndices(DSGMASystemHd(gma), i/2, term2-1, j));
+        }
+        // Now assign Gi and Hi. Let's first assign values to the equation of the mainCycleVariable (from original S-System)
+        for (j = 0; j < numberOfXi; j++) {
+            DSMatrixSetDoubleValue(DSSSysGi(ssys), i/2, j,
+                                   DSMatrixDoubleValue(DSSSystemGi(originalSsys), i/2, j));
+            DSMatrixSetDoubleValue(DSSSysHi(ssys), i/2, j,
+                                   DSMatrixDoubleValue(DSSSystemHi(originalSsys), i/2, j));
+            
+            // And now let's assign the dominat term of the maincyclevariable equation to the corresponding outlet reaction
+            DSMatrixSetDoubleValue(DSSSysGi(ssys), dependent_pool_index, j,
+                                   DSMatrixArrayDoubleWithIndices(DSGMASystemGi(gma), i/2, term1-1, j));
+            DSMatrixSetDoubleValue(DSSSysHi(ssys),dependent_pool_index, j,
+                                   DSMatrixArrayDoubleWithIndices(DSGMASystemHi(gma), i/2, term2-1, j));
+        }
+    
+    } else {
+        
+        DSMatrixSetDoubleValue(DSSSysAlpha(ssys), i/2, 0,
+                               DSMatrixDoubleValue(DSGMASystemAlpha(gma), i/2, term1-1));
+        DSMatrixSetDoubleValue(DSSSysBeta(ssys), i/2, 0,
+                               DSMatrixDoubleValue(DSGMASystemBeta(gma), i/2, term2-1));
+        
+        for (j = 0; j < numberOfEquations; j++) {
+            DSMatrixSetDoubleValue(DSSSysGd(ssys), i/2, j,
+                                   DSMatrixArrayDoubleWithIndices(DSGMASystemGd(gma), i/2, term1-1, j));
+            DSMatrixSetDoubleValue(DSSSysHd(ssys), i/2, j,
+                                   DSMatrixArrayDoubleWithIndices(DSGMASystemHd(gma), i/2, term2-1, j));
+        }
+        for (j = 0; j < numberOfXi; j++) {
+            DSMatrixSetDoubleValue(DSSSysGi(ssys), i/2, j,
+                                   DSMatrixArrayDoubleWithIndices(DSGMASystemGi(gma), i/2, term1-1, j));
+            DSMatrixSetDoubleValue(DSSSysHi(ssys), i/2, j,
+                                   DSMatrixArrayDoubleWithIndices(DSGMASystemHi(gma), i/2, term2-1, j));
+        }
+        
+    }
+}
+
+
+DSSSystem * DSSSystemWithTermsFromGMACyclical(const DSDesignSpace * ds,
+                                              const DSUInteger * termArray,
+                                              DSuIntegerMatrix * three_digit,
+                                              DSuIntegerMatrix *location)
+
+{
+    
+    // unpack variables gma, mainCycleVariables, originalSsys, numberOfCycles
+    DSUInteger *alreadyassigned = NULL, secondary_variable;
+    DSUInteger dependent_pool_index;
+    DSGMASystem * gma = ds->gma ;
+    const DSUInteger * mainCycleVariables = ds->extensionData->mainCycleVariables, * secondary_variables;
+    DSUInteger numberOfCycles = ds->extensionData->numberCycles;
+    const DSSSystem *originalSsys = ds->extensionData->originalsSystem;
+    DSSSystem *ssys = NULL;
+    DSUInteger i, w, v, term1, term2, numberOfEquations, numberOfXi, ind_term, ind_eq, d1, d2;
+    DSUInteger currentCycle = 0 ;
+    const DSMatrix * beta_original = ds->extensionData->beta;
+    double factor = 1.0, den = 1.0, num = 1.0;
+    bool isMainCyclicalVariable = false, isSecondaryVariable = false, isMainVariable = false;
+    bool alreadyassigned_bol = false;
+    
+    if (gma == NULL) {
+        DSError(M_DS_NULL ": Template GMA to make S-System is NULL", A_DS_ERROR);
+        goto bail;
+    }
+    if (termArray == NULL) {
+        DSError(M_DS_NULL ": Array of dominant terms is NULL", A_DS_ERROR);
+        goto bail;
+    }
+    
+    ssys = DSSSystemAlloc();
+    DSSSysXd(ssys) = (DSVariablePool *)DSGMASystemXd(gma);
+    DSSSysXi(ssys) = (DSVariablePool *)DSGMASystemXi(gma);
+    DSSSysXd_a(ssys) = (DSVariablePool *)DSGMASystemXd_a(gma);
+    DSSSysXd_t(ssys) = (DSVariablePool *)DSGMASystemXd_t(gma);
+    DSSSystemSetShouldFreeXd(ssys, false);
+    DSSSystemSetShouldFreeXi(ssys, false);
+    dsSSystemInitializeMatrices(ssys);
+    numberOfEquations = DSGMASystemNumberOfEquations(gma);
+    numberOfXi = DSVariablePoolNumberOfVariables(DSSSysXi(ssys));
+    
+    if (numberOfCycles != 0)
+        alreadyassigned = DSSecureMalloc(numberOfCycles*sizeof(DSUInteger));
+    for(w = 0; w < numberOfCycles; w++)
+        alreadyassigned[w] = numberOfEquations;
+    
+    
+    for (i = 0; i < 2*numberOfEquations; i+=2) {
+        term1 = termArray[i];
+        term2 = termArray[i+1];
+        if (term1 > DSGMASystemSignature(gma)[i] || term2 > DSGMASystemSignature(gma)[i+1])
+            break;
+        
+        // define if equation with index i/2 is main or not.
+        for(w = 0; w < numberOfCycles; w++)
+            if( i/2 == mainCycleVariables[w])
+                isMainCyclicalVariable = true;
+        
+        // If constructing equation for a main cyclical variable
+        if (isMainCyclicalVariable == true){
+            
+                    // define if outlet reaction (dependent_pool_index) is a secondary variable or main variable
+                    isSecondaryVariable = false;
+                    isMainVariable = false;
+                    dependent_pool_index = DSuIntegerMatrixValue(ds->extensionData->H_l_eq, currentCycle, term2-1);
+                    for(w = 0; w <numberOfCycles; w++){
+                        if( dependent_pool_index == mainCycleVariables[w])
+                            isMainVariable = true;
+                        for (v = 0; v < ds->extensionData->numberSecondaryVariables[w]; v++){
+                            secondary_variables = ds->extensionData->allSecondaryVariables[w];
+                            secondary_variable = secondary_variables[v];
+                            if( dependent_pool_index == secondary_variable)
+                                isSecondaryVariable = true;
+                        }
+                    }
+            
+                    ind_eq = DSuIntegerMatrixValue(ds->extensionData->H_l_eq, currentCycle, term2-1);
+                    ind_term = DSuIntegerMatrixValue(ds->extensionData->H_l_term, currentCycle, term2-1);
+                    DSuIntegerMatrixSetValue(location, currentCycle, 0, ind_eq);
+                    d1 = DSuIntegerMatrixValue(ds->extensionData->G_l_eq, currentCycle, term1-1);
+                    DSuIntegerMatrixSetValue(three_digit, currentCycle, 0, d1 );
+                    d2 = DSuIntegerMatrixValue(ds->extensionData->G_l_term, currentCycle, term1-1);
+                    DSuIntegerMatrixSetValue(three_digit, currentCycle, 1, d2);
+                    DSuIntegerMatrixSetValue(three_digit, currentCycle, 2, ind_term);
+                    den = DSMatrixDoubleValue(beta_original, ind_eq, ind_term);
+                    num = DSMatrixDoubleValue(DSGMASystemBeta(gma), i/2, term2-1);
+                    factor = den/num;
+            
+                    if ((isMainVariable == false && isSecondaryVariable == true ) ||
+                        (isMainVariable == false && isSecondaryVariable == false)){
+                        
+                            // If the outlet reaction does not correspond to the main variable and it is secondary.
+                            // First we assign the original Alphas and Betas to the mainCycleVariable
+                        
+                            dsSSystemAssignMatricesCyclicalCase(ssys,
+                                                                originalSsys,
+                                                                gma,term1,
+                                                                term2, factor, i,
+                                                                dependent_pool_index, true);
+                        
+                            alreadyassigned[currentCycle] = dependent_pool_index;
+                        
+                    }else{
+                            //do the normal assignment for the main cyclical variable as output
+                            dsSSystemAssignMatricesCyclicalCase(ssys,
+                                                                originalSsys,
+                                                                gma,term1,
+                                                                term2, factor, i,
+                                                                dependent_pool_index, false);
+                    }
+                    currentCycle++;
+        }else{
+                    // The normal assignment, when we are NOT dealing with a main variable.
+                    for(w = 0; w < numberOfCycles; w++)
+                        if( i/2 == alreadyassigned[w])
+                            alreadyassigned_bol = true;
+            
+                    if (alreadyassigned_bol == false)
+                        dsSSystemAssignMatricesCyclicalCase(ssys,
+                                                            originalSsys,
+                                                            gma,term1,
+                                                            term2, factor, i,
+                                                            dependent_pool_index, false);
+                    alreadyassigned_bol = false;
+        }
+        
+        isMainCyclicalVariable = false;
+        isSecondaryVariable = false;
+    }
+    
+    if (i == 2*numberOfEquations) {
+        dsSSystemSolveEquations(ssys);
+    } else {
+        DSSSystemFree(ssys);
+        ssys = NULL;
+    }
+    
+bail:
+    if (alreadyassigned != NULL)
+        DSSecureFree(alreadyassigned);
+    return ssys;
+}
+
+DSSSystem * DSSSystemWithTermsFromGMACyclical_beforefactoring(const DSDesignSpace * ds,
+                                              const DSUInteger * termArray,
+                                              DSuIntegerMatrix * three_digit,
+                                              DSuIntegerMatrix *location)
+
+{
+    
+    // unpack variables gma, mainCycleVariables, originalSsys, numberOfCycles
+    DSUInteger *alreadyassigned = NULL, secondary_variable;
+    DSUInteger dependent_pool_index;
+    DSGMASystem * gma = ds->gma ;
+    const DSUInteger * mainCycleVariables = ds->extensionData->mainCycleVariables, * secondary_variables;
+    DSUInteger numberOfCycles = ds->extensionData->numberCycles;
+    const DSSSystem *originalSsys = ds->extensionData->originalsSystem;
+    DSSSystem *ssys = NULL;
+    DSUInteger i, j, w, v, term1, term2, numberOfEquations, numberOfXi, ind_term, ind_eq, d1, d2;
+    DSUInteger currentCycle = 0 ;
+    const DSMatrix * beta_original = ds->extensionData->beta;
+    double factor = 1.0, den = 1.0, num = 1.0;
+    bool isMainCyclicalVariable = false, isSecondaryVariable = false, isMainVariable = false;
+    bool alreadyassigned_bol = false;
+
+    if (gma == NULL) {
+        DSError(M_DS_NULL ": Template GMA to make S-System is NULL", A_DS_ERROR);
+        goto bail;
+    }
+    if (termArray == NULL) {
+        DSError(M_DS_NULL ": Array of dominant terms is NULL", A_DS_ERROR);
+        goto bail;
+    }
+    
+    ssys = DSSSystemAlloc();
+    DSSSysXd(ssys) = (DSVariablePool *)DSGMASystemXd(gma);
+    DSSSysXi(ssys) = (DSVariablePool *)DSGMASystemXi(gma);
+    DSSSysXd_a(ssys) = (DSVariablePool *)DSGMASystemXd_a(gma);
+    DSSSysXd_t(ssys) = (DSVariablePool *)DSGMASystemXd_t(gma);
+    DSSSystemSetShouldFreeXd(ssys, false);
+    DSSSystemSetShouldFreeXi(ssys, false);
+    dsSSystemInitializeMatrices(ssys);
+    numberOfEquations = DSGMASystemNumberOfEquations(gma);
+    numberOfXi = DSVariablePoolNumberOfVariables(DSSSysXi(ssys));
+    
+    alreadyassigned = DSSecureMalloc(numberOfCycles*sizeof(DSUInteger));
+    for(w = 0; w < numberOfCycles; w++)
+            alreadyassigned[w] = numberOfEquations;
+    
+
+    for (i = 0; i < 2*numberOfEquations; i+=2) {
+            term1 = termArray[i];
+            term2 = termArray[i+1];
+            if (term1 > DSGMASystemSignature(gma)[i] || term2 > DSGMASystemSignature(gma)[i+1])
+                break;
+        
+            // define if equation with index i/2 is main or not.
+            for(w = 0; w < numberOfCycles; w++)
+                    if( i/2 == mainCycleVariables[w])
+                        isMainCyclicalVariable = true;
+                
+            // If constructing equation for a main cyclical variable
+            if (isMainCyclicalVariable == true){
+                
+                // define if outlet reaction (dependent_pool_index) is a secondary variable or main variable
+                isSecondaryVariable = false;
+                isMainVariable = false;
+                dependent_pool_index = DSuIntegerMatrixValue(ds->extensionData->H_l_eq, currentCycle, term2-1);
+                for(w = 0; w <numberOfCycles; w++){
+                    if( dependent_pool_index == mainCycleVariables[w])
+                        isMainVariable = true;
+                    for (v = 0; v < ds->extensionData->numberSecondaryVariables[w]; v++){
+                        secondary_variables = ds->extensionData->allSecondaryVariables[w];
+                        secondary_variable = secondary_variables[v];
+                        if( dependent_pool_index == secondary_variable)
+                            isSecondaryVariable = true;
+                    }
+                }
+                
+                ind_eq = DSuIntegerMatrixValue(ds->extensionData->H_l_eq, currentCycle, term2-1);
+                ind_term = DSuIntegerMatrixValue(ds->extensionData->H_l_term, currentCycle, term2-1);
+                DSuIntegerMatrixSetValue(location, currentCycle, 0, ind_eq);
+                d1 = DSuIntegerMatrixValue(ds->extensionData->G_l_eq, currentCycle, term1-1);
+                DSuIntegerMatrixSetValue(three_digit, currentCycle, 0, d1 );
+                d2 = DSuIntegerMatrixValue(ds->extensionData->G_l_term, currentCycle, term1-1);
+                DSuIntegerMatrixSetValue(three_digit, currentCycle, 1, d2);
+                DSuIntegerMatrixSetValue(three_digit, currentCycle, 2, ind_term);
+                den = DSMatrixDoubleValue(beta_original, ind_eq, ind_term);
+                num = DSMatrixDoubleValue(DSGMASystemBeta(gma), i/2, term2-1);
+                factor = den/num;
+
+
+                if ((isMainVariable == false && isSecondaryVariable == true) ||
+                    (isMainVariable == false && isSecondaryVariable == false )){
+                    
+                    // If the outlet reaction does not correspond to the main variable and it is secondary (or not)
+                    // First we assign the original Alphas and Betas to the mainCycleVariable
+                    
+                    DSMatrixSetDoubleValue(DSSSysAlpha(ssys), i/2, 0,
+                                           DSMatrixDoubleValue(DSSSystemAlpha(originalSsys), i/2, 0));
+                    DSMatrixSetDoubleValue(DSSSysBeta(ssys), i/2, 0,
+                                           DSMatrixDoubleValue(DSSSystemBeta(originalSsys), i/2, 0));
+                    
+                    // Then we assign values for Alpha und Betas from the first equation to the equation defined by term2
+                    DSMatrixSetDoubleValue(DSSSysAlpha(ssys),dependent_pool_index, 0,
+                                           DSMatrixDoubleValue(DSGMASystemAlpha(gma), i/2, term1-1)*factor);
+                    DSMatrixSetDoubleValue(DSSSysBeta(ssys), dependent_pool_index, 0,
+                                           DSMatrixDoubleValue(DSGMASystemBeta(gma), i/2, term2-1)*factor);
+                    // Now assign Gd and Hd. Let's first assign values to the equation of the mainCycleVariable (from original S-System)
+                    for (j = 0; j < numberOfEquations; j++) {
+                        DSMatrixSetDoubleValue(DSSSysGd(ssys), i/2, j,
+                                               DSMatrixDoubleValue(DSSSystemGd(originalSsys), i/2, j));
+                        DSMatrixSetDoubleValue(DSSSysHd(ssys), i/2, j,
+                                               DSMatrixDoubleValue(DSSSystemHd(originalSsys),i/2, j));
+                        // And now let's assign the dominat term of the maincyclevariable equation to the corresponding outlet reaction
+                        DSMatrixSetDoubleValue(DSSSysGd(ssys),dependent_pool_index, j,
+                                               DSMatrixArrayDoubleWithIndices(DSGMASystemGd(gma), i/2, term1-1, j));
+                        DSMatrixSetDoubleValue(DSSSysHd(ssys),dependent_pool_index, j,
+                                               DSMatrixArrayDoubleWithIndices(DSGMASystemHd(gma), i/2, term2-1, j));
+                    }
+                    // Now assign Gi and Hi. Let's first assign values to the equation of the mainCycleVariable (from original S-System)
+                    for (j = 0; j < numberOfXi; j++) {
+                        DSMatrixSetDoubleValue(DSSSysGi(ssys), i/2, j,
+                                               DSMatrixDoubleValue(DSSSystemGi(originalSsys), i/2, j));
+                        DSMatrixSetDoubleValue(DSSSysHi(ssys), i/2, j,
+                                               DSMatrixDoubleValue(DSSSystemHi(originalSsys), i/2, j));
+                        
+                    // And now let's assign the dominat term of the maincyclevariable equation to the corresponding outlet reaction
+                        DSMatrixSetDoubleValue(DSSSysGi(ssys), dependent_pool_index, j,
+                                               DSMatrixArrayDoubleWithIndices(DSGMASystemGi(gma), i/2, term1-1, j));
+                        DSMatrixSetDoubleValue(DSSSysHi(ssys),dependent_pool_index, j,
+                                               DSMatrixArrayDoubleWithIndices(DSGMASystemHi(gma), i/2, term2-1, j));
+                    }
+                    
+                    alreadyassigned[currentCycle] = dependent_pool_index;
+                    
+                }else{ //do the normal assignment for the main cyclical variable as output
+                    
+                    DSMatrixSetDoubleValue(DSSSysAlpha(ssys), i/2, 0,
+                                           DSMatrixDoubleValue(DSGMASystemAlpha(gma), i/2, term1-1));
+                    DSMatrixSetDoubleValue(DSSSysBeta(ssys), i/2, 0,
+                                           DSMatrixDoubleValue(DSGMASystemBeta(gma), i/2, term2-1));
+                    
+                    for (j = 0; j < numberOfEquations; j++) {
+                        DSMatrixSetDoubleValue(DSSSysGd(ssys), i/2, j,
+                                               DSMatrixArrayDoubleWithIndices(DSGMASystemGd(gma), i/2, term1-1, j));
+                        DSMatrixSetDoubleValue(DSSSysHd(ssys), i/2, j,
+                                               DSMatrixArrayDoubleWithIndices(DSGMASystemHd(gma), i/2, term2-1, j));
+                    }
+                    for (j = 0; j < numberOfXi; j++) {
+                        DSMatrixSetDoubleValue(DSSSysGi(ssys), i/2, j,
+                                               DSMatrixArrayDoubleWithIndices(DSGMASystemGi(gma), i/2, term1-1, j));
+                        DSMatrixSetDoubleValue(DSSSysHi(ssys), i/2, j,
+                                               DSMatrixArrayDoubleWithIndices(DSGMASystemHi(gma), i/2, term2-1, j));
+                    }
+                }
+            currentCycle++;
+                
+            }else{ // The normal assignment, when we are NOT dealing with a main variable.
+                
+                for(w = 0; w < numberOfCycles; w++)
+                    if( i/2 == alreadyassigned[w])
+                        alreadyassigned_bol = true;
+                
+                if (alreadyassigned_bol == false){
+                    DSMatrixSetDoubleValue(DSSSysAlpha(ssys), i/2, 0,
+                                           DSMatrixDoubleValue(DSGMASystemAlpha(gma), i/2, term1-1));
+                    DSMatrixSetDoubleValue(DSSSysBeta(ssys), i/2, 0,
+                                           DSMatrixDoubleValue(DSGMASystemBeta(gma), i/2, term2-1));
+                    for (j = 0; j < numberOfEquations; j++) {
+                        DSMatrixSetDoubleValue(DSSSysGd(ssys), i/2, j,
+                                               DSMatrixArrayDoubleWithIndices(DSGMASystemGd(gma), i/2, term1-1, j));
+                        DSMatrixSetDoubleValue(DSSSysHd(ssys), i/2, j,
+                                               DSMatrixArrayDoubleWithIndices(DSGMASystemHd(gma), i/2, term2-1, j));
+                    }
+                    for (j = 0; j < numberOfXi; j++) {
+                        DSMatrixSetDoubleValue(DSSSysGi(ssys), i/2, j,
+                                               DSMatrixArrayDoubleWithIndices(DSGMASystemGi(gma), i/2, term1-1, j));
+                        DSMatrixSetDoubleValue(DSSSysHi(ssys), i/2, j,
+                                               DSMatrixArrayDoubleWithIndices(DSGMASystemHi(gma), i/2, term2-1, j));
+                    }
+                }
+                alreadyassigned_bol = false;
+            }
+        
+            isMainCyclicalVariable = false;
+            isSecondaryVariable = false;
+    }
+    
+    if (i == 2*numberOfEquations) {
+            dsSSystemSolveEquations(ssys);
+    } else {
+            DSSSystemFree(ssys);
+            ssys = NULL;
+    }
+    
+bail:
+    if (alreadyassigned != NULL)
+        DSSecureFree(alreadyassigned);
+    return ssys;
+}
+
+static DSSSystem * DSSSystemWithTermsFromGMACyclical_old(const DSDesignSpace * ds,
+                                                         const DSUInteger * termArray,
+                                                         DSuIntegerMatrix * three_digit,
+                                                         DSuIntegerMatrix *location)
+
+{
+    // unpack variables gma, mainCycleVariables, originalSsys, numberOfCycles
+    DSUInteger alreadyassigned, secondary_variable;
+    DSUInteger dependent_pool_index;
+    DSGMASystem * gma = ds->gma ;
+    const DSUInteger * mainCycleVariables = ds->extensionData->mainCycleVariables, * secondary_variables;
+    const DSUInteger numberOfCycles = ds->extensionData->numberCycles;
+    const DSSSystem *originalSsys = ds->extensionData->originalsSystem;
+    DSSSystem *ssys = NULL;
+    DSUInteger i, j, w, v, term1, term2, numberOfEquations, numberOfXi, ind_term, ind_eq, d1, d2;
+    DSUInteger currentCycle = 0 ;
+    const DSMatrix * beta_original = ds->extensionData->beta;
+    double factor = 1.0, den = 1.0, num = 1.0;
+    bool isMainCyclicalVariable = false, isSecondaryVariable = false;
+    
+    if (gma == NULL) {
+        DSError(M_DS_NULL ": Template GMA to make S-System is NULL", A_DS_ERROR);
+        goto bail;
+    }
+    if (termArray == NULL) {
+        DSError(M_DS_NULL ": Array of dominant terms is NULL", A_DS_ERROR);
+        goto bail;
+    }
+    ssys = DSSSystemAlloc();
+    DSSSysXd(ssys) = (DSVariablePool *)DSGMASystemXd(gma);
+    DSSSysXi(ssys) = (DSVariablePool *)DSGMASystemXi(gma);
+    DSSSysXd_a(ssys) = (DSVariablePool *)DSGMASystemXd_a(gma);
+    DSSSysXd_t(ssys) = (DSVariablePool *)DSGMASystemXd_t(gma);
+    DSSSystemSetShouldFreeXd(ssys, false);
+    DSSSystemSetShouldFreeXi(ssys, false);
+    dsSSystemInitializeMatrices(ssys);
+    numberOfEquations = DSGMASystemNumberOfEquations(gma);
+    numberOfXi = DSVariablePoolNumberOfVariables(DSSSysXi(ssys));
+    
+    for (i = 0; i < 2*numberOfEquations; i+=2) {
+        term1 = termArray[i];
+        term2 = termArray[i+1];
+        if (term1 > DSGMASystemSignature(gma)[i] || term2 > DSGMASystemSignature(gma)[i+1])
+            break;
+        
+        // define if equation with index i/2 is main or not.
+        for(w = 0; w < numberOfCycles; w++)
+            if( i/2 == mainCycleVariables[w])
+                isMainCyclicalVariable = true;
+        
+        
+        if (isMainCyclicalVariable == true){          // If constructing equation for a main cyclical variable
+            
+            dependent_pool_index = DSuIntegerMatrixValue(ds->extensionData->H_l_eq, currentCycle, term2-1);
+            
+            // define if outlet reaction (dependent_pool_index) is a secondary variable
+            for(w = 0; w <numberOfCycles; w++){
+                for (v = 0; v < ds->extensionData->numberSecondaryVariables[w]; v++){
+                    secondary_variables = ds->extensionData->allSecondaryVariables[w];
+                    secondary_variable = secondary_variables[v];
+                    if( dependent_pool_index == secondary_variable){
+                        isSecondaryVariable = true;
+                    }
+                }
+            }
+            
+            if (DSMatrixArrayDoubleWithIndices(DSGMASystemHd(gma), i/2, term2-1, i/2) == 0.0 && isSecondaryVariable == true ){
+                
+                // If the outlet reaction does not correspond to the main variable and it is secondary.
+                // First we assign the original Alphas and Betas to the mainCycleVariable
+                
+                ind_eq = DSuIntegerMatrixValue(ds->extensionData->H_l_eq, currentCycle, term2-1);
+                ind_term = DSuIntegerMatrixValue(ds->extensionData->H_l_term, currentCycle, term2-1);
+                DSuIntegerMatrixSetValue(location, currentCycle, 0, ind_eq);
+                d1 = DSuIntegerMatrixValue(ds->extensionData->G_l_eq, currentCycle, term1-1);
+                DSuIntegerMatrixSetValue(three_digit, currentCycle, 0, d1 );
+                d2 = DSuIntegerMatrixValue(ds->extensionData->G_l_term, currentCycle, term1-1);
+                DSuIntegerMatrixSetValue(three_digit, currentCycle, 1, d2);
+                DSuIntegerMatrixSetValue(three_digit, currentCycle, 2, ind_term);
+                den = DSMatrixDoubleValue(beta_original, ind_eq, ind_term);
+                num = DSMatrixDoubleValue(DSGMASystemBeta(gma), i/2, term2-1);
+                factor = den/num;
+                
+                DSMatrixSetDoubleValue(DSSSysAlpha(ssys), i/2, 0,
+                                       DSMatrixDoubleValue(DSSSystemAlpha(originalSsys), i/2, 0));
+                DSMatrixSetDoubleValue(DSSSysBeta(ssys), i/2, 0,
+                                       DSMatrixDoubleValue(DSSSystemBeta(originalSsys), i/2, 0));
+                
+                // Then we assign values for Alpha und Betas from the first equation to the equation defined by term2
+                DSMatrixSetDoubleValue(DSSSysAlpha(ssys),dependent_pool_index, 0,
+                                       DSMatrixDoubleValue(DSGMASystemAlpha(gma), i/2, term1-1)*factor);
+                DSMatrixSetDoubleValue(DSSSysBeta(ssys), dependent_pool_index, 0,
+                                       DSMatrixDoubleValue(DSGMASystemBeta(gma), i/2, term2-1)*factor);
+                // Now assign Gd and Hd. Let's first assign values to the equation of the mainCycleVariable (from original S-System)
+                for (j = 0; j < numberOfEquations; j++) {
+                    DSMatrixSetDoubleValue(DSSSysGd(ssys), i/2, j,
+                                           DSMatrixDoubleValue(DSSSystemGd(originalSsys), i/2, j));
+                    DSMatrixSetDoubleValue(DSSSysHd(ssys), i/2, j,
+                                           DSMatrixDoubleValue(DSSSystemHd(originalSsys),i/2, j));
+                    // And now let's assign the dominat term of the maincyclevariable equation to the corresponding outlet reaction
+                    DSMatrixSetDoubleValue(DSSSysGd(ssys),dependent_pool_index, j,
+                                           DSMatrixArrayDoubleWithIndices(DSGMASystemGd(gma), i/2, term1-1, j));
+                    DSMatrixSetDoubleValue(DSSSysHd(ssys),dependent_pool_index, j,
+                                           DSMatrixArrayDoubleWithIndices(DSGMASystemHd(gma), i/2, term2-1, j));
+                }
+                // Now assign Gi and Hi. Let's first assign values to the equation of the mainCycleVariable (from original S-System)
+                for (j = 0; j < numberOfXi; j++) {
+                    DSMatrixSetDoubleValue(DSSSysGi(ssys), i/2, j,
+                                           DSMatrixDoubleValue(DSSSystemGi(originalSsys), i/2, j));
+                    DSMatrixSetDoubleValue(DSSSysHi(ssys), i/2, j,
+                                           DSMatrixDoubleValue(DSSSystemHi(originalSsys), i/2, j));
+                    
+                    // And now let's assign the dominat term of the maincyclevariable equation to the corresponding outlet reaction
+                    DSMatrixSetDoubleValue(DSSSysGi(ssys), dependent_pool_index, j,
+                                           DSMatrixArrayDoubleWithIndices(DSGMASystemGi(gma), i/2, term1-1, j));
+                    DSMatrixSetDoubleValue(DSSSysHi(ssys),dependent_pool_index, j,
+                                           DSMatrixArrayDoubleWithIndices(DSGMASystemHi(gma), i/2, term2-1, j));
+                }
+                alreadyassigned = dependent_pool_index;
+            }else{ //do the normal assignment for the main cyclical variable as output
+                DSMatrixSetDoubleValue(DSSSysAlpha(ssys), i/2, 0,
+                                       DSMatrixDoubleValue(DSGMASystemAlpha(gma), i/2, term1-1));
+                DSMatrixSetDoubleValue(DSSSysBeta(ssys), i/2, 0,
+                                       DSMatrixDoubleValue(DSGMASystemBeta(gma), i/2, term2-1));
+                ind_eq = DSuIntegerMatrixValue(ds->extensionData->H_l_eq, currentCycle, term2-1);
+                ind_term = DSuIntegerMatrixValue(ds->extensionData->H_l_term, currentCycle, term2-1);
+                DSuIntegerMatrixSetValue(location, currentCycle, 0, ind_eq);
+                d1 = DSuIntegerMatrixValue(ds->extensionData->G_l_eq, currentCycle, term1-1);
+                DSuIntegerMatrixSetValue(three_digit, currentCycle, 0, d1 );
+                d2 = DSuIntegerMatrixValue(ds->extensionData->G_l_term, currentCycle, term1-1);
+                DSuIntegerMatrixSetValue(three_digit, currentCycle, 1, d2);
+                DSuIntegerMatrixSetValue(three_digit, currentCycle, 2, ind_term);
+                
+                for (j = 0; j < numberOfEquations; j++) {
+                    DSMatrixSetDoubleValue(DSSSysGd(ssys), i/2, j,
+                                           DSMatrixArrayDoubleWithIndices(DSGMASystemGd(gma), i/2, term1-1, j));
+                    DSMatrixSetDoubleValue(DSSSysHd(ssys), i/2, j,
+                                           DSMatrixArrayDoubleWithIndices(DSGMASystemHd(gma), i/2, term2-1, j));
+                }
+                for (j = 0; j < numberOfXi; j++) {
+                    DSMatrixSetDoubleValue(DSSSysGi(ssys), i/2, j,
+                                           DSMatrixArrayDoubleWithIndices(DSGMASystemGi(gma), i/2, term1-1, j));
+                    DSMatrixSetDoubleValue(DSSSysHi(ssys), i/2, j,
+                                           DSMatrixArrayDoubleWithIndices(DSGMASystemHi(gma), i/2, term2-1, j));
+                }
+            }
+            currentCycle++;
+        }else{ // The normal assignment, when we are not dealing with a main variable.
+            if (i/2 != alreadyassigned){
+                DSMatrixSetDoubleValue(DSSSysAlpha(ssys), i/2, 0,
+                                       DSMatrixDoubleValue(DSGMASystemAlpha(gma), i/2, term1-1));
+                DSMatrixSetDoubleValue(DSSSysBeta(ssys), i/2, 0,
+                                       DSMatrixDoubleValue(DSGMASystemBeta(gma), i/2, term2-1));
+                for (j = 0; j < numberOfEquations; j++) {
+                    DSMatrixSetDoubleValue(DSSSysGd(ssys), i/2, j,
+                                           DSMatrixArrayDoubleWithIndices(DSGMASystemGd(gma), i/2, term1-1, j));
+                    DSMatrixSetDoubleValue(DSSSysHd(ssys), i/2, j,
+                                           DSMatrixArrayDoubleWithIndices(DSGMASystemHd(gma), i/2, term2-1, j));
+                }
+                for (j = 0; j < numberOfXi; j++) {
+                    DSMatrixSetDoubleValue(DSSSysGi(ssys), i/2, j,
+                                           DSMatrixArrayDoubleWithIndices(DSGMASystemGi(gma), i/2, term1-1, j));
+                    DSMatrixSetDoubleValue(DSSSysHi(ssys), i/2, j,
+                                           DSMatrixArrayDoubleWithIndices(DSGMASystemHi(gma), i/2, term2-1, j));
+                }
+            }
+        }
+        isMainCyclicalVariable = false;
+        isSecondaryVariable = false;
+    }
+    if (i == 2*numberOfEquations) {
+        dsSSystemSolveEquations(ssys);
+    } else {
+        DSSSystemFree(ssys);
+        ssys = NULL;
+    }
+bail:
+    return ssys;
+}
+
+
 #if defined (__APPLE__) && defined (__MACH__)
 #pragma mark - Getter Methods
 #endif
@@ -1176,6 +1816,19 @@ extern const DSUInteger DSSSystemNumberOfEquations(const DSSSystem * ssys)
 bail:
         return numberOfEquations;
 }
+
+extern const DSUInteger DSSSystemNumberOfConservations(const DSSSystem * ssys)
+{
+    DSUInteger numberOfConservations = 0;
+    if (ssys == NULL) {
+        DSError(M_DS_NULL ": S-System is NULL", A_DS_ERROR);
+        goto bail;
+    }
+    numberOfConservations = ssys->numberOfConservations;
+bail:
+    return numberOfConservations;
+}
+
 
 static void dsSSystemEquationAddPositiveTermToString(const DSSSystem *ssys, 
                                                        const DSUInteger equation,
@@ -1347,6 +2000,9 @@ extern DSExpression ** DSSSystemEquations(const DSSSystem *ssys)
                                         sum++;
                                 }
                         }
+                        // Check if matrices DSSSystemAlpha or DSSSystemBeta are equal to zero. If not, increase sum
+                        if( DSMatrixDoubleValue(DSSSystemAlpha(ssys), i, 0) != 0 || DSMatrixDoubleValue(DSSSystemBeta(ssys), i, 0) != 0 )
+                                sum++;
                         if (sum == 1 && index == DSVariablePoolIndexOfVariableWithName(DSSSystemXd(ssys), varName)) {
                                 lhs = dsExpressionAllocWithVariableName(varName);
                                 rhs = DSExpressionFromPowerlawInMatrixForm(i,
@@ -1468,6 +2124,174 @@ bail:
         return;
 }
 
+
+static void dsUnstableCaseProcessPseudoInverse(DSMatrix *pInverse, const DSSSystem *ssys)
+{
+    // This step is necessary to obtain correct equations for anomalous cases of type I. The preprocessing consinst of two steps. In a first step, all rows of the pseudoinverse (except for blowing indices) are normalized with the values in the diagonal. Then, rows corresponding to the blowing variables are set to zero.
+    DSUInteger *indices, i, j, n;
+    DSMatrix *Ad = DSSSystemAd(ssys);
+    DSUInteger numberBlowing = DSVariablePoolNumberOfVariables(ssys->Xd_b);
+    double factor;
+    bool normalize;
+    
+    // Set rows to zero that are blowing variables.
+    indices = DSVariablePoolIndicesOfSubPool(ssys->Xd_t, ssys->Xd_b);
+    
+    // set rows contained in indices to zero.
+    for (i=0; i<numberBlowing; i++){
+        for(j=0; j<DSMatrixColumns(pInverse); j++){
+            DSMatrixSetDoubleValue(pInverse, indices[i], j, 0.0);
+        }
+    }
+    
+//    // Normalize rows with the values in the diagonal if row of Ad contains a blowing variable. Skip if diagonal is zero.
+//    for (i=0; i<DSMatrixRows(pInverse); i++){
+//            normalize = false;
+//            for(n=0; n<numberBlowing; n++)
+//                if (DSMatrixDoubleValue(Ad, i, indices[n]) != 0.0)
+//                normalize = true;
+//            factor = fabs(DSMatrixDoubleValue(pInverse, i, i));
+//            if (factor != 0.0 && normalize == true){
+//                    for(j=0; j<DSMatrixColumns(pInverse); j++){
+//                        DSMatrixSetDoubleValue(pInverse, i, j, DSMatrixDoubleValue(pInverse, i, j)/factor);
+//                    }
+//            }
+//    }
+
+}
+
+static void dsUnstableCaseProcessMB_blow(DSMatrix *MB_blow){
+    
+    // The idea is to process the vector MB_blow to restrict values to [-12 and 12]
+    DSUInteger i;
+    for (i = 0; i<DSMatrixRows(MB_blow); i++){
+        if (DSMatrixDoubleValue(MB_blow, i, 0) > 12.0)
+            DSMatrixSetDoubleValue(MB_blow, i, 0, 12.0);
+        if (DSMatrixDoubleValue(MB_blow, i, 0) < -12.0)
+            DSMatrixSetDoubleValue(MB_blow, i, 0, -12.0);
+    }
+}
+
+
+static void dsuSSystemSolutionToString(const DSSSystem *ssys,
+                                      const DSUInteger equation,
+                                      char ** string,
+                                      DSUInteger *length, const bool inLog)
+{
+    DSUInteger i, numberOfXd, numberOfXi, n, col, row;
+    DSMatrix *MAi, *MB, *MB_blow, *MB_original, *B, *Ai, *Ad, *Ad2, *w, *pInvA, *Identity, *I_pInvA;
+    const DSMatrix *pInverse;
+    char tempString[100] = "\0";
+    const char *name;
+    double value;
+    
+    DSUInteger numberOfBlowing = DSVariablePoolNumberOfVariables(DSSSysXd_b(ssys));
+    DSUInteger *indices = DSVariablePoolIndicesOfSubPool(DSSSysXd(ssys), DSSSysXd_b(ssys));
+
+    
+    if (ssys == NULL) {
+        DSError(M_DS_SSYS_NULL, A_DS_ERROR);
+        goto bail;
+    }
+    numberOfXd = DSVariablePoolNumberOfVariables(DSSSysXd(ssys));
+    if (equation >= numberOfXd) {
+        DSError("Equation does not exist: Check number of equations", A_DS_ERROR);
+        goto bail;
+    }
+    if (string == NULL) {
+        DSError(M_DS_NULL ": Pointer to string is NULL", A_DS_ERROR);
+        goto bail;
+    }
+    if (length == NULL) {
+        DSError(M_DS_NULL ": Pointer to length is NULL", A_DS_ERROR);
+        goto bail;
+    }
+    if (*string == NULL) {
+        DSError(M_DS_NULL ": String should be initialized", A_DS_ERROR);
+        goto bail;
+    }
+    
+    numberOfXi = DSVariablePoolNumberOfVariables(DSSSysXi(ssys));
+    B = DSSSystemB(ssys);
+    Ai = DSSSystemAi(ssys);
+    Ad = DSSSystemAd(ssys);
+    Ad2 = DSSSystemAd(ssys);
+    
+    // Set both rows and colums of blowing variables to zero.
+    for(n=0; n<numberOfBlowing; n++){
+        for(col=0; col<DSMatrixColumns(Ad2); col++)
+            DSMatrixSetDoubleValue(Ad2, indices[n], col, 0.0);
+        for(row=0; row<DSMatrixRows(Ad2); row++)
+            DSMatrixSetDoubleValue(Ad2, row, indices[n], 0.0);
+    }
+    
+    pInverse = DSMatrixPseudoInverse(Ad2);
+    DSMatrixFree(Ad2);
+    pInvA = DSMatrixByMultiplyingMatrix(pInverse, Ad);
+    Identity = DSMatrixIdentity(DSMatrixRows(pInvA));
+    I_pInvA = DSMatrixBySubstractingMatrix(Identity, pInvA);
+    
+    DSMatrixFree(Ad);
+    DSMatrixFree(pInvA);
+    DSMatrixFree(Identity);
+    
+    w = DSMatrixCalloc(DSMatrixRows(I_pInvA), 1);
+    for (i=0; i<numberOfBlowing; i++){
+        DSMatrixSetDoubleValue(w, indices[i], 0,
+                               log10(DSVariablePoolValueForVariableWithName(ssys->Xd_b,   DSVariableName(DSVariablePoolAllVariables(DSSSysXd_b(ssys))[i]))));
+    }
+
+    MB_blow = DSMatrixByMultiplyingMatrix(I_pInvA, w);
+    dsUnstableCaseProcessMB_blow(MB_blow);
+
+    
+    DSMatrixFree(w);
+    DSMatrixFree(I_pInvA);
+    
+    if (numberOfXi != 0) {
+        MAi = DSMatrixByMultiplyingMatrix(pInverse, Ai);
+        DSMatrixFree(Ai);
+    }
+    MB_original = DSMatrixByMultiplyingMatrix(pInverse, B);
+    MB = DSMatrixByAddingMatrix(MB_original, MB_blow);
+    
+    DSMatrixFree(B);
+    DSMatrixFree(MB_original);
+    DSMatrixFree(MB_blow);
+    if (inLog == true)
+        sprintf(tempString, "%lf", DSMatrixDoubleValue(MB, equation, 0));
+    else
+        sprintf(tempString, "10^%lf", DSMatrixDoubleValue(MB, equation, 0));
+    if (*length-strlen(*string) < 100) {
+        *length += 1000;
+        *string = DSSecureRealloc(*string, sizeof(char)**length);
+    }
+    strncat(*string, tempString, *length-strlen(*string));
+    for (i = 0; i < numberOfXi; i++) {
+        if (*length-strlen(*string) < 100) {
+            *length += 1000;
+            *string = DSSecureRealloc(*string, sizeof(char)**length);
+        }
+        name = DSVariableName(DSVariablePoolAllVariables(DSSSysXi(ssys))[i]);
+        value = -DSMatrixDoubleValue(MAi, equation, i);
+        if (value == 0.0)
+            continue;
+        if (inLog == true)
+            sprintf(tempString, "+%lf*log(%s)", value, name);
+        else if (value == 1.0)
+            sprintf(tempString, "*%s", name);
+        else
+            sprintf(tempString, "*%s^%lf", name, value);
+        strncat(*string, tempString, *length-strlen(*string));
+    }
+    if (numberOfXi != 0)
+        DSMatrixFree(MAi);
+    DSMatrixFree(MB);
+    DSMatrixFree((DSMatrix *)pInverse);
+bail:
+    return;
+}
+
 extern DSExpression ** DSSSystemSolution(const DSSSystem *ssys)
 {
         DSUInteger i, numberOfEquations, length;
@@ -1508,6 +2332,58 @@ bail:
         return solution;
 }
 
+extern DSExpression ** DSuSSystemSolution(const DSSSystem *ssys)
+{
+    DSUInteger i, numberOfEquations, length;
+    DSExpression ** solution = NULL;
+    char *tempString, * equationString, *varName;
+    const DSSSystem * ssys_no_algebraic;
+    
+    if (ssys == NULL) {
+        DSError(M_DS_SSYS_NULL, A_DS_ERROR);
+        goto bail;
+    }
+    if (DSSSysXd_b(ssys) == NULL) {
+        DSError("S-System being accessed has no blowing variables", A_DS_ERROR);
+        goto bail;
+    }
+    if ( DSVariablePoolNumberOfVariables(DSSSystemXd_t( ssys)) != 0 ){
+        ssys_no_algebraic = DSSSystemByRemovingAlgebraicConstraints(ssys);
+    } else {
+        ssys_no_algebraic = ssys;
+    }
+    numberOfEquations = DSSSystemNumberOfEquations(ssys_no_algebraic);
+    if (numberOfEquations == 0) {
+        DSError("S-System being accessed has no equations", A_DS_ERROR);
+        goto bail;
+    }
+    solution = DSSecureCalloc(sizeof(DSExpression *), numberOfEquations);
+    length = 1000;
+    tempString = DSSecureCalloc(sizeof(char), length);
+    for (i = 0; i < numberOfEquations; i++) {
+        tempString[0] = '\0';
+        dsuSSystemSolutionToString(ssys_no_algebraic, i, &tempString, &length, false);
+        if (strlen(tempString) == 0)
+            break;
+        varName = DSVariableName(DSVariablePoolVariableAtIndex(DSSSystemXd(ssys_no_algebraic), i));
+        equationString = DSSecureCalloc(
+                                        sizeof(char),
+                                        strlen(tempString)+strlen(varName)+4);
+        equationString = strcpy(equationString, varName);
+        equationString = strcat(equationString, " = ");
+        equationString = strcat(equationString, tempString);
+        solution[i] = DSExpressionByParsingString(equationString);
+        DSSecureFree(equationString);
+    }
+    DSSecureFree(tempString);
+    
+    if (DSVariablePoolNumberOfVariables(DSSSystemXd_t( ssys))  != 0 ){
+        DSSSystemFree((DSSSystem *)ssys_no_algebraic);
+    }
+bail:
+    return solution;
+}
+
 extern DSExpression ** DSSSystemLogarithmicSolution(const DSSSystem *ssys)
 {
         DSUInteger i, numberOfEquations, length;
@@ -1546,6 +2422,56 @@ extern DSExpression ** DSSSystemLogarithmicSolution(const DSSSystem *ssys)
         DSSecureFree(tempString);
 bail:
         return solution;
+}
+
+extern DSExpression ** DSuSSystemLogarithmicSolution(const DSSSystem *ssys)
+{
+    DSUInteger i, numberOfEquations, length;
+    DSExpression ** solution = NULL;
+    char *tempString, * equationString, *varName;
+    const DSSSystem *ssys_no_algebraic;
+    if (ssys == NULL) {
+        DSError(M_DS_SSYS_NULL, A_DS_ERROR);
+        goto bail;
+    }
+    if (DSSSysXd_b(ssys) == NULL) {
+        DSError("S-System being accessed has no blowing variables", A_DS_ERROR);
+        goto bail;
+    }
+    if (DSVariablePoolNumberOfVariables(DSSSystemXd_t( ssys))  != 0 ){
+        ssys_no_algebraic = DSSSystemByRemovingAlgebraicConstraints(ssys);
+    } else {
+        ssys_no_algebraic = ssys;
+    }
+    numberOfEquations = DSSSystemNumberOfEquations(ssys_no_algebraic);
+    if (numberOfEquations == 0) {
+        DSError("S-System being accessed has no equations", A_DS_ERROR);
+        goto bail;
+    }
+    solution = DSSecureCalloc(sizeof(DSExpression *), numberOfEquations);
+    length = 1000;
+    tempString = DSSecureCalloc(sizeof(char), length);
+    for (i = 0; i < numberOfEquations; i++) {
+        tempString[0] = '\0';
+        dsuSSystemSolutionToString(ssys_no_algebraic, i, &tempString, &length, true);
+        if (strlen(tempString) == 0)
+            break;
+        varName = DSVariableName(DSVariablePoolVariableAtIndex(DSSSystemXd(ssys_no_algebraic), i));
+        equationString = DSSecureCalloc(sizeof(char),
+                                        strlen(tempString)+strlen(varName)+10);
+        equationString = strcpy(equationString, "log(");
+        equationString = strcat(equationString, varName);
+        equationString = strcat(equationString, ") = ");
+        equationString = strcat(equationString, tempString);
+        solution[i] = DSExpressionByParsingString(equationString);
+        DSSecureFree(equationString);
+    }
+    DSSecureFree(tempString);
+    if (DSVariablePoolNumberOfVariables(DSSSystemXd_t( ssys))  != 0 ){
+        DSSSystemFree((DSSSystem *)ssys_no_algebraic);
+    }
+bail:
+    return solution;
 }
 
 extern const DSMatrix * DSSSystemAlpha(const DSSSystem * ssys)
@@ -1654,6 +2580,30 @@ extern const DSVariablePool * DSSSystemXd_t(const DSSSystem * const ssys)
         pool = DSSSysXd_t(ssys);
 bail:
         return pool;
+}
+
+extern const DSVariablePool * DSSSystemXd_b(const DSSSystem * const ssys)
+{
+    DSVariablePool *pool = NULL;
+    if (ssys == NULL) {
+        DSError(M_DS_NULL ": S-System is NULL", A_DS_ERROR);
+        goto bail;
+    }
+    pool = DSSSysXd_b(ssys);
+bail:
+    return pool;
+}
+
+extern const DSVariablePool * DSSSystemXd_a_c(const DSSSystem * const ssys)
+{
+    DSVariablePool *pool = NULL;
+    if (ssys == NULL) {
+        DSError(M_DS_NULL ": S-System is NULL", A_DS_ERROR);
+        goto bail;
+    }
+    pool = DSSSysXd_a_c(ssys);
+bail:
+    return pool;
 }
 
 extern const DSVariablePool * DSSSystemXi(const DSSSystem * ssys)
@@ -1994,6 +2944,8 @@ extern DSMatrix * DSSSystemG(const DSSSystem *ssys)
                 DSError(M_DS_NULL ": S-System is NULL", A_DS_ERROR);
                 goto bail;
         }
+//        if (DSMatrixRows(DSSSysGd(ssys))  != DSMatrixRows(DSSSysGi(ssys)))
+//            goto bail;
         if (DSVariablePoolNumberOfVariables(DSSSystemXi(ssys)) != 0)
                 G = DSMatrixAppendMatrices(DSSSysGd(ssys), DSSSysGi(ssys), true);
         else
@@ -2043,6 +2995,105 @@ bail:
         return isSingular;
 }
 
+extern bool DSSSystemIsConserved(const DSSSystem *ssys)
+{
+    bool isConserved = false;
+    if (ssys == NULL) {
+        DSError(M_DS_SSYS_NULL, A_DS_ERROR);
+        goto bail;
+    }
+    isConserved = (ssys->modifierFlags & DS_SSYSTEM_FLAG_CONSERVED) ? true : false;
+bail:
+    return isConserved;
+}
+
+extern bool DSSSystemIsUnstable(const DSSSystem *ssys)
+{
+    bool isUnstable = false;
+    if (ssys == NULL) {
+        DSError(M_DS_SSYS_NULL, A_DS_ERROR);
+        goto bail;
+    }
+    isUnstable = (ssys->modifierFlags & DS_SSYSTEM_FLAG_UNSTABLE) ? true : false;
+bail:
+    return isUnstable;
+}
+
+extern bool DSSSystemIsFalseBlowing(const DSSSystem *ssys)
+{
+    bool isFalseBlowing = false;
+    if (ssys == NULL) {
+        DSError(M_DS_SSYS_NULL, A_DS_ERROR);
+        goto bail;
+    }
+    
+       DSMatrix *Ai = NULL, *Ad = NULL, *b = NULL, *Ai_neg = NULL;
+        DSMatrix *A = NULL, *Augmented = NULL;
+        DSMatrix *transA = NULL, *transAugmented = NULL;
+        DSSSystem *collapsedSystem = NULL;
+        DSUInteger rank_A, rank_Augmented;
+            
+        if( DSSSystemXd_a(ssys) != 0){
+            collapsedSystem = DSSSystemByRemovingAlgebraicConstraints(ssys);
+            Ad = DSSSystemAd(collapsedSystem);
+            Ai = DSSSystemAi(collapsedSystem);
+            b = DSSSystemB(collapsedSystem);
+            DSSSystemFree(collapsedSystem);
+        }else {
+            Ad = DSSSystemAd(ssys);
+            Ai = DSSSystemAi(ssys);
+            b = DSSSystemB(ssys);
+        }
+        
+        //modify sign of matrix Ai
+        Ai_neg = DSMatrixByMultiplyingScalar(Ai, -1.0);
+        
+        // construct matrix A and Augmented
+        A = DSMatrixAppendMatrices(Ad, Ai_neg, true);
+        Augmented = DSMatrixAppendMatrices(A, b, true);
+        
+        
+        if (DSMatrixRows(Ad) < DSMatrixColumns(Ad)){
+            transA = DSMatrixTranspose(Ad);
+            rank_A = DSMatrixRank(transA);
+            if (transA != NULL)
+                DSMatrixFree(transA);
+        }else{
+            rank_A = DSMatrixRank(Ad);
+        }
+        
+        if (DSMatrixRows(Augmented) < DSMatrixColumns(Augmented)){
+            transAugmented = DSMatrixTranspose(Augmented);
+            rank_Augmented = DSMatrixRank(transAugmented);
+            if (transAugmented != NULL)
+                DSMatrixFree(transAugmented);
+        }else{
+            rank_Augmented = DSMatrixRank(Augmented);
+        }
+    
+        // find out if this case was a false blow up
+        if (rank_Augmented != DSMatrixRows(Ad))
+                isFalseBlowing = true;
+    
+        
+        // delete variables
+        if (Ai != NULL)
+            DSMatrixFree(Ai);
+        if (Ai_neg != NULL)
+            DSMatrixFree(Ai_neg);
+        if (Ad != NULL)
+            DSMatrixFree(Ad);
+        if (b != NULL)
+            DSMatrixFree(b);
+        if (A != NULL)
+            DSMatrixFree(A);
+        if (Augmented != NULL)
+            DSMatrixFree(Augmented);
+    
+bail:
+    return isFalseBlowing;
+}
+
 extern bool DSSSystemShouldFreeXd(const DSSSystem *ssys)
 {
         bool shouldFree = false;
@@ -2079,6 +3130,32 @@ extern void DSSSystemSetIsSingular(DSSSystem *ssys, bool isSingular)
         ssys->modifierFlags = (isSingular ? DS_SSYSTEM_FLAG_SINGULAR : 0) | newFlag;
 bail:
         return;
+}
+
+extern void DSSSystemSetIsConserved(DSSSystem *ssys, bool isConserved)
+{
+    unsigned char newFlag;
+    if (ssys == NULL) {
+        DSError(M_DS_SSYS_NULL, A_DS_ERROR);
+        goto bail;
+    }
+    newFlag = ssys->modifierFlags & ~DS_SSYSTEM_FLAG_CONSERVED;
+    ssys->modifierFlags = (isConserved ? DS_SSYSTEM_FLAG_CONSERVED : 0) | newFlag;
+bail:
+    return;
+}
+
+extern void DSSSystemSetIsUnstable(DSSSystem *ssys, bool isUnstable)
+{
+    unsigned char newFlag;
+    if (ssys == NULL) {
+        DSError(M_DS_SSYS_NULL, A_DS_ERROR);
+        goto bail;
+    }
+    newFlag = ssys->modifierFlags & ~DS_SSYSTEM_FLAG_UNSTABLE;
+    ssys->modifierFlags = (isUnstable ? DS_SSYSTEM_FLAG_UNSTABLE : 0) | newFlag;
+bail:
+    return;
 }
 
 extern void DSSSystemSetShouldFreeXd(DSSSystem *ssys, bool shouldFreeXd)
@@ -2161,6 +3238,194 @@ bail:
         if (B != NULL)
                 DSMatrixFree(B);
         return steadyState;
+}
+
+extern DSMatrix * DSuSSystemSteadyStateValues(const DSSSystem *ssys, const DSVariablePool *Xi0)
+{
+    DSMatrix * steadyState = NULL;
+    DSMatrix *Xi = NULL;
+    DSMatrix *MAi, *MAiXi, *B = NULL, *Ai = NULL, *Ad, *Ad2,  *pInvA, *Identity, *I_pInvA, *w, *MB_blow;
+    DSMatrix *MB_original;
+    const DSMatrix *pInverse;
+    DSVariablePool *pool = NULL;
+    DSUInteger i;
+    const char *name;
+    const DSSSystem *ssys_no_algebraic;
+    DSUInteger n, row, col;
+    if (ssys == NULL) {
+        DSError(M_DS_SSYS_NULL, A_DS_ERROR);
+        goto bail;
+    }
+    if (Xi0 == NULL && DSVariablePoolNumberOfVariables(DSSSysXi(ssys)) != 0) {
+        DSError(M_DS_VAR_NULL ": Xi0 variable pool is NULL", A_DS_ERROR);
+        goto bail;
+    }
+    if (DSSSystemIsUnstable(ssys) == false){
+        goto bail;
+    }
+    if ( DSVariablePoolNumberOfVariables(DSSSystemXd_t( ssys)) != 0 ){
+        ssys_no_algebraic = DSSSystemByRemovingAlgebraicConstraints(ssys);
+    } else {
+        ssys_no_algebraic = ssys;
+    }
+    
+    DSUInteger numberOfBlowing = DSVariablePoolNumberOfVariables(DSSSysXd_b(ssys_no_algebraic));
+    DSUInteger *indices = DSVariablePoolIndicesOfSubPool(DSSSysXd(ssys_no_algebraic), DSSSysXd_b(ssys_no_algebraic));
+    
+    B = DSSSystemB(ssys_no_algebraic);
+    Ad = DSSSystemAd(ssys_no_algebraic);
+    Ad2 = DSSSystemAd(ssys_no_algebraic);
+    
+    // Set both rows and colums of blowing variables to zero.
+    for(n=0; n<numberOfBlowing; n++){
+        for(col=0; col<DSMatrixColumns(Ad2); col++)
+        DSMatrixSetDoubleValue(Ad2, indices[n], col, 0.0);
+        for(row=0; row<DSMatrixRows(Ad2); row++)
+        DSMatrixSetDoubleValue(Ad2, row, indices[n], 0.0);
+    }
+    
+    pInverse = DSMatrixPseudoInverse(Ad2);
+    DSMatrixFree(Ad2);
+
+//    pInverse = DSUnstableCaseGetSubSetPseudoInverse(ssys_no_algebraic->Xd_t, NULL, ssys_no_algebraic->Xd_b, Ad);
+//    dsUnstableCaseProcessPseudoInverse(pInverse, ssys);
+    
+    pInvA = DSMatrixByMultiplyingMatrix(pInverse, Ad);
+    Identity = DSMatrixIdentity(DSMatrixRows(pInvA));
+    I_pInvA = DSMatrixBySubstractingMatrix(Identity, pInvA);
+    
+    DSMatrixFree(Ad);
+    DSMatrixFree(pInvA);
+    DSMatrixFree(Identity);
+    w = DSMatrixCalloc(DSMatrixRows(I_pInvA), 1);
+    
+    for (i=0; i<numberOfBlowing; i++){
+        DSMatrixSetDoubleValue(w, indices[i], 0,
+                               log10(DSVariablePoolValueForVariableWithName(ssys_no_algebraic->Xd_b, DSVariableName(DSVariablePoolAllVariables(DSSSysXd_b(ssys_no_algebraic))[i]))));
+    }
+    MB_blow = DSMatrixByMultiplyingMatrix(I_pInvA, w);
+    dsUnstableCaseProcessMB_blow(MB_blow);
+    DSMatrixFree(w);
+    MB_original = DSMatrixByMultiplyingMatrix(pInverse, B);
+    steadyState = DSMatrixByAddingMatrix(MB_original, MB_blow);
+    DSMatrixFree(MB_original);
+    DSMatrixFree(MB_blow);
+    DSMatrixFree(I_pInvA);
+    
+    
+    if (DSVariablePoolNumberOfVariables(DSSSysXi(ssys_no_algebraic)) != 0) {
+        pool = DSVariablePoolAlloc();
+        for (i=0; i < DSVariablePoolNumberOfVariables(DSSSysXi(ssys_no_algebraic)); i++) {
+            name =  DSVariableName(DSVariablePoolAllVariables(DSSSysXi(ssys_no_algebraic))[i]);
+            DSVariablePoolAddVariableWithName(pool, name);
+            if (DSVariablePoolHasVariableWithName(Xi0, name) == false) {
+                DSMatrixFree(steadyState);
+                DSVariablePoolFree(pool);
+                steadyState = NULL;
+                printf("bail variablepool has no variable \n");
+                goto bail;
+            }
+            DSVariablePoolSetValueForVariableWithName(pool,  name, DSVariableValue(DSVariablePoolVariableWithName(Xi0, name)));
+        }
+        Ai = DSSSystemAi(ssys_no_algebraic);
+        Xi = DSVariablePoolValuesAsVector(pool, false);
+        DSMatrixApplyFunction(Xi, log10);
+        MAi = DSMatrixByMultiplyingMatrix(pInverse, Ai);
+        MAiXi = DSMatrixByMultiplyingMatrix(MAi, Xi);
+        DSMatrixSubstractByMatrix(steadyState, MAiXi);
+        DSMatrixFree(Ai);
+        DSMatrixFree(Xi);
+        DSMatrixFree(MAi);
+        DSMatrixFree(MAiXi);
+        DSVariablePoolFree(pool);
+    }
+    DSMatrixFree((DSMatrix *) pInverse);
+    if ( DSVariablePoolNumberOfVariables(DSSSystemXd_t( ssys)) != 0 )
+        DSSSystemFree((DSSSystem *)ssys_no_algebraic);
+bail:
+    if (B != NULL)
+        DSMatrixFree(B);
+    return steadyState;
+}
+
+extern DSMatrix * DSuSSystemSteadyStateValuesForConservedVariables(const DSSSystem *ssys, const DSVariablePool *Xi0){
+    
+            // This function should calculate steady states for variable pool Xd_a_c. Function DSSSystemSteadyStateValues()
+            // was taken as template.
+    
+            DSMatrix * steadyState = NULL;
+            DSMatrix *Xi = NULL;
+            DSMatrix *MAi, *MAiXi, *B = NULL, *Ai = NULL, *M = NULL, *Ad = NULL;
+            DSVariablePool *pool = NULL;
+            DSUInteger i, n, *indices = NULL;
+            const char *name;
+            if (ssys == NULL) {
+                DSError(M_DS_SSYS_NULL, A_DS_ERROR);
+                goto bail;
+            }
+            if (Xi0 == NULL && DSVariablePoolNumberOfVariables(DSSSysXi(ssys)) != 0) {
+                DSError(M_DS_VAR_NULL ": Xi0 variable pool is NULL", A_DS_ERROR);
+                goto bail;
+            }
+            if (DSSSystemIsUnstable(ssys) == false){
+                goto bail;
+            }
+    
+            n = DSVariablePoolNumberOfVariables(DSSSysXd_a_c(ssys));
+            indices = DSVariablePoolIndicesOfSubPool(DSSSysXd(ssys), DSSSysXd_a_c(ssys));
+    
+            if (indices == NULL){
+                goto bail;
+            }
+    
+            // let's get vector B
+            B = DSMatrixSubMatrixIncludingRows(DSSSystemB(ssys), n, indices);
+    
+            // Now let's get matrix Ai
+            Ai = DSMatrixSubMatrixIncludingRows(DSSSystemAi(ssys), n, indices) ;
+    
+            // Now let's get Matrix M
+            Ad = DSMatrixSubMatrixIncludingRowsAndColumns(DSSSystemAd(ssys), n, n, indices, indices);
+            M = DSMatrixInverse(Ad);
+    
+            steadyState = DSMatrixByMultiplyingMatrix(M, B);
+            if (DSVariablePoolNumberOfVariables(DSSSysXi(ssys)) != 0) {
+                pool = DSVariablePoolAlloc();
+                for (i=0; i < DSVariablePoolNumberOfVariables(DSSSysXi(ssys)); i++) {
+                    name =  DSVariableName(DSVariablePoolAllVariables(DSSSysXi(ssys))[i]);
+                    DSVariablePoolAddVariableWithName(pool, name);
+                    if (DSVariablePoolHasVariableWithName(Xi0, name) == false) {
+                        DSMatrixFree(steadyState);
+                        DSVariablePoolFree(pool);
+                        steadyState = NULL;
+                        goto bail;
+                    }
+                    DSVariablePoolSetValueForVariableWithName(pool,  name, DSVariableValue(DSVariablePoolVariableWithName(Xi0, name)));
+                }
+                
+                Xi = DSVariablePoolValuesAsVector(pool, false);
+                DSMatrixApplyFunction(Xi, log10);
+                MAi = DSMatrixByMultiplyingMatrix(M, Ai);
+                MAiXi = DSMatrixByMultiplyingMatrix(MAi, Xi);
+                DSMatrixSubstractByMatrix(steadyState, MAiXi);
+                DSMatrixFree(Ai);
+                DSMatrixFree(Xi);
+                DSMatrixFree(MAi);
+                DSMatrixFree(MAiXi);
+                DSVariablePoolFree(pool);
+            }
+
+        bail:
+            if (B != NULL)
+                DSMatrixFree(B);
+            if (indices != NULL)
+                DSSecureFree(indices);
+            if (Ad != NULL)
+                DSMatrixFree(Ad);
+            if (M != NULL)
+                DSMatrixFree(M);
+            return steadyState;
+
 }
 
 extern DSMatrix * DSSSystemAuxiliaryVariablesForSteadyState(const DSSSystem *ssys, const DSVariablePool *Xdt0, const DSVariablePool *Xi0)
@@ -2430,7 +3695,164 @@ bail:
                 DSMatrixFree(ss);
         if (pool != NULL)
                 DSVariablePoolFree(pool);
-        return flux;   
+//    printf("Reporting from function DSSSystemSteadyStateFlux. The steady state flux matrix is: \n");
+//    DSMatrixPrint(flux);
+        return flux;
+}
+
+extern DSMatrix * DSSSystemSteadyStateFluxForConservedVariables(const DSSSystem *ssys, const DSVariablePool *Xi0)
+
+    // This function is used to add fluxes from Xd_a_c (a subset of Xd_t in gma system). Function DSSSystemSteadyStateFlux is used as template.
+
+{
+    DSMatrix * flux = NULL, *Xi = NULL, *ss=NULL;
+    DSMatrix * gi0= NULL, *alpha = NULL;
+    DSUInteger i, index1;
+    DSVariablePool *pool = NULL;
+    const char *name;
+    double value;
+    if (ssys == NULL) {
+        DSError(M_DS_SSYS_NULL, A_DS_ERROR);
+        goto bail;
+    }
+    if (Xi0 == NULL && DSVariablePoolNumberOfVariables(DSSSysXi(ssys)) != 0) {
+        DSError(M_DS_VAR_NULL ": Xi0 variable pool is NULL", A_DS_ERROR);
+        goto bail;
+    }
+    if (DSSSystemHasSolution(ssys) == false || DSSSystemIsUnstable(ssys) == false)
+        goto bail;
+    alpha = DSMatrixCopy(DSSSystemAlpha(ssys));
+    DSMatrixApplyFunction(alpha, log10);
+    ss = DSSSystemSteadyStateValues(ssys, Xi0);
+    flux = DSMatrixByMultiplyingMatrix(DSSSystemGd(ssys), ss);
+    if (DSVariablePoolNumberOfVariables(DSSSysXi(ssys)) != 0) {
+        pool = DSVariablePoolAlloc();
+        for (i=0; i < DSVariablePoolNumberOfVariables(DSSSysXi(ssys)); i++) {
+            name =  DSVariableName(DSVariablePoolAllVariables(DSSSysXi(ssys))[i]);
+            DSVariablePoolAddVariableWithName(pool, name);;
+            if (DSVariablePoolHasVariableWithName(Xi0, name) == false) {
+                DSError(M_DS_WRONG ": Variable Pool does not have independent variable", A_DS_ERROR);
+                DSMatrixFree(flux);
+                flux = NULL;
+                DSVariablePoolFree(pool);
+                goto bail;
+            }
+            value = DSVariableValue(DSVariablePoolVariableWithName(Xi0, name));
+            DSVariablePoolSetValueForVariableWithName(pool, name, value);
+        }
+        Xi = DSVariablePoolValuesAsVector(pool, false);
+        DSMatrixApplyFunction(Xi, log10);
+        gi0 = DSMatrixByMultiplyingMatrix(DSSSystemGi(ssys), Xi);
+        DSMatrixAddByMatrix(flux, gi0);
+        DSMatrixFree(Xi);
+        DSMatrixFree(gi0);
+    }
+    DSMatrixAddByMatrix(flux, alpha);
+    if (ssys->fluxDictionary != NULL) {
+        for (i = 0; i < DSVariablePoolNumberOfVariables(DSSSystemXd(ssys)); i++) {
+            name = DSVariableName(DSVariablePoolVariableAtIndex(DSSSystemXd(ssys), i));
+            DSVariablePoolAddVariableWithName(pool, name);
+            DSVariablePoolSetValueForVariableWithName(pool,
+                                                      name,
+                                                      pow(10, DSMatrixDoubleValue(ss, i, 0)));
+        }
+        for (i = 0; i < DSVariablePoolNumberOfVariables(DSSSystemXd(ssys)); i++) {
+            name = DSVariableName(DSVariablePoolVariableAtIndex(DSSSystemXd(ssys), i));
+            index1 = DSVariablePoolIndexOfVariableWithName(DSSSystemXd(ssys), name);
+            DSMatrixSetDoubleValue(flux, index1, 0,
+                                   log10(DSExpressionEvaluateWithVariablePool(DSDictionaryValueForName(ssys->fluxDictionary,name), pool)));
+        }
+    }
+bail:
+    if (alpha != NULL)
+        DSMatrixFree(alpha);
+    if (ss != NULL)
+        DSMatrixFree(ss);
+    if (pool != NULL)
+        DSVariablePoolFree(pool);
+    return flux;
+}
+
+
+extern DSMatrix * DSuSSystemSteadyStateFlux(const DSSSystem *ssys, const DSVariablePool *Xi0)
+{
+    DSMatrix * flux = NULL, *Xi = NULL, *ss=NULL;
+    DSMatrix * gi0= NULL, *alpha = NULL;
+    DSUInteger i, index1;
+    DSVariablePool *pool = NULL;
+    const DSSSystem * ssys_no_algebraic;
+    
+    const char *name;
+    double value;
+    if (ssys == NULL) {
+        DSError(M_DS_SSYS_NULL, A_DS_ERROR);
+        goto bail;
+    }
+    if (Xi0 == NULL && DSVariablePoolNumberOfVariables(DSSSysXi(ssys)) != 0) {
+        DSError(M_DS_VAR_NULL ": Xi0 variable pool is NULL", A_DS_ERROR);
+        goto bail;
+    }
+    if (DSSSystemIsUnstable(ssys) == false)
+        goto bail;
+    
+    if ( DSVariablePoolNumberOfVariables(DSSSystemXd_t( ssys)) != 0 ){
+        ssys_no_algebraic = DSSSystemByRemovingAlgebraicConstraints(ssys);
+    } else {
+        ssys_no_algebraic = ssys;
+    }
+    alpha = DSMatrixCopy(DSSSystemAlpha(ssys_no_algebraic));
+    DSMatrixApplyFunction(alpha, log10);
+    ss = DSuSSystemSteadyStateValues(ssys_no_algebraic, Xi0);
+    flux = DSMatrixByMultiplyingMatrix(DSSSystemGd(ssys_no_algebraic), ss);
+    if (DSVariablePoolNumberOfVariables(DSSSysXi(ssys_no_algebraic)) != 0) {
+        pool = DSVariablePoolAlloc();
+        for (i=0; i < DSVariablePoolNumberOfVariables(DSSSysXi(ssys_no_algebraic)); i++) {
+            name =  DSVariableName(DSVariablePoolAllVariables(DSSSysXi(ssys_no_algebraic))[i]);
+            DSVariablePoolAddVariableWithName(pool, name);;
+            if (DSVariablePoolHasVariableWithName(Xi0, name) == false) {
+                DSError(M_DS_WRONG ": Variable Pool does not have independent variable", A_DS_ERROR);
+                DSMatrixFree(flux);
+                flux = NULL;
+                DSVariablePoolFree(pool);
+                goto bail;
+            }
+            value = DSVariableValue(DSVariablePoolVariableWithName(Xi0, name));
+            DSVariablePoolSetValueForVariableWithName(pool, name, value);
+        }
+        Xi = DSVariablePoolValuesAsVector(pool, false);
+        DSMatrixApplyFunction(Xi, log10);
+        gi0 = DSMatrixByMultiplyingMatrix(DSSSystemGi(ssys_no_algebraic), Xi);
+        DSMatrixAddByMatrix(flux, gi0);
+        DSMatrixFree(Xi);
+        DSMatrixFree(gi0);
+    }
+    DSMatrixAddByMatrix(flux, alpha);
+    if (ssys_no_algebraic->fluxDictionary != NULL) {
+        for (i = 0; i < DSVariablePoolNumberOfVariables(DSSSystemXd(ssys_no_algebraic)); i++) {
+            name = DSVariableName(DSVariablePoolVariableAtIndex(DSSSystemXd(ssys_no_algebraic), i));
+            DSVariablePoolAddVariableWithName(pool, name);
+            DSVariablePoolSetValueForVariableWithName(pool,
+                                                      name,
+                                                      pow(10, DSMatrixDoubleValue(ss, i, 0)));
+        }
+        for (i = 0; i < DSVariablePoolNumberOfVariables(DSSSystemXd(ssys_no_algebraic)); i++) {
+            name = DSVariableName(DSVariablePoolVariableAtIndex(DSSSystemXd(ssys_no_algebraic), i));
+            index1 = DSVariablePoolIndexOfVariableWithName(DSSSystemXd(ssys_no_algebraic), name);
+            DSMatrixSetDoubleValue(flux, index1, 0,
+                                   log10(DSExpressionEvaluateWithVariablePool(DSDictionaryValueForName(ssys_no_algebraic->fluxDictionary,name), pool)));
+        }
+    }
+bail:
+    if (alpha != NULL)
+        DSMatrixFree(alpha);
+    if (ss != NULL)
+        DSMatrixFree(ss);
+    if (pool != NULL)
+        DSVariablePoolFree(pool);
+    if ( DSVariablePoolNumberOfVariables(DSSSystemXd_t( ssys)) != 0 )
+        DSSSystemFree((DSSSystem *)ssys_no_algebraic);
+    
+    return flux;
 }
 
 static void dsSSystemRouthArrayProcessZeroRoots(DSMatrix * routhMatrix, const DSUInteger row, const double threshold)
@@ -2934,6 +4356,69 @@ bail:
         return logGain;
 }
 
+extern double DSuSSystemLogarithmicGain(const DSSSystem *ssys, const char *XdName, const char *XiName)
+{
+    double logGain = INFINITY;
+    DSUInteger XdIndex = 0;
+    DSUInteger XiIndex = 0;
+    DSMatrix * L = NULL, * Ai = NULL;
+    
+    if (ssys == NULL) {
+        DSError(M_DS_SSYS_NULL, A_DS_ERROR);
+        goto bail;
+    }
+//    if ( DSVariablePoolNumberOfVariables(DSSSystemXd_t(ssys)) != 0 ){
+//        ssys_no_algebraic = DSSSystemByRemovingAlgebraicConstraints(ssys);
+//    } else {
+//        ssys_no_algebraic = ssys;
+//    }
+    if (XdName == NULL) {
+        DSError(M_DS_NULL, A_DS_ERROR);
+        goto bail;
+    }
+    if (XiName == NULL) {
+        DSError(M_DS_NULL, A_DS_ERROR);
+        goto bail;
+    }
+    if (DSVariablePoolHasVariableWithName(DSSSysXd(ssys), XdName) == false) {
+        DSError(M_DS_WRONG, A_DS_ERROR);
+        goto bail;
+    } else {
+        XdIndex=DSVariablePoolIndexOfVariableWithName(DSSSysXd(ssys), XdName);
+    }
+    if (DSVariablePoolHasVariableWithName(DSSSysXi(ssys), XiName) == false) {
+        DSError(M_DS_WRONG, A_DS_ERROR);
+        goto bail;
+    } else {
+        XiIndex = DSVariablePoolIndexOfVariableWithName(DSSSysXi(ssys), XiName);
+    }
+    Ai = DSSSystemAi(ssys);
+    if (Ai == NULL) {
+        goto bail;
+    }
+    if (DSSSystemIsUnstable(ssys) == false ){
+        goto bail;
+    }
+    
+    DSMatrix *Ad = DSSSystemAd(ssys);
+    const DSMatrix *pInverse = DSUnstableCaseGetSubSetPseudoInverse(ssys->Xd_t, NULL, ssys->Xd_b, Ad);
+    L = DSMatrixByMultiplyingMatrix(pInverse, Ai);
+    DSMatrixFree(Ad);
+    DSMatrixFree((DSMatrix *)pInverse);
+    
+    if (L == NULL) {
+        DSError(M_DS_MAT_NULL, A_DS_ERROR);
+        goto bail;
+    }
+    
+    logGain = -DSMatrixDoubleValue(L, XdIndex, XiIndex);
+    DSMatrixFree(L);
+    DSMatrixFree(Ai);
+
+bail:
+    return logGain;
+}
+
 
 #if defined (__APPLE__) && defined (__MACH__)
 #pragma mark - Utility functions
@@ -3288,6 +4773,13 @@ extern DSSSystemMessage * DSSSystemEncode(const DSSSystem * ssys)
                 message->xd_t[i] = strdup(DSVariableName(DSVariablePoolVariableAtIndex(X, i)));
         }
         message->n_xd_t = DSVariablePoolNumberOfVariables(X);
+        if (DSSSystemIsConserved(ssys) == true){
+            message->has_numberofconservations = true;
+            message->numberofconservations = ssys->numberOfConservations;
+        } else{
+            message->has_numberofconservations = false;
+        }
+
 bail:
         return message;
 }
@@ -3331,6 +4823,11 @@ extern DSSSystem * DSSSystemFromSSystemMessage(const DSSSystemMessage * message)
         }
         DSSSystemSetShouldFreeXd(ssystem, true);
         DSSSystemSetShouldFreeXi(ssystem, true);
+        if (message->has_numberofconservations == true){
+            ssystem->numberOfConservations = message->numberofconservations;
+            DSSSystemSetIsConserved(ssystem, true);
+        }
+    
 bail:
         return ssystem;
 }

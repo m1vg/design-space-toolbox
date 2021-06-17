@@ -35,8 +35,10 @@
 #include <string.h>
 #include <glpk.h>
 
+#include "qhull_ra.h"
 #include "DSMemoryManager.h"
 #include "DSCase.h"
+#include "DSUnstableCase.h"
 #include "DSVariable.h"
 #include "DSGMASystem.h"
 #include "DSSSystem.h"
@@ -84,8 +86,10 @@ static glp_prob * dsCaseLinearProblemForMatrices(const DSMatrix *A, const DSMatr
                 glp_set_row_bnds(linearProblem, i+1, GLP_UP, 0.0,
                                  DSMatrixDoubleValue(B, i, 0));
         }
-        for (i = 0; i < numberOfXi; i++)
-                glp_set_col_bnds(linearProblem, i+1, GLP_FR, 0., 0.);
+        for (i = 0; i < numberOfXi; i++){
+                glp_set_col_bnds(linearProblem, i+1, GLP_FR, 0., 0.); // original jason
+//                glp_set_col_bnds(linearProblem, i+1, GLP_DB, -20.0, 20.0); // edits miguel
+        }
         
         if (ia != NULL)
                 DSSecureFree(ia);
@@ -160,6 +164,212 @@ bail:
         return isValid;
 }
 
+extern const bool DSCaseHasSharedBoundaries(const DSCase * aCase1, const DSCase * aCase2, const bool intersecting){
+    
+        bool has_shared = false, has_shared_intersecting = false, has_shared_non_intersecting = false;
+        glp_prob *linearProblem = NULL;
+        const DSCase **pointer_cases = NULL;
+        DSCase * aCase = NULL;
+    
+        if (aCase1 == NULL || aCase2 == NULL) {
+                DSError(M_DS_CASE_NULL, A_DS_ERROR);
+                goto bail;
+        }
+        if (DSCaseHasSolution(aCase1) == false || DSCaseHasSolution(aCase2) == false ) {
+                goto bail;
+        }
+    
+        pointer_cases = DSSecureMalloc(sizeof( DSCase *)*2);
+        pointer_cases[0] = aCase1;
+        pointer_cases[1] = aCase2;
+        aCase = DSPseudoCaseFromIntersectionOfCases(2, pointer_cases);
+    
+        linearProblem = dsCaseLinearProblemForCaseValidity(DSCaseU(aCase), DSCaseZeta(aCase));
+    
+        if (linearProblem != NULL) {
+                glp_simplex(linearProblem, NULL);
+                if (glp_get_obj_val(linearProblem) <= -1E-14 && glp_get_prim_stat(linearProblem) == GLP_FEAS) {
+                        has_shared_intersecting = true;
+                }
+                if ((glp_get_obj_val(linearProblem) >= -1E-14 || glp_get_obj_val(linearProblem) <= 1E-14 ) && glp_get_prim_stat(linearProblem) == GLP_FEAS) {
+                        has_shared_non_intersecting = true;
+                }
+                glp_delete_prob(linearProblem);
+        }
+        if (intersecting == true)
+            has_shared = has_shared_intersecting;
+        else
+            has_shared = has_shared_non_intersecting;
+    
+        if (pointer_cases != NULL)
+            DSSecureFree(pointer_cases);
+        if (aCase != NULL)
+            DSSecureFree(aCase);
+bail:
+    return has_shared;
+}
+
+extern DSMatrix * DSCaseSharedBoundaries(const DSCase *aCase1, const DSCase *aCase2, const bool intersecting){
+    
+    bool has_shared = false;
+    DSMatrix *aux1 = NULL, *aux2 = NULL, *aux3 = NULL, *aux3_t = NULL;
+    DSMatrix *p1 = NULL, * p2 = NULL, * SharedBoundaries_aux = NULL, *SharedBoundaries = NULL;
+    DSUInteger bound_1, bound_2, rank, counter = 0, * rows = NULL, i, max_val;
+    
+    
+    //0. Initialice matrix SharedBoundaries_aux
+    max_val = DSCaseNumberOfBoundaries(aCase1) * DSCaseNumberOfBoundaries(aCase2);
+
+    SharedBoundaries_aux = DSMatrixAlloc(max_val, 2);
+    
+    //1. First, let's create a intersection from these two cases and see if they have the pontential to have shared boundaries
+    has_shared = DSCaseHasSharedBoundaries(aCase1, aCase2, intersecting);
+    
+    // 2. If these two cases have the potential for shared boundaries, calculate pairwise rank of boundaries.
+    if (has_shared == true){
+        
+        for (bound_1 = 0; bound_1 < DSCaseNumberOfBoundaries(aCase1); bound_1++){
+            for (bound_2 = 0; bound_2 < DSCaseNumberOfBoundaries(aCase2); bound_2++){
+                
+                
+                p1 = DSMatrixSubMatrixIncludingRowList(aCase1->U, 1, bound_1);
+                p2 = DSMatrixSubMatrixIncludingRowList(aCase1->zeta, 1, bound_1);
+                aux1 = DSMatrixAppendMatrices(p1, p2, true);
+                if (p1 != NULL)
+                    DSMatrixFree(p1);
+                if (p2 != NULL)
+                    DSMatrixFree(p2);
+                
+                p1 = DSMatrixSubMatrixIncludingRowList(aCase2->U, 1, bound_2);
+                p2 = DSMatrixSubMatrixIncludingRowList(aCase2->zeta, 1, bound_2);
+                aux2 = DSMatrixAppendMatrices(p1, p2, true);
+                if (p1 != NULL)
+                    DSMatrixFree(p1);
+                if (p2 != NULL)
+                    DSMatrixFree(p2);
+                
+                aux3 = DSMatrixAppendMatrices(aux1, aux2, false);
+                aux3_t = DSMatrixTranspose(aux3);
+                
+                rank = DSMatrixRank(aux3_t);
+            
+                if (rank == 1){
+                    DSMatrixSetDoubleValue(SharedBoundaries_aux, counter, 0, bound_1);
+                    DSMatrixSetDoubleValue(SharedBoundaries_aux, counter, 1, bound_2);
+                    counter ++;
+                }
+                
+                if (aux1 != NULL)
+                    DSMatrixFree(aux1);
+                if (aux2 != NULL)
+                    DSMatrixFree(aux2);
+                if (aux3 != NULL)
+                    DSMatrixFree(aux3);
+                if (aux3_t != NULL)
+                    DSMatrixFree(aux3_t);
+            }
+        }
+    }
+    
+    // 3. Initialize the rows vector, cut matrix SharedBoundaries_aux according to rows.
+    if (counter != 0){
+        rows = DSSecureMalloc(sizeof(DSUInteger)*counter);
+        for (i=0; i<counter; i++){
+            rows[i] = i;
+        }
+        SharedBoundaries = DSMatrixSubMatrixIncludingRows(SharedBoundaries_aux, counter, rows);
+    }
+    
+    if (SharedBoundaries_aux != NULL)
+        DSMatrixFree(SharedBoundaries_aux);
+    if (rows != NULL)
+        DSSecureFree(rows);
+
+    return SharedBoundaries;
+}
+
+extern const long int DSCaseSharedBoundariesNumberOfVertices(const DSCase *aCase1,
+                                                             const DSCase *aCase2,
+                                                             const DSVariablePool *lowerBounds,
+                                                             const DSVariablePool *upperBounds,
+                                                             const long int maxVertices,
+                                                             const bool limitVertices){
+    
+    DSUInteger n_variables = 0, k;
+    const DSCase **pointer_cases = NULL;
+    DSCase * aCase = NULL;
+    DSVariablePool *lowerBounds_int = NULL, *upperBounds_int = NULL;
+    const DSVariable ** all_variables = NULL ;
+    long int numberOfVertices = 0;
+    
+    //* The variable pools lowerBounds and upperBounds should assign values to the variables contained in the Xi pool (DSCaseXi(aCase))
+    
+    if (aCase1 == NULL || aCase2 == NULL){
+        DSError(M_DS_CASE_NULL, A_DS_ERROR);
+        goto bail;
+    }
+
+    if (lowerBounds == NULL || upperBounds == NULL){
+        DSError(M_DS_NULL":Variable Pool is Null",A_DS_ERROR);
+        goto bail;
+    }
+    
+
+    pointer_cases = DSSecureMalloc(sizeof( DSCase *)*2);
+    pointer_cases[0] = aCase1;
+    pointer_cases[1] = aCase2;
+    aCase = DSPseudoCaseFromIntersectionOfCases(2, pointer_cases);
+        
+    if (aCase == NULL) {
+            DSError(M_DS_CASE_NULL, A_DS_ERROR);
+            goto bail;
+    }
+    
+    n_variables = DSVariablePoolNumberOfVariables(DSCaseXi(aCase));
+    
+    if (n_variables != DSVariablePoolNumberOfVariables(lowerBounds)
+        || DSVariablePoolNumberOfVariables(lowerBounds) != DSVariablePoolNumberOfVariables(upperBounds)){
+        DSError(M_DS_WRONG":Inconsistent number of variables in pool",A_DS_ERROR);
+        goto bail;
+    }
+    
+    //* Let's just re-assign the values from lowerBounds and upperBounds just to make sure they are set in the correct order.
+    all_variables = DSVariablePoolAllVariables(DSCaseXi(aCase));
+    lowerBounds_int = DSVariablePoolCopy(DSCaseXi(aCase));
+    upperBounds_int = DSVariablePoolCopy(DSCaseXi(aCase));
+    for (k=0; k<n_variables; k++){
+        
+        DSVariablePoolSetValueForVariableWithName(lowerBounds_int,
+                                                  DSVariableName(all_variables[k]),
+                                                  DSVariablePoolValueForVariableWithName(lowerBounds, DSVariableName(all_variables[k])));
+        
+        DSVariablePoolSetValueForVariableWithName(upperBounds_int,
+                                                  DSVariableName(all_variables[k]),
+                                                  DSVariablePoolValueForVariableWithName(upperBounds, DSVariableName(all_variables[k])));
+        
+    }
+    
+    DSCaseRemoveRedundantBoundaries(aCase);
+    numberOfVertices = DSCaseNDVertexEnumerationNumberOfVertices(aCase,
+                                                                lowerBounds_int,
+                                                                upperBounds_int,
+                                                                maxVertices,
+                                                                limitVertices);
+    
+    if (pointer_cases != NULL)
+        DSSecureFree(pointer_cases);
+    if (aCase != NULL)
+        DSCaseFree(aCase);
+    if (lowerBounds_int != NULL)
+        DSVariablePoolFree(lowerBounds_int);
+    if (upperBounds_int != NULL)
+        DSVariablePoolFree(upperBounds_int);
+
+bail:
+    return numberOfVertices;
+    
+}
+
 extern const bool DSCaseIsValid(const DSCase *aCase, const bool strict)
 {
         bool isValid = false;
@@ -187,6 +397,58 @@ extern const bool DSCaseIsValid(const DSCase *aCase, const bool strict)
         }
 bail:
         return isValid;
+}
+
+extern const bool DSCaseSharedBoundariesIsValid(const DSCase *aCase)
+{
+        bool isValid = false;
+        glp_prob *linearProblem = NULL;
+        if (aCase == NULL) {
+                DSError(M_DS_CASE_NULL, A_DS_ERROR);
+                goto bail;
+        }
+        if (DSCaseHasSolution(aCase) == false) {
+                goto bail;
+        }
+        linearProblem = dsCaseLinearProblemForCaseValidity(DSCaseU(aCase), DSCaseZeta(aCase));
+        if (linearProblem != NULL) {
+                glp_simplex(linearProblem, NULL);
+                if (glp_get_obj_val(linearProblem) <= 1E-14 && glp_get_prim_stat(linearProblem) == GLP_FEAS) {
+                        isValid = true;
+                }
+                glp_delete_prob(linearProblem);
+        }
+bail:
+        return isValid;
+}
+
+extern const bool DSCasesSharedBoundariesIsValid(const DSCase *aCase1, const DSCase *aCase2){
+    
+    bool isValid = false;
+    const DSCase **pointer_cases = NULL;
+    DSCase * aCase = NULL;
+
+
+    
+    if (aCase1 == NULL || aCase2 == NULL){
+        DSError(M_DS_CASE_NULL, A_DS_ERROR);
+        goto bail;
+    }
+    
+    pointer_cases = DSSecureMalloc(sizeof( DSCase *)*2);
+    pointer_cases[0] = aCase1;
+    pointer_cases[1] = aCase2;
+    aCase = DSPseudoCaseFromIntersectionOfCases(2, pointer_cases);
+    
+    isValid = DSCaseSharedBoundariesIsValid(aCase);
+    
+    if (pointer_cases != NULL)
+        DSSecureFree(pointer_cases);
+    if (aCase != NULL)
+        DSCaseFree(aCase);
+    
+bail:
+    return isValid;
 }
 
 __deprecated extern const bool DSCaseIsValidInStateSpace(const DSCase *aCase) {
@@ -470,6 +732,35 @@ extern DSVariablePool * DSCaseValidParameterSet(const DSCase *aCase)
                 }
                 glp_delete_prob(linearProblem);
         }
+bail:
+        return Xi;
+}
+
+extern DSVariablePool * DSCaseSharedBoundariesValidParameterSet(const DSCase *aCase)
+{
+        DSVariablePool * Xi = NULL;
+        glp_prob *linearProblem = NULL;
+        DSUInteger i;
+        if (aCase == NULL) {
+                DSError(M_DS_CASE_NULL, A_DS_ERROR);
+                goto bail;
+        }
+        if (DSCaseSharedBoundariesIsValid(aCase) == false){
+                goto bail;
+        }
+        linearProblem = dsCaseLinearProblemForCaseValidity(DSCaseU(aCase), DSCaseZeta(aCase));
+        if (linearProblem != NULL) {
+                glp_simplex(linearProblem, NULL);
+                if (glp_get_obj_val(linearProblem) <= 1E-14 && glp_get_prim_stat(linearProblem) == GLP_FEAS) {
+                        Xi = DSVariablePoolCopy(DSCaseXi(aCase));
+                        DSVariablePoolSetReadWriteAdd(Xi);
+                        for (i = 0; i < DSVariablePoolNumberOfVariables(Xi); i++) {
+                                DSVariableSetValue(DSVariablePoolAllVariables(Xi)[i], pow(10, glp_get_col_prim(linearProblem, i+1)));
+                        }
+                }
+                glp_delete_prob(linearProblem);
+        }
+        
 bail:
         return Xi;
 }
@@ -945,9 +1236,6 @@ extern const bool DSCaseIsValidAtSlice(const DSCase *aCase, const DSVariablePool
         }
         if (dsCaseSetVariableBoundsLinearProblem(aCase, linearProblem, lowerBounds, upperBounds) <= DSVariablePoolNumberOfVariables(DSCaseXi(aCase))) {
                 glp_simplex(linearProblem, NULL);
-//                if (DSCaseNumber(aCase) == 7) {
-//                        printf("Case 4: %.15f %i [%i]", glp_get_obj_val(linearProblem), glp_get_prim_stat(linearProblem), DSCaseIsValidAtPoint(aCase, lowerBounds));
-//                }
                 if (strict == true) {
                         if (glp_get_obj_val(linearProblem) <= -1E-14 && glp_get_prim_stat(linearProblem) == GLP_FEAS)
                                 isValid = true;
@@ -958,6 +1246,7 @@ extern const bool DSCaseIsValidAtSlice(const DSCase *aCase, const DSVariablePool
         }
         
         glp_delete_prob(linearProblem);
+    
 bail:
         return isValid;
 }
@@ -1645,6 +1934,23 @@ exit:
         return vertexAndConnectivity;
 }
 
+long int DSCaseVerticesNumberOfVerticesForNDSlice(const DSCase *aCase,
+                                                  const DSVariablePool * lowerBounds,
+                                                  const DSVariablePool *upperBounds,
+                                                  const long int maxVertices,
+                                                  const bool limitVertices){
+        
+        long int numberVertices;
+    
+        numberVertices = DSCaseNDVertexEnumerationNumberOfVertices(aCase,
+                                                                   lowerBounds,
+                                                                   upperBounds,
+                                                                   maxVertices,
+                                                                   limitVertices);
+    
+        return numberVertices;
+}
+
 extern DSVertices * DSCaseVerticesForSlice(const DSCase *aCase, const DSVariablePool * lowerBounds, const DSVariablePool *upperBounds, const DSUInteger numberOfVariables, const char **variables)
 {
         DSVertices *vertices = NULL;
@@ -1910,6 +2216,607 @@ bail:
         return O;
 }
 
+extern DSCaseVolume * DSCaseVolume_lrs(const DSCase *aCase,
+                                       const DSVariablePool *lowerBounds,
+                                       const DSVariablePool *upperBounds,
+                                       const long int maxNumberVertices,
+                                       const bool limitVertices,
+                                       const bool return_vertices_matrix){
+    
+    /* The calculation of the volume using the lrs library involves two steps. First, we calculate the vertices of the polytope using the function DSCaseVerticesNDSlice(). In a second step we go back to the H-Representation again using the lrs library. */
+
+    DSCaseVolume *Volume = NULL;
+    DSMatrixArray *matrixArray = NULL;
+    DSMatrix * Vertices = NULL;
+    
+    if (aCase == NULL) {
+            DSError(M_DS_CASE_NULL, A_DS_ERROR);
+            goto bail;
+    }
+    Volume = DSSecureMalloc(sizeof(DSCaseVolume));
+    matrixArray = DSCaseNDVertexEnumerationVertices(aCase,
+                                                    lowerBounds,
+                                                    upperBounds,
+                                                    maxNumberVertices,
+                                                    limitVertices,
+                                                    Volume);
+    if (matrixArray == NULL)
+            goto bail;
+    
+    Vertices = DSMatrixArrayMatrix(matrixArray, 0);
+
+    /* The Vertices matrix has dimensions [Nr. Vertices x Independent Variables] */
+    DSCaseFacetsForVertices(aCase, Vertices, maxNumberVertices, limitVertices, Volume);
+    
+    if (return_vertices_matrix == true){
+            Volume->vertices = Vertices;
+            dsCaseVolumeSetAverage(lowerBounds, Volume);
+    }else{
+            DSMatrixArrayFree(matrixArray);
+    }
+    
+    
+    
+//    dsCallqHull();
+    
+    DSVariablePool *centroid = NULL;
+    centroid = DSCaseCentroid_qhull(aCase,
+                                    lowerBounds,
+                                    upperBounds,
+                                    maxNumberVertices,
+                                    limitVertices);
+    
+bail:
+    return Volume;
+
+}
+
+extern DSVariablePool * DSCaseCentroid_qhull(const DSCase *aCase,
+                                             const DSVariablePool *lowerBounds,
+                                             const DSVariablePool *upperBounds,
+                                             const long int maxNumberVertices,
+                                             const bool limitVertices){
+    
+    DSVariablePool *centroid = NULL;
+    DSMatrixArray *matrixArray = NULL;
+    DSMatrix * Vertices = NULL;
+    DSCaseVolume *Volume = NULL;
+    coordT *points = NULL;
+
+     
+     if (aCase == NULL) {
+             DSError(M_DS_CASE_NULL, A_DS_ERROR);
+             goto bail;
+     }
+     Volume = DSSecureMalloc(sizeof(DSCaseVolume));
+     matrixArray = DSCaseNDVertexEnumerationVertices(aCase,
+                                                     lowerBounds,
+                                                     upperBounds,
+                                                     maxNumberVertices,
+                                                     limitVertices,
+                                                     Volume);
+     if (matrixArray == NULL)
+             goto bail;
+     
+     Vertices = DSMatrixArrayMatrix(matrixArray, 0);
+    
+    /*
+     The next steps for the calculation include:
+     
+     1. Transform Matrix [numpoints x dim] into vector[numpoints x (dim + 1)] for the delaunay trianqulation
+     
+     2. Call delaunay triangulation.
+     
+     3. Call function within the macros FORALLfacets & FOREACHvertex_ that calculates centroid and updates the total volume.
+     
+     */
+    
+    points = DSMatrixToArray(Vertices, true);
+    centroid = DSVariablePoolCopy(DSCaseXi(aCase));
+    DSVariablePoolSetReadWriteAdd((DSVariablePool *) centroid);
+    dsCaseCalculateCentroid_qhull(points,
+                                  DSMatrixColumns(Vertices)+1,
+                                  DSMatrixRows(Vertices),
+                                  centroid);
+    
+    DSMatrixArrayFree(matrixArray);
+    DSSecureFree(Volume);
+    DSSecureFree(points);
+
+bail:
+    
+    return centroid;
+}
+
+void dsCaseCalculateCentroid_qhull(coordT *points,
+                                   DSUInteger dim,
+                                   DSUInteger numpoints,
+                                   DSVariablePool *centroid){
+    
+
+        boolT ismalloc= False;    /* True if qhull should free points in qh_freeqhull() or reallocation */
+        char flags[250];          /* option flags for qhull, see qh-quick.htm */
+        FILE *errfile= stderr;    /* error messages from qhull code */
+        int exitcode;             /* 0 if no error from qhull */
+        facetT *facet;            /* set by FORALLfacets */
+        int curlong, totlong;     /* memory remaining after qh_memfreeshort, used if !qh_NOmem  */
+        int i=0;
+        vertexT *vertex, **vertexp;
+        double total_volume = 0.0, facet_volume = 0.0;
+        coordT *case_centroid = NULL;
+        coordT *facet_centroid = NULL;
+        coordT *facet_points = NULL;
+        int vertex_count = 0;
+        const DSVariable ** variables;
+    
+        qhT qh_qh;    /* Create a new instance of Qhull (qhB) */
+        qhT *qh = &qh_qh;
+
+        QHULL_LIB_CHECK
+        qh_zero(qh, errfile);
+        sprintf(flags, "qhull s Tcv i Fa FA d QJ Pp"); // for delaunay computations
+//        sprintf(flags, "qhull s i FA QJ"); // for volume computations
+
+        qh_init_A(qh, stdin, stdout, stderr, 0, NULL);
+        exitcode = setjmp(qh->errexit);
+        fflush(NULL);
+        qh->NOerrexit= False;
+        if (!exitcode) {
+                qh_initflags(qh, flags);
+                qh_setdelaunay(qh, dim, numpoints, points);
+                qh_init_B(qh, points, numpoints, dim, ismalloc);
+                qh_qhull(qh);
+                qh_check_output(qh);
+                fflush(NULL);
+//                qh_produce_output(qh);  /* delete this line to help avoid io_r.c */
+                qh_prepare_output(qh);
+                if (qh->VERIFYoutput && !qh->FORCEoutput && !qh->STOPadd && !qh->STOPcone && !qh->STOPpoint)
+                  qh_check_points(qh);
+                fflush(NULL);
+                
+                /* Define an array containing the case centroid */
+                case_centroid = DSSecureCalloc(sizeof(coordT), dim-1);
+                
+                FORALLfacets {
+                    if(facet->good){
+                        /* 1. Initialice point array that will contain the vertices of the facet */
+                        facet_points = DSSecureMalloc(sizeof(coordT)*(dim*(dim-1)));
+                        /* 2. Initialice a variable pool that will contain the centroid of this facet */
+                        facet_centroid = DSSecureCalloc(sizeof(coordT), dim-1);
+                        vertex_count = 0;
+                                FOREACHvertex_(facet->vertices){
+                                    
+                                    for (i=0; i<(dim-1); i++){
+                                        /* Fill out the facet_points array with information of each vertex*/
+                                        facet_points[i + vertex_count*(dim-1)] = vertex->point[i];
+                                        
+                                        /* Update facet_centroid array containing the centroid of the facet*/
+                                        facet_centroid[i] += vertex->point[i];
+                                    }
+                                vertex_count++;
+                                }
+                        
+                        /* Get the volume of the respective facet. Update the total volume */
+                        facet_volume = DSVolumefromArray_qhull(facet_points, dim, dim-1);
+                        total_volume += facet_volume;
+
+                        for(i=0; i<(dim-1); i++){
+                            /* scale the centroid of the facet by dividing by the number of points and multiplying by the volume of the facet */
+                            facet_centroid[i] = (facet_centroid[i]*facet_volume)/(dim);
+                            /* update the centroid case by adding the facet centroid to the case centroid*/
+                            case_centroid[i] += facet_centroid[i];
+                        }
+                    
+                        if (facet_centroid != NULL)
+                            DSSecureFree(facet_centroid);
+                        if (facet_points != NULL)
+                            DSSecureFree(facet_points);
+                    }
+                }
+            /* Scale the case centroid */
+            
+            variables = DSVariablePoolAllVariables(centroid);
+            for(i=0; i<(dim-1); i++){
+                
+                case_centroid[i] = case_centroid[i]/total_volume;
+                DSVariablePoolSetValueForVariableWithName(centroid,
+                                                          DSVariableName(variables[i]),
+                                                          case_centroid[i]);
+            }
+            
+            if (case_centroid !=NULL)
+                DSSecureFree(case_centroid);
+        }
+        qh->NOerrexit= True;
+        #ifdef qh_NOmem
+          qh_freeqhull(qh, qh_ALL);
+        #else
+          qh_freeqhull(qh, !qh_ALL);
+          qh_memfreeshort(qh, &curlong, &totlong);
+          if (curlong || totlong)
+            fprintf(stderr, "qhull warning (user_eg2, run 2): did not free %d bytes of long memory (%d pieces)\n",
+                 totlong, curlong);
+        #endif
+    
+}
+
+
+void dsCallqHull(void){
+    
+    int DIM = 3;
+    int TOTpoints = 8;
+
+    int dim= DIM;             /* dimension of points */
+    int numpoints = TOTpoints;            /* number of points */
+    coordT points[DIM*TOTpoints]; /* array of coordinates for each point */
+    boolT ismalloc= False;    /* True if qhull should free points in qh_freeqhull() or reallocation */
+    char flags[250];          /* option flags for qhull, see qh-quick.htm */
+    FILE *outfile= stdout;    /* output from qh_produce_output()
+                                 use NULL to skip qh_produce_output() */
+    FILE *errfile= stderr;    /* error messages from qhull code */
+    int exitcode;             /* 0 if no error from qhull */
+    facetT *facet;            /* set by FORALLfacets */
+    int curlong, totlong;     /* memory remaining after qh_memfreeshort, used if !qh_NOmem  */
+    int i=0;
+    double value;
+    vertexT *vertex, **vertexp;
+
+    qhT qh_qh;    /* Create a new instance of Qhull (qhB) */
+    qhT *qh = &qh_qh;
+
+    QHULL_LIB_CHECK
+    qh_zero(qh, errfile);
+//    sprintf(flags, "qhull s Tcv i Fa FA d QJ"); // for delaunay computations
+    sprintf(flags, "qhull s i FA QJ"); // for volume computations
+
+    
+    qh_init_A(qh, stdin, stdout, stderr, 0, NULL);
+    exitcode = setjmp(qh->errexit);
+    fflush(NULL);
+    qh->NOerrexit= False;
+    if (!exitcode) {
+        qh_initflags(qh, flags);
+        
+//        // Define the array. Vertices of case 15 [-3 to 3]
+//        points[0] = -1.00031292439;
+//        points[1] = -1.875;
+//        points[2] = 0;
+//
+//        points[3] = -3.0;
+//        points[4] = -1.875;
+//        points[5] = 0;
+//
+//        points[6] = -3.0;
+//        points[7] = -2.0;
+//        points[8] = 0;
+//
+//        points[9] = -0.50031286478;
+//        points[10] = -2.0;
+//        points[11] = 0;
+        
+//        // Define the array. Vertices of case 11 [-4 to 4]
+//        points[0] = -1.0;
+//        points[1] = 4.0;
+//        points[2] = 0;
+//
+//        points[3] = -4.0;
+//        points[4] = 4.0;
+//        points[5] = 0;
+//
+//        points[6] = -4.0;
+//        points[7] = -1.87512516975;
+//        points[8] = 0;
+//
+//        points[9] = -1.0;
+//        points[10] = -1.87512516975;
+//        points[11] = 0;
+        
+        
+//        // Define the array. Vertices of case 1 [-4 to 4] @ MOTIF1-3D. Ro = 100
+//        points[0] = 10000.0 ;
+//        points[1] = 10000.0 ;
+//        points[2] = 10000.0;
+//        points[3] = 0;
+//
+////         point 2
+//        points[4] = 10000.0;
+//        points[5] = 1.0;
+//        points[6] = 10000.0;
+//        points[7] = 0;
+//
+////         point 3
+//        points[8] = 1.0;
+//        points[9] = 1.0;
+//        points[10] = 10000.0;
+//        points[11] = 0;
+//
+////        point 4
+//        points[12] = 1.0;
+//        points[13] = 10000.0;
+//        points[14] = 10000.0;
+//        points[15] = 0;
+//
+////        point 5
+//        points[16] = 10000.0;
+//        points[17] = 10000.0;
+//        points[18] = 0.01;
+//        points[19] = 0;
+//
+////        point 6
+//        points[20] = 10000.0;
+//        points[21] = 1.0;
+//        points[22] = 0.01;
+//        points[23] = 0;
+//
+////        point 7
+//        points[24] = 1.0;
+//        points[25] = 1.0;
+//        points[26] = 0.01;
+//        points[27] = 0;
+//
+////        point 8
+//        points[28] = 1.0;
+//        points[29] = 10000.0;
+//        points[30] = 0.01;
+//        points[31] = 0;
+        
+        
+        // Define the array. Vertices of case 1 [-4 to 4] @ MOTIF1-3D. Ro = 100
+        points[0] = 4.0 ;
+        points[1] = 4.0 ;
+        points[2] = 4.0;
+        
+//         point 2
+        points[3] = 4.0;
+        points[4] = 0.0;
+        points[5] = 4.0;
+        
+//         point 3
+        points[6] = 0;
+        points[7] = 0;
+        points[8] = 4.0;
+        
+//        point 4
+        points[9] = 0.0;
+        points[10] = 4.0;
+        points[11] = 4.0;
+        
+//        point 5
+        points[12] = 4.0;
+        points[13] = 4.0;
+        points[14] = -2.0;
+        
+//        point 6
+        points[15] = 4.0;
+        points[16] = 0.0;
+        points[17] = -2.0;
+        
+//        point 7
+        points[18] = 0.0;
+        points[19] = 0.0;
+        points[20] = -2.0;
+        
+//        point 8
+        points[21] = 0.0;
+        points[22] = 4.0;
+        points[23] = -2.0;
+    
+
+//        qh_setdelaunay(qh, dim, numpoints, points);
+        qh_init_B(qh, points, numpoints, DIM, ismalloc);
+        qh_qhull(qh);
+        qh_check_output(qh);
+        fflush(NULL);
+
+        qh_produce_output(qh);  /* delete this line to help avoid io_r.c */
+        if (qh->VERIFYoutput && !qh->FORCEoutput && !qh->STOPadd && !qh->STOPcone && !qh->STOPpoint)
+          qh_check_points(qh);
+        fflush(NULL);
+        
+        
+        // Playing a bit
+        
+        printf("The total area of the facet is: %f. The total volume is: %f \n ",
+               qh->totarea,
+               qh->totvol);
+        
+        printf("The number of Delaunay regions is: %u \n", qh->num_good);
+        printf("About to print good facets \n");
+        FORALLfacets {
+            if(facet->good){
+                    
+                    printf("Facet %d. Area = %f \n", i, facet->f.area);
+                    printf("The maximum number of elements of the vertices is %d \n", facet->vertices->maxsize);
+                
+                    FOREACHvertex_(facet->vertices){
+                            printf("The id for the vertex is %d \n", vertex->id);
+                            printf("The coordinates of this vertex are: %f %f %f \n",
+                                  vertex->point[0],
+                                  vertex->point[1],
+                                  vertex->point[2]);
+                    }
+
+                    i++;
+            }
+        }
+            
+    }
+    qh->NOerrexit= True;
+    #ifdef qh_NOmem
+      qh_freeqhull(qh, qh_ALL);
+    #else
+      qh_freeqhull(qh, !qh_ALL);
+      qh_memfreeshort(qh, &curlong, &totlong);
+      if (curlong || totlong)
+        fprintf(stderr, "qhull warning (user_eg2, run 2): did not free %d bytes of long memory (%d pieces)\n",
+             totlong, curlong);
+    #endif
+    
+    
+    printf("Testing routine DSVolumefromFloatArray_qhull \n");
+    float volume;
+    volume = DSVolumefromArray_qhull(points, numpoints, DIM);
+    printf("The volume calculated from the routine is %f \n", volume);
+    printf("End of dsCallqHull \n");
+    
+}
+
+
+
+void dsCaseVolumeSetAverage(const DSVariablePool * variables,
+                            DSCaseVolume * Volume ){
+    
+    
+    DSMatrix * vertices;
+    vertices = Volume->vertices;
+    
+    
+    if (vertices == NULL || variables == NULL || Volume == NULL){
+            DSError("NULL pointer ", A_DS_ERROR);
+            goto bail;
+    }
+    
+    DSMatrix * averages = NULL;
+    DSInteger i;
+    DSVariablePool * aux = NULL;
+    const DSVariable ** var;
+    double value = 0.0;
+    
+    averages = DSMatrixAverage(vertices, false);
+    
+    if (DSMatrixColumns(averages) != DSVariablePoolNumberOfVariables(variables)){
+            DSError("The number of dimensions is not consistent with the number of variables ", A_DS_ERROR);
+            goto bail;
+    }
+    
+    var = DSVariablePoolAllVariables(variables);
+    aux = DSVariablePoolCopy(variables);
+    
+    for (i=0; i<DSVariablePoolNumberOfVariables(variables); i++){
+        value = DSMatrixDoubleValue(averages, 0, i);
+        DSVariablePoolSetValueForVariableWithName(aux,
+                                                  DSVariableName(var[i]),
+                                                  value);
+    }
+    
+    Volume->average = aux;
+    
+bail:
+    return;
+}
+
+extern double DSCaseVolumeGetVolume(const DSCaseVolume * Volume_str){
+    
+    double volume = 0;
+    
+    if (Volume_str == NULL) {
+            DSError("Pointer is null!", A_DS_ERROR);
+            goto bail;
+    }
+    
+    volume = Volume_str->volume;
+    
+bail:
+    return volume;
+    
+    
+}
+
+extern double DSCaseVolumeGetVertices(const DSCaseVolume * Volume_str){
+    
+    double vertices = 0;
+    
+    if (Volume_str == NULL) {
+            DSError("Pointer is null!", A_DS_ERROR);
+            goto bail;
+    }
+    
+    vertices = Volume_str->nr_vertices;
+    
+bail:
+    return vertices;
+}
+
+extern DSMatrix * DSCaseVolumeGetVerticesMatrix(const DSCaseVolume * Volume_str){
+    
+    DSMatrix * vertices = NULL;
+    
+    if (Volume_str == NULL) {
+            DSError("Pointer is null!", A_DS_ERROR);
+            goto bail;
+    }
+    
+    vertices = Volume_str->vertices;
+    
+bail:
+    return vertices;
+}
+
+extern DSVariablePool * DSCaseVolumeGetOperatingPoint2D(const DSCaseVolume *Volume_str){
+    
+    DSVariablePool *operatingPoint = NULL;
+    
+    
+    if (Volume_str == NULL) {
+            DSError("Pointer is null!", A_DS_ERROR);
+            goto bail;
+    }
+    
+    operatingPoint = Volume_str->average;
+bail:
+    return operatingPoint;
+}
+
+
+extern double DSCaseDimension(const DSCase *aCase,
+                              const DSVariablePool *lowerBounds,
+                              const DSVariablePool *upperBounds){
+    
+    /* This function calculates the dimensionality of the vertices of the polytope  */
+
+    DSMatrixArray *matrixArray = NULL;
+    DSMatrix * Vertices = NULL;
+    DSMatrix *aux = NULL;
+    double dimension = 0.0;
+    
+    if (aCase == NULL) {
+            DSError(M_DS_CASE_NULL, A_DS_ERROR);
+            goto bail;
+    }
+        
+    matrixArray = DSCaseNDVertexEnumeration(aCase, lowerBounds, upperBounds);
+        
+    if (matrixArray == NULL) {
+            goto bail;
+    }
+    if (DSMatrixArrayNumberOfMatrices(matrixArray) < 2) {
+            goto bail;
+    }
+    
+    Vertices = DSMatrixArrayMatrix(matrixArray, 0);
+    
+//    printf("Reporting from function DSCaseDimension(). for case %s. The vertices of this case are: \n ", aCase->caseIdentifier);
+//    DSMatrixPrint(Vertices);
+
+    if (DSMatrixColumns(Vertices) > DSMatrixRows(Vertices))
+        aux = DSMatrixTranspose(Vertices);
+    else
+        aux = Vertices;
+    
+    if (aux != NULL)
+        dimension = DSMatrixRank(aux);
+    else
+        goto bail;
+        
+    if (matrixArray != NULL)
+        DSMatrixArrayFree(matrixArray);
+    
+bail:
+    return dimension;
+
+}
+
+
 #if defined (__APPLE__) && defined (__MACH__)
 #pragma mark Intersection of cases
 #endif
@@ -2006,7 +2913,7 @@ extern DSPseudoCase * DSPseudoCaseFromIntersectionOfCases(const DSUInteger numbe
 {
         DSUInteger i;
         DSPseudoCase * caseIntersection = NULL;
-        DSMatrix *Cd = NULL, *Ci = NULL, *delta = NULL, *U = NULL, *Zeta = NULL, *temp;
+        DSMatrix *Cd = NULL, *Ci = NULL, *delta = NULL, *U = NULL, *Zeta = NULL, *temp = NULL;
         char caseIdentifier[1000];
         if (numberOfCases == 0) {
                 DSError(M_DS_WRONG ": Number of cases must be at least one", A_DS_ERROR);
@@ -2026,29 +2933,55 @@ extern DSPseudoCase * DSPseudoCaseFromIntersectionOfCases(const DSUInteger numbe
         }
         U = DSMatrixCopy(DSCaseU(cases[0]));
         Zeta = DSMatrixCopy(DSCaseZeta(cases[0]));
-        Ci = DSMatrixCopy(DSCaseCi(cases[0]));
-        Cd = DSMatrixCopy(DSCaseCd(cases[0]));
-        delta = DSMatrixCopy(DSCaseDelta(cases[0]));
+        // These checks were added because when analyzing blowing behavior of a single s-system matrices Ci, Cd and Delta do not exist.
+        if (DSCaseCi(cases[0]) != NULL)
+            Ci = DSMatrixCopy(DSCaseCi(cases[0]));
+        if (DSCaseCd(cases[0]) != NULL)
+            Cd = DSMatrixCopy(DSCaseCd(cases[0]));
+        if (DSCaseDelta(cases[0]) != NULL)
+            delta = DSMatrixCopy(DSCaseDelta(cases[0]));
         sprintf(caseIdentifier, "%s", DSCaseIdentifier(cases[0]));
         for (i = 1; i < numberOfCases; i++) {
                 sprintf(caseIdentifier, "%s, %s", caseIdentifier, DSCaseIdentifier(cases[i]));
-                temp = DSMatrixAppendMatrices(U, DSCaseU(cases[i]), false);
-                DSMatrixFree(U);
-                U = temp;
-                temp = DSMatrixAppendMatrices(Zeta, DSCaseZeta(cases[i]), false);
-                DSMatrixFree(Zeta);
-                Zeta = temp;
-                temp = DSMatrixAppendMatrices(Cd, DSCaseCd(cases[i]), false);
-                DSMatrixFree(Cd);
-                Cd = temp;
-                temp = DSMatrixAppendMatrices(Ci, DSCaseCi(cases[i]), false);
-                DSMatrixFree(Ci);
-                Ci = temp;
-                temp = DSMatrixAppendMatrices(delta, DSCaseDelta(cases[i]), false);
-                DSMatrixFree(delta);
-                delta = temp;
-                if (U == NULL || Zeta == NULL || Cd == NULL || Ci == NULL || delta == NULL)
+            
+                if (U != NULL && DSCaseU(cases[i]) != NULL ){
+                    temp = DSMatrixAppendMatrices(U, DSCaseU(cases[i]), false);
+                    DSMatrixFree(U);
+                    U = temp;
+                }
+            
+                if (Zeta != NULL && DSCaseZeta(cases[i]) != NULL ){
+                    temp = DSMatrixAppendMatrices(Zeta, DSCaseZeta(cases[i]), false);
+                    DSMatrixFree(Zeta);
+                    Zeta = temp;
+                }
+            
+                if (Cd != NULL && DSCaseCd(cases[i]) != NULL ){
+                    temp = DSMatrixAppendMatrices(Cd, DSCaseCd(cases[i]), false);
+                    DSMatrixFree(Cd);
+                    Cd = temp;
+                }
+            
+                if (Ci != NULL && DSCaseCi(cases[i]) != NULL){
+                    temp = DSMatrixAppendMatrices(Ci, DSCaseCi(cases[i]), false);
+                    DSMatrixFree(Ci);
+                    Ci = temp;
+                }
+            
+                if (delta != NULL && DSCaseDelta(cases[i])){
+                    temp = DSMatrixAppendMatrices(delta, DSCaseDelta(cases[i]), false);
+                    DSMatrixFree(delta);
+                    delta = temp;
+                }
+            
+//                if (U == NULL || Zeta == NULL || Cd == NULL || Ci == NULL || delta == NULL)
+//                        goto bail;
+            
+//               This constraint was relaxed to allow for analysis of subcases of single S-systems (without Cd, Ci oder     delta matrices).
+            
+                  if (U == NULL && Zeta == NULL && Cd == NULL && Ci == NULL && delta == NULL)
                         goto bail;
+            
         }
         caseIntersection = DSSecureCalloc(1, sizeof(DSCase));
         caseIntersection->freeVariables = true;
@@ -2461,3 +3394,219 @@ bail:
         return faces;
 }
 
+extern const bool DSUnstableCaseConditionsAreValid(DSUnstableCase *uCase, const DSUInteger *bSignature)
+{
+    
+            bool isValid = false;
+            glp_prob *linearProblem = NULL;
+            DSMatrix * U1 = NULL, *U2 = NULL, *U = NULL, * Zeta1 = NULL, *Zeta = NULL;
+            DSCase *aCase = uCase->originalCase;
+    
+            if (uCase == NULL || aCase == NULL ) {
+                DSError(M_DS_CASE_NULL, A_DS_ERROR);
+                goto bail;
+            }
+    
+            if (bSignature == NULL)
+                goto bail;
+    
+            // populate matrices Cd_unstable, Ci_unstable and delta_unstable
+            dsUnstableCaseGetAdditionalConstraintMatrices(uCase, bSignature);
+            
+             if (uCase->Cd_unstable == NULL || uCase->Ci_unstable == NULL || uCase->delta_unstable == NULL ) {
+                 goto bail;
+             }
+    
+    
+            if (DSCaseCd(aCase) != NULL && DSCaseCi(aCase) != NULL ){
+                U1 = DSMatrixAppendMatrices(DSCaseCd(aCase), DSCaseCi(aCase), true);
+                U2 = DSMatrixAppendMatrices(uCase->Cd_unstable, uCase->Ci_unstable, true);
+                U = DSMatrixAppendMatrices(U1, U2, false);
+                if (U1 != NULL)
+                    DSMatrixFree(U1);
+                if (U2 != NULL)
+                    DSMatrixFree(U2);
+                Zeta1 = DSCaseDelta(aCase);
+                Zeta = DSMatrixAppendMatrices(Zeta1, uCase->delta_unstable, false);
+            } else {
+                 U = DSMatrixAppendMatrices(uCase->Cd_unstable, uCase->Ci_unstable, true);
+                 Zeta = DSMatrixCopy(uCase->delta_unstable);
+            }
+            if (U != NULL && Zeta != NULL)
+                    linearProblem = dsUnstableCaseLinearProblemForCaseValidity(U, Zeta, uCase, bSignature);
+            if (U !=NULL)
+                DSMatrixFree(U);
+            if (Zeta != NULL)
+                DSMatrixFree(Zeta);
+    
+            if (linearProblem != NULL) {
+                glp_simplex(linearProblem, NULL);
+                
+                // -1e-14 original value // alt. value -1e-13
+                if (glp_get_obj_val(linearProblem) <= -1e-13 && glp_get_prim_stat(linearProblem) == GLP_FEAS) {
+                    isValid = true;
+                    DSUnstableCaseDetermineBlowingBehavior(linearProblem, uCase, bSignature);
+                }
+                glp_delete_prob(linearProblem);
+            }
+        bail:
+            return isValid;
+    
+}
+
+extern glp_prob * dsUnstableCaseLinearProblemForMatrices(const DSMatrix *A_, const DSMatrix *B_,
+                                                         DSUnstableCase *uCase, const DSUInteger * bSignature)
+{
+            glp_prob *linearProblem = NULL;
+            int * ia = NULL, *ja = NULL;
+            double *ar = NULL;
+            DSUInteger i, numberOfXi, numberOfBoundaries;
+            DSUInteger numberOfEqualities = uCase->Xd_e->numberOfVariables , numberOfKnifes = uCase->knifeEdge->numberOfVariables;
+            DSUInteger numberOfBlowing = uCase->Xd_b->numberOfVariables;
+            DSMatrixArray *lp_AB1 = NULL, *lp_AB2 = NULL;
+            DSUInteger blowingIndex;
+            char * name;
+            const DSVariablePool *Xd = uCase->originalCase->Xd;
+            DSMatrix *A, *B;
+            DSUInteger numberOfOriginalBounds;
+    
+            if (uCase->originalCase->delta != NULL ){
+                 numberOfOriginalBounds = DSMatrixRows(uCase->originalCase->delta) + numberOfBlowing;
+            } else {
+                 numberOfOriginalBounds = numberOfBlowing;
+            }
+    
+            glp_term_out(GLP_OFF);
+            linearProblem = glp_create_prob();
+            if (linearProblem == NULL) {
+                DSError(M_DS_NULL ": Linear problem is NULL", A_DS_ERROR);
+                goto bail;
+            }
+            if (numberOfKnifes == 0) {
+                DSError(M_DS_NULL ": The case does not have any knife-edge constraints", A_DS_ERROR);
+                goto bail;
+            }
+    
+            //Then add Equality constraints if Xd_e is not zero.
+            if (uCase->Xd_e->numberOfVariables !=0){
+                lp_AB1 = dsUnstableCaseLinearProblemAddEqualityConstraints(A_, B_, uCase);
+                // Then add Knife edge constraints
+                lp_AB2 = dsUnstableCaseLinearProblemAddKnifeEdgeConditions(DSMatrixArrayMatrix(lp_AB1, 0),
+                                                                           DSMatrixArrayMatrix(lp_AB1, 1), uCase);
+            }else{
+                // Then add Knife edge constraints
+                lp_AB2 = dsUnstableCaseLinearProblemAddKnifeEdgeConditions(A_, B_, uCase);
+            }
+    
+            A = DSMatrixArrayMatrix(lp_AB2, 0);
+            B = DSMatrixArrayMatrix(lp_AB2, 1);
+            numberOfXi = DSMatrixColumns(A);
+            numberOfBoundaries = DSMatrixRows(A);
+    
+        //    printf("-------reporting from dsUnstableCaseLinearProblemForMatrices \n");
+        //    printf("The matrix A is: \n");
+        //    DSMatrixPrint(A);
+        //    printf("The matrix B is: \n");
+        //    DSMatrixPrint(B);
+    
+            ia = DSMatrixRowsForGLPK(A);
+            ja = DSMatrixColumnsForGLPK(A);
+            ar = DSMatrixDataForGLPK(A);
+    
+            glp_add_rows(linearProblem, numberOfBoundaries);
+            glp_add_cols(linearProblem, numberOfXi);
+            glp_set_obj_dir(linearProblem, GLP_MIN);
+            glp_load_matrix(linearProblem, numberOfBoundaries*numberOfXi, ia, ja, ar);
+    
+            // set bounds for original boundaries and additional constraints coming from blow up/down assumption.
+            if (numberOfOriginalBounds != 0){
+                for (i = 0; i < numberOfOriginalBounds; i++) {
+                    glp_set_row_bnds(linearProblem, i+1, GLP_UP, 0.0,
+                                     DSMatrixDoubleValue(B, i, 0));
+                }
+            }
+            // set bounds for equality constraints
+            for (i = numberOfOriginalBounds; i < numberOfOriginalBounds + numberOfEqualities; i++) {
+                glp_set_row_bnds(linearProblem, i+1, GLP_FX, DSMatrixDoubleValue(B, i, 0),
+                                 DSMatrixDoubleValue(B, i, 0));
+            }
+            // set bounds for knife-edges.
+            for (i = numberOfOriginalBounds + numberOfEqualities;
+                 i < numberOfOriginalBounds + numberOfEqualities + numberOfKnifes; i++) {
+                glp_set_row_bnds(linearProblem, i+1, GLP_FR, 0.0, 0.0);
+            }
+    
+            // set bounds for all variables:
+            for (i = 0; i < numberOfXi; i++)
+                glp_set_col_bnds(linearProblem, i+1, GLP_DB, -3.0, 3.0);
+
+    
+            // set bounds for dependet variables free. This is useful for cases where the solution of a dependent pool depends on a Xd_b
+            DSUInteger nr_dependent = uCase->originalCase->Xd->numberOfVariables;
+            for (i = 0; i < nr_dependent; i++)
+                glp_set_col_bnds(linearProblem, i+1, GLP_FR, 0.0, 0.0);
+    
+    
+            //set value for blowing variables. Loop over number of Xd_b
+            for(i=0; i<numberOfBlowing; i++){
+                name = DSVariableName(DSVariablePoolVariableAtIndex(uCase->Xd_b, i));
+                blowingIndex = DSVariablePoolIndexOfVariableWithName(Xd, name) ;
+                if (bSignature[i] == 1){
+                    glp_set_col_bnds(linearProblem, blowingIndex+1, GLP_FX, 12.0, 12.0);
+                }else{
+                    glp_set_col_bnds(linearProblem, blowingIndex+1, GLP_FX, -12.0, -12.0);
+                }
+            }
+    
+            if (ia != NULL)
+                DSSecureFree(ia);
+            if (ja != NULL)
+                DSSecureFree(ja);
+            if (ar != NULL)
+                DSSecureFree(ar);
+            if (uCase->Xd_e->numberOfVariables != 0)
+                DSMatrixArrayFree(lp_AB1);
+            DSMatrixArrayFree(lp_AB2);
+        bail:
+            return linearProblem;
+}
+
+extern glp_prob * dsUnstableCaseLinearProblemForCaseValidity(const DSMatrix * U,
+                                                             const DSMatrix *zeta,
+                                                             DSUnstableCase *uCase,
+                                                             const DSUInteger * bSignature )
+{
+            glp_prob *linearProblem = NULL;
+            DSMatrix *slacks = NULL, * coefficients;
+            DSUInteger numberOfXi, numberOfBoundaries;
+    
+            if (zeta == NULL) {
+                DSError(M_DS_MAT_NULL, A_DS_ERROR);
+                goto bail;
+            }
+            if (U == NULL)
+                numberOfXi = 0;
+            else
+                numberOfXi = DSMatrixColumns(U);
+    
+            numberOfBoundaries = DSMatrixRows(zeta);
+            if (numberOfXi > 0) {
+                slacks = DSMatrixAlloc(numberOfBoundaries, 1);
+                DSMatrixSetDoubleValueAll(slacks, 1.0);
+                coefficients = DSMatrixAppendMatrices(U, slacks, true);
+                DSMatrixMultiplyByScalar(coefficients, -1.0);
+            } else {
+                coefficients = DSMatrixAlloc(numberOfBoundaries, 1);
+                DSMatrixSetDoubleValueAll(coefficients, -1.0);
+                
+            }
+            linearProblem = dsUnstableCaseLinearProblemForMatrices(coefficients, zeta, uCase, bSignature);
+            glp_set_col_bnds(linearProblem, glp_get_num_cols(linearProblem), GLP_LO, -1.0, 0.0);
+            glp_set_obj_coef(linearProblem, glp_get_num_cols(linearProblem), 1.0);
+    
+            DSMatrixFree(coefficients);
+            if (slacks != NULL)
+                DSMatrixFree(slacks);
+        bail:
+            return linearProblem;
+}
