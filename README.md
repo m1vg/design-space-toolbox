@@ -10,7 +10,7 @@ Getting Started
 ---------------------
 
 
-The most convenient way to access the software is through its Docker Image [https://hub.docker.com/r/savageau/dst3]. 
+The most convenient way to access the software is through its Docker Image: https://hub.docker.com/r/savageau/dst3. 
 
 
 
