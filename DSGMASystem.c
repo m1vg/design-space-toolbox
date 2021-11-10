@@ -688,7 +688,10 @@ static void dsGMASystemCreateSystemMatrices(DSGMASystem *gma, gma_parseraux_t **
                         }
                         current = DSGMAParserAuxNextNode(current);
                 }
-                dsGMASystemCombineAllIdenticalTerms(gma, i, &p, &n);
+            
+            // For some special systems (e.g., polymerizations), it is important to keep identical terms individually. This will guarantee that co-dominance routines are used and that the stoichiometry of co-dominant phenotypes is correctly calculated.
+            
+//                dsGMASystemCombineAllIdenticalTerms(gma, i, &p, &n);
 //                p = dsGMASystemCombineIdenticalTerms(gma, i, p, true);
 //                n = dsGMASystemCombineIdenticalTerms(gma, i, n, false);
                 DSGMASignature(gma)[2*i] = p;

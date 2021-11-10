@@ -203,7 +203,6 @@ extern DSUnstableCase * DSUnstableCaseAddBoundaryMatrices(DSCase *aCase, const D
     unstableCase = DSSecureCalloc(sizeof(DSUnstableCase), 1);
     unstableCase->originalCase = DSCaseCopy(aCase);
     
-
     // allocate dictionary
     unstableCase->ValidCases = DSDictionaryAlloc();
     
@@ -230,11 +229,7 @@ extern DSUnstableCase * DSUnstableCaseAddBoundaryMatrices(DSCase *aCase, const D
             if (isValid == true){
                         
                     DSUnstableCaseCreateBoundaryMatrices_alt2(unstableCase);
-                
-                    //////////////////////////
                     // Allocate memory for new Case and link data structures to uCase->originalCase
-//                    nCase = DSSecureCalloc(sizeof(DSCase), 1);
-//                    nCase->freeVariables = false;
                     nCase = DSCaseCopy(unstableCase->originalCase);
                     dsUnstableCaseCloneaCase(unstableCase->originalCase, nCase, ds, i);
                     nCase->U = DSMatrixCopy(unstableCase->U);
@@ -257,10 +252,8 @@ extern DSUnstableCase * DSUnstableCaseAddBoundaryMatrices(DSCase *aCase, const D
                     // save nCase to unstableCase->ValidCases. Name is: Case_identifier_i
                     if (DSDictionaryValueForName(unstableCase->ValidCases, name) == NULL)
                             DSDictionaryAddValueWithName(unstableCase->ValidCases, name, nCase);
-                    /////////////////////////
             }
     }
-    //DSuCaseFree(unstableCase);
     return unstableCase;
 }
 

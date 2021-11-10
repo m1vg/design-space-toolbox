@@ -570,6 +570,7 @@ extern double DSVariablePoolValueForVariableWithName(const DSVariablePool *pool,
         }
         var = DSVariablePoolVariableWithName(pool, name);
         if (var == NULL) {
+                printf("The name causing trouble is %s \n", name);
                 DSError(M_DS_WRONG ": Variable Pool does not have variable with given name", A_DS_WARN);
                 goto bail;
         }

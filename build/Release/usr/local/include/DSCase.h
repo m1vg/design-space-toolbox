@@ -60,6 +60,7 @@ __BEGIN_DECLS
 #define DSCaseSigCons(x)             ((x)->conserved_sig)
 #define DSCaseNum(x)                 ((x)->caseNumber)
 #define DSCaseId(x)                  ((x)->caseIdentifier)
+#define DSCaseDominantMassBalances(x)        ((x)->dominant_mass_balances)
 
 #if defined (__APPLE__) && defined (__MACH__)
 #pragma mark - DSCase Global behavior
@@ -75,6 +76,7 @@ extern char DSCaseEndianness(void);
 extern DSCase * DSCaseCopy(const DSCase *aCase);
 extern void DSCaseFree(DSCase * aCase);
 extern void DSCaseVolumeFree(DSCaseVolume *caseVolume);
+void DSCaseMassBalanceDataFree(DSCase *aCase);
 
 #if defined (__APPLE__) && defined (__MACH__)
 #pragma mark - Factory functions
@@ -116,6 +118,10 @@ extern double DSCaseLogarithmicGain(const DSCase *aCase, const char *XdName, con
 extern const DSVariablePool * DSCaseXd(const DSCase * aCase);
 extern const DSVariablePool * DSCaseXd_a(const DSCase * aCase);
 extern const DSVariablePool * DSCaseXi(const DSCase * aCase);
+
+extern DSUInteger DSCaseNumberOfMassBalances(const DSCase *aCase);
+extern const char * DSCaseDominantFinAtIndex(const DSCase *aCase, DSUInteger i);
+extern const char * DSCaseDominantFoutAtIndex(const DSCase *aCase, DSUInteger i);
 #if defined (__APPLE__) && defined (__MACH__)
 #pragma mark - Utility functions
 #endif
@@ -127,7 +133,22 @@ extern DSMatrix * DSCaseDoubleValueBoundariesAtPointSortXi(const DSCase * aCase,
 extern void DSCaseAddConstraints(DSCase * aCase, const char ** strings, DSUInteger numberOfConstraints);
 
 extern void DSCaseRemoveRedundantBoundaries(DSCase *aCase);
+extern void DSCaseAdjustStoichiometryOfCodominantCase(DSCase *aCase);
+extern bool DSCaseCodominantCaseFulfillMassBalances(const DSDesignSpace *ds,
+                                                    DSCase * newCase,
+                                                    DSUInteger numberZeroBoundaries,
+                                                    DSUInteger *zeroBoundaries,
+                                                    DSUInteger *numberZeroBoundariesPerBlock,
+                                                    const double *factors);
 
+//extern void dsCyclicalDesignSpaceCodominantCaseAdjustConditionMatrices_i(const DSDesignSpace *ds,
+//                                                                         DSCase *aCase,
+//                                                                         double factor,
+//                                                                         DSUInteger i,
+//                                                                         DSUInteger ineq_nr,
+//                                                                         bool ineq_nr_baseline_init,
+//                                                                         DSUInteger level);
+extern void dsCyclicalDesignSpaceCodominantCaseAdjustConditionMatrices_DominantInput(DSCase *newCase,const DSExpression *dominant_input, double factor);
 
 #if defined (__APPLE__) && defined (__MACH__)
 #pragma mark Linear programming functions - See DSCaseLinearProgramming.c

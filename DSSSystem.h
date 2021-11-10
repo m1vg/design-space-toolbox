@@ -38,11 +38,12 @@ __BEGIN_DECLS
 
 #define M_DS_SSYS_NULL                  M_DS_NULL ": S-System is NULL"
 
-#define DS_SSYSTEM_FLAG_SINGULAR          0x01
-#define DS_SSYSTEM_FLAG_FREE_XD           0x02
-#define DS_SSYSTEM_FLAG_FREE_XI           0x04
-#define DS_SSYSTEM_FLAG_UNSTABLE          0x08
-#define DS_SSYSTEM_FLAG_CONSERVED         0x10
+#define DS_SSYSTEM_FLAG_SINGULAR                                0x01
+#define DS_SSYSTEM_FLAG_FREE_XD                                 0x02
+#define DS_SSYSTEM_FLAG_FREE_XI                                 0x04
+#define DS_SSYSTEM_FLAG_UNSTABLE                                0x08
+#define DS_SSYSTEM_FLAG_CONSERVED                               0x10
+#define DS_SSYSTEM_FLAG_ADJUST_CODOMINANT_STOICHIOMETRY         0x20
 
 
 #if defined (__APPLE__) && defined (__MACH__)
@@ -127,6 +128,7 @@ extern DSExpression ** DSuSSystemLogarithmicSolution(const DSSSystem *ssys);
 #endif
 
 extern const DSMatrix * DSSSystemAlpha(const DSSSystem * ssys);
+extern const DSMatrix * DSSSystemAlphaAdjusted(const DSSSystem * ssys);
 extern const DSMatrix * DSSSystemBeta(const DSSSystem * ssys);
 extern const DSMatrix * DSSSystemGd(const DSSSystem * ssys);
 extern const DSMatrix * DSSSystemGi(const DSSSystem * ssys);
@@ -161,6 +163,7 @@ extern bool DSSSystemIsSingular(const DSSSystem *ssys);
 extern bool DSSSystemIsConserved(const DSSSystem *ssys);
 extern bool DSSSystemIsUnstable(const DSSSystem *ssys);
 extern bool DSSSystemIsFalseBlowing(const DSSSystem *ssys);
+extern bool DSSSystemAdjustCodominantStoichiometry(const DSSSystem *ssys);
 
 extern bool DSSSystemShouldFreeXd(const DSSSystem *ssys);
 extern bool DSSSystemShouldFreeXi(const DSSSystem *ssys);
@@ -169,6 +172,7 @@ extern bool DSSSystemShouldFreeXi(const DSSSystem *ssys);
 extern void DSSSystemSetIsSingular(DSSSystem *ssys, bool isSingular);
 extern void DSSSystemSetIsConserved(DSSSystem *ssys, bool isConserved);
 extern void DSSSystemSetIsUnstable(DSSSystem *ssys, bool isUnstable);
+extern void DSSSystemSetAdjustCodominantStoichiometry(DSSSystem *ssys, bool AdjustStoichiometry);
 extern void DSSSystemSetShouldFreeXd(DSSSystem *ssys, bool shouldFreeXd);
 extern void DSSSystemSetShouldFreeXi(DSSSystem *ssys, bool shouldFreeXi);
 
@@ -186,6 +190,7 @@ extern void DSSSystemPrint(const DSSSystem * ssys);
 extern void DSSSystemPrintEquations(const DSSSystem *ssys);
 extern void DSSSystemPrintSolution(const DSSSystem *ssys);
 extern void DSSSystemPrintLogarithmicSolution(const DSSSystem *ssys);
+extern void DSSSystemAdjustStoichiometryOfCodominantCase(DSSSystem *ssys);
 
 #if defined(__APPLE__) && defined (__MACH__)
 #pragma mark - Data Serialization

@@ -268,6 +268,60 @@ bail:
         return;
 }
 
+extern void DSDesignSpaceSetAdjustCodominantStoichiometry(DSDesignSpace *ds, bool adjust)
+{
+        unsigned char newFlag;
+        if (ds == NULL) {
+                DSError(M_DS_DESIGN_SPACE_NULL, A_DS_ERROR);
+                goto bail;
+        }
+        newFlag = ds->modifierFlags & ~DS_DESIGN_SPACE_FLAG_CO_DOMINANCE_ADJUST_STOICHIOMETRY;
+        ds->modifierFlags = (adjust ? DS_DESIGN_SPACE_FLAG_CO_DOMINANCE_ADJUST_STOICHIOMETRY : 0) | newFlag;
+bail:
+        return;
+}
+
+extern void DSDesignSpaceSetSkipOverlappingCodominantPhenotypes(DSDesignSpace *ds, bool skip)
+{
+        unsigned char newFlag;
+        if (ds == NULL) {
+                DSError(M_DS_DESIGN_SPACE_NULL, A_DS_ERROR);
+                goto bail;
+        }
+        newFlag = ds->modifierFlags & ~DS_DESIGN_SPACE_FLAG_CO_DOMINANCE_SKIP_OVERLAPPING_PHENOTYPES;
+        ds->modifierFlags = (skip ? DS_DESIGN_SPACE_FLAG_CO_DOMINANCE_SKIP_OVERLAPPING_PHENOTYPES : 0) | newFlag;
+bail:
+        return;
+}
+
+extern void DSDesignSpaceSetShouldConsiderMassBalances(DSDesignSpace *ds, bool mass_balance)
+{
+        unsigned char newFlag;
+        if (ds == NULL) {
+                DSError(M_DS_DESIGN_SPACE_NULL, A_DS_ERROR);
+                goto bail;
+        }
+        newFlag = ds->modifierFlags & ~DS_DESIGN_SPACE_FLAG_MASS_BALANCES;
+        ds->modifierFlags = (mass_balance ? DS_DESIGN_SPACE_FLAG_MASS_BALANCES : 0) | newFlag;
+bail:
+        return;
+}
+
+extern void DSDesignSpaceSetAdjustCodominantBoundaries(DSDesignSpace *ds, bool adjust_boundaries){
+    unsigned char newFlag;
+    if (ds == NULL) {
+            DSError(M_DS_DESIGN_SPACE_NULL, A_DS_ERROR);
+            goto bail;
+    }
+    newFlag = ds->modifierFlags2 & ~DS_DESIGN_SPACE_FLAG_C0_DOMINANCE_ADJUST_BOUNDARIES;
+    ds->modifierFlags2 = (adjust_boundaries ? DS_DESIGN_SPACE_FLAG_C0_DOMINANCE_ADJUST_BOUNDARIES : 0) | newFlag;
+    
+    
+bail:
+    return;
+    
+}
+
 extern void DSDesignSpaceSetUnstable(DSDesignSpace *ds, bool Unstable)
 {
     unsigned char newFlag;
@@ -319,6 +373,72 @@ bail:
     
 }
 
+extern void DSDesignSpaceInitializeMassBalances(DSDesignSpace *ds,
+                                                 const char ** fin_strings,
+                                                 const char ** fout_strings,
+                                                 const char ** signature_string,
+                                                 DSUInteger numberOfMassBalances,
+                                                const DSVariablePool * metabolicBlocks,
+                                                const char ** S_string, DSUInteger rows, DSUInteger columns,
+                                                const char ** rxns){
+    
+    if (numberOfMassBalances == 0 || fin_strings == NULL || fout_strings == NULL)
+        goto bail;
+    
+    if (ds == NULL) {
+        DSError(M_DS_DESIGN_SPACE_NULL, A_DS_ERROR);
+        goto bail;
+    }
+    
+    DSMassBalanceData *massBalances = NULL;
+    char ** fin = NULL, ** fout = NULL, *aux_in, *aux_out, **rxns_vector, *aux;
+    DSUInteger i, length = 1000, * signature = NULL, row, col;
+    DSExpression *fin_exp=NULL, *fout_exp=NULL;
+    DSMatrix *S = NULL;
+    
+    S = DSMatrixFromStringVector(S_string, rows, columns);
+    massBalances = DSSecureCalloc(1, sizeof(DSMassBalanceData));
+    massBalances->n = numberOfMassBalances;
+    
+    fin = DSSecureCalloc(numberOfMassBalances, sizeof(char *));
+    fout = DSSecureCalloc(numberOfMassBalances, sizeof(char *));
+    signature = DSSecureCalloc(1, sizeof(DSUInteger)*2*numberOfMassBalances);
+    
+    for (i=0; i<numberOfMassBalances; i++){
+        
+        aux_in = DSSecureCalloc(sizeof(char), length);
+        aux_out = DSSecureCalloc(sizeof(char), length);
+        strcpy(aux_in, fin_strings[i]);
+        strcpy(aux_out, fout_strings[i]);
+        fin[i] = aux_in;
+        fout[i] = aux_out;
+        signature[2*i] = atoi(signature_string[2*i]);
+        signature[2*i + 1] = atoi(signature_string[2*i + 1]);
+    }
+    
+    if (S != NULL){
+        rxns_vector = DSSecureCalloc(DSMatrixColumns(S), sizeof(char *));
+        for (i=0; i<DSMatrixColumns(S); i++){
+            aux = DSSecureCalloc(sizeof(char), length);
+            strcpy(aux, rxns[i]);
+            rxns_vector[i] = aux;
+        }
+        massBalances->S = S;
+        massBalances->rxns = rxns_vector;
+    }
+    
+    massBalances->fin = fin;
+    massBalances->fout = fout;
+    massBalances->signature = signature;
+    massBalances->metabolicBlocks = DSVariablePoolCopy(metabolicBlocks);
+
+    ds->massBalances = massBalances;
+    DSDesignSpaceSetShouldConsiderMassBalances(ds, true);
+        
+bail:
+    return;
+}
+
 
 #if defined (__APPLE__) && defined (__MACH__)
 #pragma mark - Getters -
@@ -339,6 +459,20 @@ extern bool DSDesignSpaceResolveCoDominance(const DSDesignSpace *ds)
         return ds->modifierFlags & DS_DESIGN_SPACE_FLAG_RESOLVE_CO_DOMINANCE;
 }
 
+extern bool DSDesignSpaceAdjustCodominantStoichiometry(const DSDesignSpace *ds)
+{
+        return ds->modifierFlags & DS_DESIGN_SPACE_FLAG_CO_DOMINANCE_ADJUST_STOICHIOMETRY;
+}
+
+extern bool DSDesignSpaceSkipOverlappingCodominantPhenotypes(const DSDesignSpace *ds)
+{
+        return ds->modifierFlags & DS_DESIGN_SPACE_FLAG_CO_DOMINANCE_SKIP_OVERLAPPING_PHENOTYPES;
+}
+
+extern bool DSDesignSpaceShouldAdjustCodominantBoundaries(DSDesignSpace *ds){
+    return ds->modifierFlags2 & DS_DESIGN_SPACE_FLAG_C0_DOMINANCE_ADJUST_BOUNDARIES;
+}
+
 extern bool DSDesignSpaceUnstable(const DSDesignSpace *ds)
 {
         return ds->modifierFlags & DS_DESIGN_SPACE_FLAG_UNSTABLE;
@@ -347,6 +481,64 @@ extern bool DSDesignSpaceUnstable(const DSDesignSpace *ds)
 extern bool DSDesignSpaceConserved(const DSDesignSpace *ds)
 {
         return ds->modifierFlags & DS_DESIGN_SPACE_FLAG_CONSERVATIONS;
+}
+
+extern bool DSDesignSpaceShouldConsiderMassBalances(const DSDesignSpace * ds)
+{
+        return ds->modifierFlags & DS_DESIGN_SPACE_FLAG_MASS_BALANCES;
+    
+}
+
+extern const char * DSDesignSpaceFinAtIndex(const DSDesignSpace *ds, DSUInteger n){
+    
+    const char * fin = NULL;
+    
+    if (ds == NULL) {
+        DSError(M_DS_DESIGN_SPACE_NULL, A_DS_ERROR);
+        goto bail;
+    }
+    
+    if (ds->massBalances->fin == NULL || n > ds->massBalances->n)
+        goto bail;
+    
+    fin = ds->massBalances->fin[n];
+bail:
+    return fin;
+}
+
+extern const char * DSDesignSpaceFoutAtIndex(const DSDesignSpace *ds, DSUInteger n){
+    
+    const char * fout = NULL;
+    
+    if (ds == NULL) {
+        DSError(M_DS_DESIGN_SPACE_NULL, A_DS_ERROR);
+        goto bail;
+    }
+    
+    if (ds->massBalances->fout == NULL || n > ds->massBalances->n)
+        goto bail;
+    
+    fout = ds->massBalances->fout[n];
+    
+bail:
+    return fout;
+}
+
+extern DSUInteger DSDesignSpaceNumberOfMetabolicBlocks(const DSDesignSpace *ds){
+    DSUInteger n = 0;
+    
+    if (ds == NULL) {
+        DSError(M_DS_DESIGN_SPACE_NULL, A_DS_ERROR);
+        goto bail;
+    }
+    
+    if (ds->massBalances == NULL)
+        goto bail;
+    
+    n= ds->massBalances->n;
+    
+bail:
+    return n;
 }
 
 extern DSUInteger DSDesignSpaceNumberOfConservations(const DSDesignSpace *ds){
@@ -796,7 +988,46 @@ bail:
         return string;
 }
 
-extern DSUInteger * DSCaseIndexOfZeroBoundaries(const DSCase * aCase, DSUInteger * numberOfZeros) {
+static void dsCaseMetabolicBlocksOfZeroBoundaries(const DSDesignSpace * ds,
+                                                  const DSCase *aCase,
+                                                  DSUInteger * numberZeroBoundariesPerBlock,
+                                                  DSUInteger zeroBoundaryIndex){
+    
+    if (numberZeroBoundariesPerBlock == NULL)
+        goto bail;
+    
+    DSUInteger *signature = NULL, i, n_ineq=0, block;
+    DSVariablePool *MetabolicBlocks =NULL, *Xd=NULL;
+    char *variable =NULL, **AllVariableNames =NULL;
+    MetabolicBlocks = ds->massBalances->metabolicBlocks;
+    Xd = DSCaseXd(aCase);
+    
+    if (MetabolicBlocks == NULL)
+        goto bail;
+    
+    AllVariableNames = DSVariablePoolAllVariableNames(Xd);
+    signature = DSDesignSpaceSignature(ds);
+    for (i=0; i<2*DSCaseNumberOfEquations(aCase); i++){
+        n_ineq += signature[i] - 1;
+        if (n_ineq >= zeroBoundaryIndex){
+            variable = AllVariableNames[i/2];
+            block = (DSUInteger)DSVariablePoolValueForVariableWithName(MetabolicBlocks, variable);
+            numberZeroBoundariesPerBlock[block] += 1;
+            break;
+        }
+    }
+    if (AllVariableNames != NULL)
+        DSSecureFree(AllVariableNames);
+    
+bail:
+    return;
+    
+    
+}
+
+extern DSUInteger * DSCaseIndexOfZeroBoundaries(const DSCase * aCase, DSUInteger * numberOfZeros,
+                                                DSUInteger * numberZeroBoundariesPerBlock,
+                                                const DSDesignSpace *ds){
         DSUInteger * zeroBoundaries = NULL;
         DSUInteger i, j;
         DSMatrix * temp1;
@@ -822,6 +1053,10 @@ extern DSUInteger * DSCaseIndexOfZeroBoundaries(const DSCase * aCase, DSUInteger
                 if (j == DSMatrixColumns(temp1)) {
                         zeroBoundaries[*numberOfZeros] = i;
                         *numberOfZeros += 1;
+                        dsCaseMetabolicBlocksOfZeroBoundaries(ds,
+                                                              aCase,
+                                                              numberZeroBoundariesPerBlock,
+                                                              i+1);
                 }
         }
 bail:
@@ -938,6 +1173,182 @@ bail:
 }
 
 
+static bool dsDesignSpaceCasesWithIdenticalFluxesAreCyclical_alt(const DSDesignSpace * ds, const DSCase * aCase, DSUInteger numberZeroBoundaries, const DSUInteger * zeroBoundaries)
+{
+//        printf("dsDesignSpaceCasesWithIdenticalFluxesAreCyclical_alt. About to perform initial tests \n");
+        bool anyCyclical = false, repeated = false;
+        struct indexTermPair {
+                DSUInteger index;
+                DSUInteger termNumber;
+        } * pair;
+        DSUInteger i, j, k, current, start, previous, count, zz, end_copy, ii_copy, numberOfEquations, numberOfInequalities =0, term_vector_counter;
+        DSUInteger numberOfTestCases = 0, *unique_indices = NULL, *number_cases = NULL, *term_vector=NULL;
+        const DSUInteger * signature;
+        DSUInteger ** casesIdentifiers = NULL;
+        DSStack * indexTermPairs = NULL, *indexTermPairs2 = NULL;
+        if (ds == NULL) {
+                DSError(M_DS_DESIGN_SPACE_NULL, A_DS_ERROR);
+                goto bail;
+        }
+        if (aCase == NULL) {
+                DSError(M_DS_CASE_NULL, A_DS_ERROR);
+                goto bail;
+        }
+        if (numberZeroBoundaries == 0) {
+                goto bail;
+        }
+        if (zeroBoundaries == NULL) {
+                DSError(M_DS_NULL ": Array of identical boundaries is NULL.", A_DS_ERROR);
+                goto bail;
+        }
+        if (DSDesignSpaceCyclicalCaseDictionary(ds) == NULL) {
+                goto bail;
+        }
+        numberOfEquations = DSCaseNumberOfEquations(aCase);
+        signature = DSDesignSpaceSignature(ds);
+    
+        // For nested cyclical cases, we adjust the numberZeroBoundaries to ignore zero boundaries from the parent design space
+    
+//        printf("------dsDesignSpaceCasesWithIdenticalFluxesAreCyclical_alt: initial tests passed \n");
+
+        // We first determine the maximum number of inequalities for the design space.
+        for (i=0; i<numberOfEquations*2; i++)
+            numberOfInequalities += signature[i] - 1;
+        // We then adjust numberZeroBoundaries if neccesary
+        for (i=0; i<numberZeroBoundaries; i++){
+            if (zeroBoundaries[i] >= numberOfInequalities){
+//                printf("The old number of zeroBoundaries is %u, the new one is %u \n", numberZeroBoundaries, i);
+                numberZeroBoundaries = i;
+                break;
+            }
+        }
+        
+        // We allocate and initialice the vectors unique_indices and number_cases.
+        unique_indices = DSSecureCalloc(sizeof(DSUInteger), numberZeroBoundaries);
+        number_cases = DSSecureCalloc(sizeof(DSUInteger), numberZeroBoundaries);
+        term_vector = DSSecureCalloc(sizeof(DSUInteger), numberZeroBoundaries);
+        previous = numberOfEquations*2;
+        indexTermPairs = DSStackAlloc();
+        for (i = 0; i < numberZeroBoundaries; i++) {
+            
+                pair = DSSecureMalloc(sizeof(struct indexTermPair)*1);
+                current = zeroBoundaries[i];
+                start = 0;
+            
+                for (j = 0; j < 2*numberOfEquations; j++) {
+                        if (signature[j] == 1)
+                                continue;
+                        if (current < signature[j]-1)
+                                break;
+                        start += signature[j]-1;
+                        current -= signature[j]-1;
+                }
+                
+                if (j == 2*numberOfEquations) {
+                        DSSecureFree(pair);
+                        break;
+                }
+                pair->index = j;
+                pair->termNumber = current+1;
+                if (current+1 >= DSCaseSignature(aCase)[j]) {
+                        (pair->termNumber)++;
+                }
+                DSStackPush(indexTermPairs, (void *)pair);
+                if (previous == numberOfEquations*2) {
+                        previous = j;
+                        numberOfTestCases = 1;
+                        k = 1;
+                } else if (previous == j) {
+                        k++;
+                } else {
+                        numberOfTestCases *= k;
+                        k = 0;
+                        previous = j;
+                }
+            
+                //we now assign values to unique_indices and number_cases from pair->index and pair->termnumber
+                if (i == 0){
+                        unique_indices[i] = pair->index;
+                        number_cases[i] = 2;
+                }else{
+                        repeated = false;
+                        for (zz=0; zz<numberZeroBoundaries; zz++){
+                                if (unique_indices[zz] == pair->index){
+                                    number_cases[zz] += 1;
+                                    repeated = true;
+                                    break;
+                                }
+                        }
+                        if (repeated == false){
+                            unique_indices[i] = pair->index;
+                            number_cases[i] = 2;
+                        }
+                }
+                term_vector[i] = pair->termNumber;
+//            printf("boundary %u: index = %u, termNumber = %u \n", i, pair->index, pair->termNumber);
+        }
+//        printf("dsDesignSpaceCasesWithIdenticalFluxesAreCyclical_alt: initial for loop passed \n");
+        // Now, we update the number of TestCases
+        numberOfTestCases = 1;
+        for (i = 0; i<numberZeroBoundaries; i++){
+            if (number_cases[i] != 0)
+                numberOfTestCases *= number_cases[i];
+        }
+    
+        // We now allocate the case identifiers.
+        casesIdentifiers = DSSecureCalloc(sizeof(DSUInteger *), numberOfTestCases);
+        for (i = 0; i < numberOfTestCases; i++) {
+                casesIdentifiers[i] = DSSecureCalloc(sizeof(DSUInteger), numberOfEquations*2);
+                for (j = 0; j < numberOfEquations*2; j++) {
+                        casesIdentifiers[i][j] = DSCaseSignature(aCase)[j];
+                }
+        }
+    
+        count = 1;
+        end_copy = 1;
+        term_vector_counter = 0;
+        for (i=0; i<numberZeroBoundaries; i++){
+            
+//            printf("zeroBoundary = %u. Termvector[i] = %u \n", i, term_vector[i]);
+            if (number_cases[i] == 0)
+                continue;
+            
+            for (zz=0; zz<number_cases[i]-1; zz++){
+//                printf("copying %u of %u times: end_copy = %u \n", zz,number_cases[i]-1, end_copy);
+                for (ii_copy = 0; ii_copy<end_copy; ii_copy++){
+                    
+                        for (j = 0; j < numberOfEquations*2; j++) {
+                                casesIdentifiers[count][j] = casesIdentifiers[ii_copy][j];
+                        }
+                        casesIdentifiers[count][unique_indices[i]] = term_vector[term_vector_counter];
+                        count++;
+                }
+                term_vector_counter++;
+            }
+            end_copy = count;
+        }
+            
+        
+//        printf("Cases being tested for case %s \n", aCase->caseIdentifier);
+        for (i = 0; i < numberOfTestCases; i++) {
+            
+//            printf("testing case %u \n", DSCaseNumberForSignature(casesIdentifiers[i],
+//                                                                  DSDesignSpaceGMASystem(ds)));
+                if (DSDesignSpaceCyclicalCaseWithCaseNumber(ds, DSCaseNumberForSignature(casesIdentifiers[i], DSDesignSpaceGMASystem(ds))) != NULL)
+                        anyCyclical = true;
+                DSSecureFree(casesIdentifiers[i]);
+        }
+        DSSecureFree(casesIdentifiers);
+        DSSecureFree(unique_indices);
+        DSSecureFree(number_cases);
+        DSSecureFree(term_vector);
+        DSStackFreeWithFunction(indexTermPairs, DSSecureFree);
+//        printf("dsDesignSpaceCasesWithIdenticalFluxesAreCyclical_alt: end of function -----\n");
+bail:
+        return anyCyclical;
+}
+
+
 //static DSCase * dsDesignSpaceCaseByRemovingIdenticalFluxes(const DSDesignSpace * ds, const DSCase * aCase)
 //{
 //        DSCase * newCase = NULL;
@@ -1020,16 +1431,698 @@ bail:
 //        return newCase;
 //}
 
+//extern DSUInteger dsDesignSpaceCodominantCaseProcessDeltaMatrix(const DSDesignSpace *ds,
+//                                                          DSCase *aCase,
+//                                                          double factor,
+//                                                          DSUInteger i,
+//                                                          DSUInteger ineq_nr_baseline,
+//                                                          bool ineq_nr_baseline_init){
+//    printf("start ************* \n");
+//
+//    const DSUInteger *signature =NULL;
+//    double value;
+//    DSUInteger ii, j=0, total_nr_ineqs = 0, ineq_nr = 0;
+//    signature = DSDesignSpaceSignature(ds);
+//
+//    if (signature == NULL || aCase == NULL || ds == NULL){
+//        goto bail;
+//    }
+//
+//    if (i%2 == 0)
+//        ii = i;
+//    else
+//        ii = i-1;
+//
+//    for(j=0; j<DSCaseNumberOfEquations(aCase)*2; j++){
+//        if (j<ii)
+//            ineq_nr += signature[j]-1;
+//        total_nr_ineqs += signature[j] -1;
+//    }
+//
+//    if (ineq_nr_baseline_init == true){
+//        ineq_nr += ineq_nr_baseline;
+//        factor = 1/factor; // because exchange fluxes are not dominant for  parent cyclical cases.
+//    }
+//
+//    printf("Modifying Delta matrices for case %s \n", aCase->caseIdentifier);
+//    printf("I received the delta matrix: \n");
+//    DSMatrixPrint(DSCaseDelta(aCase));
+//    printf("i = %u; ii = %u, j=%u \n ", i, ii, j);
+//    printf("signature[ii]-1 is: %u. ineq_nr = %u \n", signature[ii]-1, ineq_nr);
+//    printf("The ineq_nr_baseline is %u \n", ineq_nr_baseline);
+//
+//    for (j=0; j<signature[ii]-1; j++){
+//        value = DSMatrixDoubleValue(DSCaseDelta(aCase), ineq_nr+j, 0);
+//        if (i%2 == 0){
+//            DSMatrixSetDoubleValue(DSCaseDelta(aCase), ineq_nr+j, 0, log10(pow(10, value)*factor));
+//            printf("factor = %f; log10(10^value * factor) = %f; ineq_nr+j = %u; i(mod)2 = %u \n", factor,
+//                   log10(pow(10, value)*factor), ineq_nr+j, i%2);
+//        }
+//        else{
+//            DSMatrixSetDoubleValue(DSCaseDelta(aCase), ineq_nr+j, 0, log10(pow(10, value)/factor));
+//            printf("factor = %f; log10(10^value / factor) = %f; ineq_nr+j = %u; i(mod)2 = %u \n", factor,
+//                   log10(pow(10, value)/factor), ineq_nr+j, i%2);
+//        }
+//    }
+//
+//
+//    printf("I generated the delta matrix: \n");
+//    DSMatrixPrint(DSCaseDelta(aCase));
+//    printf("the total_nr_ineqs is %u \n", total_nr_ineqs);
+//    printf("Finish ************* \n");
+//
+//bail:
+//    return total_nr_ineqs;
+//
+//}
+
+static DSUInteger dsCyclicalDesignSpaceAdjust_i(const DSDesignSpace *ds, DSUInteger i){
+    
+    DSUInteger cycle_nr, *secondary_variables_i, secondary_i ;
+    DSUInteger active_cycle;
+    DSUInteger i_cycle;
+    bool active_cycle_bol = false;
+    char *aux1[100];
+    
+    i_cycle = i;
+    
+    if (ds->extensionData == NULL)
+        goto bail;
+    
+    // if the case comes from a cyclical parent case, we see if i has to be adjusted.
+    // we check if the equation for i is a secondary cyclical variable.
+    // if so, we check what is the corresponding main cyclical variable and set i to that value.
+    
+    for(cycle_nr=0; cycle_nr < ds->extensionData->numberCycles; cycle_nr++){
+        secondary_variables_i = ds->extensionData->allSecondaryVariables[cycle_nr];
+        for (secondary_i=0; secondary_i < ds->extensionData->numberSecondaryVariables[cycle_nr]; secondary_i++){
+            if (secondary_variables_i[secondary_i] == i/2){
+                active_cycle = cycle_nr;
+                active_cycle_bol = true;
+                break;
+            }
+        }
+    }
+    if (active_cycle_bol == true)
+        i_cycle = ds->extensionData->mainCycleVariables[active_cycle]*2 + 1;
+    
+bail:
+    
+    return i_cycle;
+    
+}
+
+//static DSUInteger get_case_number_for_level(char * str1, DSUInteger level){
+//
+//    DSUInteger case_number=0, n=0, i;
+//    char ** tokens, *token_i, *rest = NULL;
+//
+//    if (str1 == NULL)
+//        goto bail;
+//
+//    rest = strdup(str1);
+//    tokens = DSSecureMalloc(sizeof(char *)*1);
+//
+//
+//    // we first split the caseIdentifier into tokens using the function strtok_r with delimiter "_"
+//    while ((token_i = strtok_r(rest, "_", &rest))){
+//        if (n>0)
+//            DSSecureRealloc(tokens, sizeof(char *)*(n+1));
+//        tokens[n] = DSSecureMalloc(sizeof(char)*100);
+//        sprintf(tokens[n], "%s", token_i);
+//        printf("%s\n", token_i);
+//        n++;
+//    }
+//    printf("level = %u, n-1 = %u \n", level, n-1);
+//    // n is 1 element larger than the length of tokens.
+//    if (level > n-1)
+//        DSError(" Check function get_case_number_for_level", A_DS_FATAL);  //A_DS_ERROR
+//
+//    case_number = atoi(tokens[n -1 - level]);
+        
+    
+//    if (rest != NULL)
+//        DSSecureFree(rest);
+//
+//    if (n>0){
+//        for (i=0; i<n-1; i++)
+//            DSSecureFree(tokens[i]);
+//    }
+//    DSSecureFree(tokens);
+    
+//bail:
+//    return case_number;
+//}
+
+//static DSUInteger get_internal_i(const DSDesignSpace * ds, DSUInteger i_cycle, DSCase *aCase,
+//                                 DSUInteger * factor, DSUInteger *level){
+//
+//
+//    DSUInteger i_internal, i, *aCase_internal_signature = NULL, aCase_internal_number;
+//    DSuIntegerMatrix *G_L_eq = NULL;
+//    DSUInteger cycle_nr, *secondary_variables_i, secondary_i ;
+//    DSUInteger active_cycle;
+//    bool active_cycle_bol = false;
+//
+//    *level = *level + 1;
+//    i_internal = i_cycle;
+//
+//    if (ds->extensionData == NULL)
+//        goto bail;
+//    aCase_internal_number = get_case_number_for_level(aCase->caseIdentifier, *level);
+//    if (aCase_internal_number == 0)
+//        goto bail;
+//
+//    printf("i_cycle/2 = %u. main case identifier = %s, level = %u, internal case = %u \n", i_cycle/2, aCase->caseIdentifier, *level, aCase_internal_number);
+//
+//    // we check if i_cycle/n is primary or secondary.
+//
+//
+//    for(cycle_nr=0; cycle_nr < ds->extensionData->numberCycles; cycle_nr++){
+//        if (ds->extensionData->mainCycleVariables[cycle_nr] == i_cycle/2){
+//            active_cycle = cycle_nr;
+//            active_cycle_bol = true;
+//            break;
+//        }
+//        secondary_variables_i = ds->extensionData->allSecondaryVariables[cycle_nr];
+//        for (secondary_i=0; secondary_i < ds->extensionData->numberSecondaryVariables[cycle_nr]; secondary_i++){
+//            if (secondary_variables_i[secondary_i] == i_cycle/2){
+//                active_cycle = cycle_nr;
+//                active_cycle_bol = true;
+//                break;
+//            }
+//        }
+//    }
+//
+//    if (active_cycle_bol == false){
+//        *factor = (1.0/(*factor));
+//        printf("i_cycle/2 = %u is NOT secondary or primary! i_internal = i_cycle \n");
+//        goto bail;
+//    }
+//
+//    printf("i_cycle/2 = %u is secondary!");
+//
+//    aCase_internal_signature = DSCaseSignatureForCaseNumber(aCase_internal_number, DSDesignSpaceGMASystem(ds));
+//    G_L_eq = ds->extensionData->G_l_eq_previous;
+//
+//    printf("Trying to access G_l_eq with row = %u, column = %u \n", active_cycle, aCase_internal_signature[(i_cycle/2)*2]);
+//
+//    printf("The matrix G_l_term_previous is: \n");
+//    DSuIntegerMatrixPrint(ds->extensionData->G_l_term_previous);
+//    printf("The matrix G_l_eq_previous is: \n");
+//    DSuIntegerMatrixPrint(ds->extensionData->G_l_eq_previous);
+//
+//    i_internal = DSuIntegerMatrixValue(G_L_eq, active_cycle, aCase_internal_signature[(i_cycle/2)*2]) * 2 + 1;
+//
+//
+//    printf("i_cycle = %u, i_internal = %u \n", i_cycle, i_internal);
+//
+////    if (aCase_internal_signature != NULL)
+////        DSCaseFree(aCase_internal_signature);
+//
+//bail:
+//    return i_internal;
+//}
+
+
+extern void dsCyclicalDesignSpaceCodominantCaseAdjustConditionMatrices_DominantInput(DSCase *newCase, const DSExpression *dominant_input, double factor){
+    
+    if (newCase == NULL || dominant_input == NULL)
+        goto bail;
+    
+    DSVariablePool *domExpressionVar = NULL, *domExpressionVarXi = NULL;
+    DSUInteger i, row, col;
+    double index, previous, factor_i = factor;
+    const char * name;
+    bool modify, up, down;
+        
+    // We first identify all parameters contained in the dominant input expression.
+    domExpressionVar = DSExpressionVariablesInExpression(dominant_input);
+    if (DSVariablePoolNumberOfVariables(domExpressionVar) == 0)
+        goto bail;
+    domExpressionVarXi = DSVariablePoolAlloc();
+        
+    // We then identify INDEPENDENT parameters conatined in the dominant_input expression.
+    for (i=0; i<DSVariablePoolNumberOfVariables(domExpressionVar); i++){
+        name = DSVariableName(DSVariablePoolAllVariables(domExpressionVar)[i]);
+        if (DSVariablePoolHasVariableWithName(DSCaseXi(newCase),name) == true){
+            DSVariablePoolAddVariableWithName(domExpressionVarXi, name);
+            index = (double)DSVariablePoolIndexOfVariableWithName(DSCaseXi(newCase), name);
+            DSVariablePoolSetValueForVariableWithName(domExpressionVarXi, name, index);
+        }
+    }
+    
+//    printf("The independent variables in the dominant input for case %s are: \n", newCase->caseIdentifier);
+//    DSVariablePoolPrint(domExpressionVarXi);
+    
+    // We now loop through every ROW of Ci and see if ALL variables in domExpressionVarXi are present. If so, we modify the delta matrix with the factor and the exponent.
+    for (row=0; row<DSMatrixRows(DSCaseCi(newCase)); row++){
+        modify = false; up = false; down = false;
+        for(i=0; i<DSVariablePoolNumberOfVariables(domExpressionVarXi); i++){
+            name = DSVariableName(DSVariablePoolAllVariables(domExpressionVarXi)[i]);
+            col = (DSUInteger)DSVariablePoolValueForVariableWithName(domExpressionVarXi, name);
+            if (DSMatrixDoubleValue(DSCaseCi(newCase), row, col) > 0.0){
+                up = true;
+                modify = true;
+            } else if (DSMatrixDoubleValue(DSCaseCi(newCase), row, col) < 0.0){
+                down = true;
+                modify = true;
+            }else{
+                modify = false;
+                break;
+            }
+        }
+        if (modify == true){
+            previous = DSMatrixDoubleValue(DSCaseDelta(newCase), row, 0);
+            if (up == down)
+                DSError("Check function dsCyclicalDesignSpaceCodominantCaseAdjustConditionMatrices_DominantInput", A_DS_WARN);
+            if (down == true)
+                factor_i = 1.0/factor;
+            DSMatrixSetDoubleValue(DSCaseDelta(newCase), row, 0, log10(pow(10, previous)*factor_i));
+        }
+    }
+    
+    // Modify delta matrix if the row of Ci contains all independent variables in dominant_input.
+    if (domExpressionVar != NULL)
+        DSVariablePoolFree(domExpressionVar);
+    if (domExpressionVarXi != NULL)
+        DSVariablePoolFree(domExpressionVarXi);
+    
+bail:
+    
+    return;
+}
+
+
+//extern void dsCyclicalDesignSpaceCodominantCaseAdjustConditionMatrices_i(const DSDesignSpace *ds,
+//                                                                         DSCase *aCase,
+//                                                                         double factor,
+//                                                                         DSUInteger i,
+//                                                                         DSUInteger ineq_nr,
+//                                                                         bool ineq_nr_baseline_init,
+//                                                                         DSUInteger level){
+//
+//    printf("***level= %u, case prefix is: %s \n", level, ds->casePrefix);
+//    printf("I received index = %u for case %s \n", i, aCase->caseIdentifier);
+//
+//    DSDesignSpace *parent_ds = NULL;
+//    DSUInteger ineq_nr_baseline = 0, current_ineq_nr = 0, i_cycle, active_cycle=0, *case_sig_3d_internal;
+//    DSUInteger cycle_nr =0, *secondary_variables_i, secondary_i, i_internal, *aux_sig;
+//    DSUInteger aCase_internal_number;
+//    DSCase *aCase_internal;
+//
+//    if (ds->extensionData != NULL)
+//        parent_ds = (const DSDesignSpace *)ds->extensionData->parent_ds;
+//
+//    if (ineq_nr_baseline_init == false)
+//        current_ineq_nr = 0;
+//    else
+//        current_ineq_nr = ineq_nr;
+//
+//    // if the parent design space is cyclical, check if i needs to be adjusted.
+//    i_cycle =  dsCyclicalDesignSpaceAdjust_i(ds, i);
+//
+//    // We start by modifying the current layer.
+//    printf("i_cycle is: %u. currrent_ineq_nr = %u \n", i_cycle, current_ineq_nr);
+//    ineq_nr_baseline = dsDesignSpaceCodominantCaseProcessDeltaMatrix(ds, aCase, factor, i_cycle,
+//                                                                     current_ineq_nr,
+//                                                                     ineq_nr_baseline_init);
+//    if (parent_ds == NULL)
+//        goto bail;
+//
+//    // if the current ds has a parent ds, analyze those layers too.
+//    printf("analyzing internal layers! About to calculate i_internal \n");
+//    i_internal = get_internal_i(parent_ds, i_cycle, aCase,  &factor, &level);
+//    ineq_nr_baseline_init = true;
+//    printf("i_internal = %u \n", i_internal);
+//    dsCyclicalDesignSpaceCodominantCaseAdjustConditionMatrices_i(parent_ds,
+//                                                                 aCase,
+//                                                                 factor,
+//                                                                 i_internal,
+//                                                                 ineq_nr_baseline + ineq_nr,
+//                                                                 ineq_nr_baseline_init,
+//                                                                 level);
+//
+//
+//    printf("*** \n");
+//
+//bail:
+//    return;
+//
+//}
+
+
+static void dsCyclicalDesignSpaceCodominatCaseAdjustSsystemMatrices(DSCase *aCase,
+                                                                    const double * factors,
+                                                                    const DSDesignSpace * ds,
+                                                                    const DSUInteger position){
+    
+    if (aCase == NULL) {
+            DSError(M_DS_CASE_NULL, A_DS_ERROR);
+            goto bail;
+    }
+    
+    if (factors == NULL) {
+            DSError(": Factors is NULL", A_DS_ERROR);
+            goto bail;
+    }
+    
+    DSMatrix *alpha = NULL;
+    DSUInteger w, numberOfCycles, i, dependent_pool_index, currentCycle = 0, position_mod, *secondary_variables;
+    DSUInteger * mainCycleVariables, secondary_variable, v, *termArray, term1, term2;
+    bool isMainCyclicalVariable = false, isSecondaryVariable = false, isMainVariable = false;
+    double previous_value;
+    
+    termArray = DSCaseSignature(aCase);
+    term1 = termArray[(position/2)*2];
+    term2 = termArray[(position/2)*2 + 1];
+    
+    mainCycleVariables = ds->extensionData->mainCycleVariables;
+    numberOfCycles = ds->extensionData->numberCycles;
+    alpha = DSMatrixCopy(DSSSystemAlpha(DSCaseSSystem(aCase)));
+    
+    // we first determine if i/2 is a main cyclical variable.
+    for(w = 0; w < numberOfCycles; w++){
+        if( position/2 == mainCycleVariables[w]){
+            isMainCyclicalVariable = true;
+            currentCycle = w;
+            break;
+        }
+    }
+    if (isMainCyclicalVariable == true){
+        
+        // define if outlet reaction (dependent_pool_index) is a secondary variable or main variable
+        isSecondaryVariable = false;
+        isMainVariable = false;
+        
+        dependent_pool_index = DSuIntegerMatrixValue(ds->extensionData->H_l_eq, currentCycle, term2-1);
+        for(w = 0; w <numberOfCycles; w++){
+            if( dependent_pool_index == mainCycleVariables[w])
+                isMainVariable = true;
+            for (v = 0; v < ds->extensionData->numberSecondaryVariables[w]; v++){
+                secondary_variables = ds->extensionData->allSecondaryVariables[w];
+                secondary_variable = secondary_variables[v];
+                if( dependent_pool_index == secondary_variable)
+                    isSecondaryVariable = true;
+            }
+        }
+        
+        if ((isMainVariable == false && isSecondaryVariable == true ) ||
+            (isMainVariable == false && isSecondaryVariable == false)){
+            // If the outlet reaction does not correspond to the main variable and it is secondary. Special assignment.
+            
+            position_mod = dependent_pool_index;
+            previous_value = DSMatrixDoubleValue(alpha, position_mod, 0);
+            if(position%2 == 0)
+                DSMatrixSetDoubleValue(alpha, position_mod, 0, factors[position]*previous_value);
+            else
+                DSMatrixSetDoubleValue(alpha, position_mod, 0, previous_value/factors[position]);
+            
+        }else{
+            // regular assignment because the outlet reaction is the main cyclical variable
+            previous_value = DSMatrixDoubleValue(alpha, position/2, 0);
+            if(position%2 == 0)
+                DSMatrixSetDoubleValue(alpha, position/2, 0, factors[position]*previous_value);
+            else
+                DSMatrixSetDoubleValue(alpha, position/2, 0, previous_value/factors[position]);
+        }
+
+    }else{
+        // The normal assignment, when we are NOT dealing with a main variable.
+        previous_value = DSMatrixDoubleValue(alpha, position/2, 0);
+        if(position%2 == 0)
+            DSMatrixSetDoubleValue(alpha, position/2, 0, factors[position]*previous_value);
+        else
+            DSMatrixSetDoubleValue(alpha, position/2, 0, previous_value/factors[position]);
+    }
+    aCase->ssys->alpha_adjusted = alpha;
+//    aCase->ssys->alpha = DSMatrixCopy(alpha);
+    
+bail:
+    return;
+}
+
+
+
+static void dsDesignSpaceCodominantCaseAdjustConditionMatrices(DSCase *aCase,
+                                                               double *factors,
+                                                               const DSDesignSpace *ds){
+    if (factors == NULL){
+        DSError("factors is NULL", A_DS_ERROR);
+        goto bail;
+    }
+    
+    if (aCase == NULL){
+        DSError(M_DS_CASE_NULL, A_DS_ERROR);
+        goto bail;
+    }
+    
+    if (ds == NULL){
+        DSError("DS is NULL", A_DS_ERROR);
+        goto bail;
+    }
+    
+    const DSUInteger * case_signature = NULL, *signature =NULL;
+    DSExpression ** caseEquations = DSCaseEquations(aCase), *DominantInput = NULL, *rhs_equation = NULL;
+    DSUInteger i, ineq_nr =0, ii;
+    double value;
+    
+    case_signature = DSCaseSignature(aCase);
+    signature = DSDesignSpaceSignature(ds);
+    
+    
+    //1. Identify the rate law that corresponds to the input to the codominance and adjust the corresponding entries in the delta matrix.
+    for (i=0; i<DSCaseNumberOfEquations(aCase)*2; i++){
+        if (factors[i] == 1.0)
+            continue;
+        rhs_equation = DSExpressionEquationRHSExpression(caseEquations[i/2]);
+        DominantInput = DSExpressionBranchAtIndex(rhs_equation, 1);
+        if (i%2 == 0)
+            value = factors[i];
+        else
+            value = 1.0/factors[i];
+        // 2. We then modify the condition matrices.
+        dsCyclicalDesignSpaceCodominantCaseAdjustConditionMatrices_DominantInput(aCase,
+                                                                                 DominantInput,
+                                                                                 value);
+        if (rhs_equation != NULL)
+            DSExpressionFree(rhs_equation);
+        rhs_equation = NULL;
+        
+    }
+    
+    if (caseEquations != NULL)
+        DSSecureFree(caseEquations);
+        
+bail:
+    return;
+}
+
+
+static double * dsCyclicalDesignSpaceAdjustFactorsVector(double * factors,
+                                                   const DSCase * aCase,
+                                                   const DSDesignSpace * ds){
+    
+    if (factors == NULL) {
+            DSError(": Factors is NULL", A_DS_ERROR);
+            goto bail;
+    }
+    
+    // This function was written to replace the function dsCyclicalDesignSpaceCodominatCaseAdjustSsystemMatrices
+    
+    
+    DSUInteger w, numberOfCycles, i, dependent_pool_index, currentCycle = 0, position_mod, *secondary_variables, position;
+    DSUInteger * mainCycleVariables, secondary_variable, v, *termArray, term1, term2;
+    bool isMainCyclicalVariable = false, isSecondaryVariable = false, isMainVariable = false;
+    double *factors_aux;
+    
+    termArray = DSCaseSignature(aCase);
+    mainCycleVariables = ds->extensionData->mainCycleVariables;
+    numberOfCycles = ds->extensionData->numberCycles;
+    
+    factors_aux = DSSecureMalloc(sizeof(double)*DSCaseNumberOfEquations(aCase)*2);
+    for (i=0; i<DSCaseNumberOfEquations(aCase)*2; i++){
+        factors_aux[i] = 1.0;
+    }
+    
+    for (i=0; i<DSCaseNumberOfEquations(aCase)*2; i++){
+            if (factors[i] == 1.0)
+                continue;
+            position = i;
+            term1 = termArray[(position/2)*2];
+            term2 = termArray[(position/2)*2 + 1];
+            
+            // we first determine if i/2 is a main cyclical variable.
+            for(w = 0; w < numberOfCycles; w++){
+                if( position/2 == mainCycleVariables[w]){
+                    isMainCyclicalVariable = true;
+                    currentCycle = w;
+                    break;
+                }
+            }
+            if (isMainCyclicalVariable == true){
+                
+                // define if outlet reaction (dependent_pool_index) is a secondary variable or main variable
+                isSecondaryVariable = false;
+                isMainVariable = false;
+                
+                dependent_pool_index = DSuIntegerMatrixValue(ds->extensionData->H_l_eq, currentCycle, term2-1);
+                for(w = 0; w <numberOfCycles; w++){
+                    if( dependent_pool_index == mainCycleVariables[w])
+                        isMainVariable = true;
+                    for (v = 0; v < ds->extensionData->numberSecondaryVariables[w]; v++){
+                        secondary_variables = ds->extensionData->allSecondaryVariables[w];
+                        secondary_variable = secondary_variables[v];
+                        if( dependent_pool_index == secondary_variable)
+                            isSecondaryVariable = true;
+                    }
+                }
+                
+                if ((isMainVariable == false && isSecondaryVariable == true ) ||
+                    (isMainVariable == false && isSecondaryVariable == false)){
+                    
+                    // If the outlet reaction does not correspond to the main variable and it is secondary. Special assignment.
+                    position_mod = dependent_pool_index;
+                    if(position%2 == 0)
+                        factors_aux[position_mod*2] = factors[position];
+                    else
+                        factors_aux[position_mod*2+1] = factors[position];
+                }else{
+                    // regular assignment because the outlet reaction is the main cyclical variable
+                    factors_aux[position] = factors[position];
+                }
+            }else{
+                // The normal assignment, when we are NOT dealing with a main variable.
+                factors_aux[position] = factors[position];
+            }
+    }
+
+bail:
+    return factors_aux;
+}
+
+static double * dsCaseCodominantCaseMergeLinkedFactors(double *cyclical_factors, DSCase * aCase, DSDesignSpace * ds){
+    
+    if (aCase == NULL) {
+            DSError(M_DS_CASE_NULL, A_DS_ERROR);
+            goto bail;
+    }
+    if (cyclical_factors == NULL) {
+            DSError(": Factors is NULL", A_DS_ERROR);
+            goto bail;
+    }
+    
+    double * linked_factors = NULL;
+    DSUInteger i;
+
+    linked_factors = DSSecureMalloc(sizeof(double)*DSCaseNumberOfEquations(aCase)*2);
+    for (i=0; i<DSCaseNumberOfEquations(aCase)*2; i++){
+        linked_factors[i] = cyclical_factors[i];
+    }
+    
+//    if (ds->massBalances == NULL){
+//        DSError(": Mass Balances is NULL", A_DS_ERROR);
+//        goto bail;
+//    }
+//
+//    DSMatrix *S = ds->massBalances->S;
+//    char ** rxns = ds->massBalances->rxns;
+//    DSVariablePool * Xd = DSCaseXd(aCase);
+    
+    // The elements in tis function will be the stoichiometric matrix, along with the vector of pools and reactions.
+    
+    // The general idea here is to construct a subset of the stoichiometric matrix containing the fluxes affected by the factors.
+    // Then, for the most general case, metabolic blocks are found. For each metabolic block, We find a common metabolite linking all reactions within the block. Then, we identify the input flux and assigned it a factor corresponding to a merged factor. 
+    
+    
+bail:
+    return linked_factors;
+}
+
+static void dsDesignSpaceCodominatCaseAdjustSsystemMatrices(DSCase *aCase,
+                                                            double * factors,
+                                                            const DSDesignSpace * ds){
+    if (aCase == NULL) {
+            DSError(M_DS_CASE_NULL, A_DS_ERROR);
+            goto bail;
+    }
+    if (factors == NULL) {
+            DSError(": Factors is NULL", A_DS_ERROR);
+            goto bail;
+    }
+    DSMatrix *alpha = NULL;
+    DSUInteger i, position;
+    double previous_value,  *linked_factors = NULL, *cyclical_factors = NULL;
+    char *aux1[100], *aux2[100], *aux3[100];
+    
+    // If the design space is checking for cycles, we need to consider elements contained in extensionData. The order of the S-system equations will not agree with the boundaries. This needs to be considered before S-system equations can be adjusted.
+    
+    if (DSDesignSpaceCyclical(ds) == true)
+        cyclical_factors = dsCyclicalDesignSpaceAdjustFactorsVector(factors, aCase, ds);
+    else
+        cyclical_factors = factors;
+    
+    // for k-7-like networks, cyclical factors need to be further processed to merge common factors.
+    linked_factors = dsCaseCodominantCaseMergeLinkedFactors(cyclical_factors, aCase, ds);
+
+    alpha = DSMatrixCopy(DSSSystemAlpha(DSCaseSSystem(aCase)));
+    for (i=0; i<DSCaseNumberOfEquations(aCase)*2; i++){
+        if (linked_factors[i] == 1.0)
+            continue;
+        previous_value = DSMatrixDoubleValue(alpha, i/2, 0);
+        if(i%2 == 0)
+            DSMatrixSetDoubleValue(alpha, i/2, 0, linked_factors[i]*previous_value);
+        else
+            DSMatrixSetDoubleValue(alpha, i/2, 0, previous_value/linked_factors[i]);
+        aCase->ssys->alpha_adjusted = alpha;
+    }
+    
+    if (DSDesignSpaceShouldAdjustCodominantBoundaries(ds) == true){
+        if (DSSSystemAlpha(DSCaseSSystem(aCase)) != NULL)
+            DSMatrixFree(DSSSystemAlpha(DSCaseSSystem(aCase)));
+        aCase->ssys->alpha = DSMatrixCopy(aCase->ssys->alpha_adjusted);
+        dsDesignSpaceCodominantCaseAdjustConditionMatrices(aCase, linked_factors, ds);
+    }else{
+        DSSSystemSetAdjustCodominantStoichiometry(DSCaseSSystem(aCase), true);
+    }
+    
+
+    if (cyclical_factors != NULL && DSDesignSpaceCyclical(ds) == true)
+        DSSecureFree(cyclical_factors);
+    if (linked_factors != NULL)
+        DSSecureFree(linked_factors);
+    
+    // delete after debugging. Manual adjustment of delta matrices.
+//    sprintf(aux1, "%s", "3_3");
+//    sprintf(aux2, "%s", "3_2");
+//    sprintf(aux3, "%s", "3_3");
+//    if (strcmp(aux1, aCase->caseIdentifier) == 0 || strcmp(aux2, aCase->caseIdentifier) == 0 ||
+//        strcmp(aux3, aCase->caseIdentifier) == 0 ){
+//        DSMatrixSetDoubleValue(DSCaseDelta(aCase), 4, 0, log10(3.0));
+//    }else{
+//        DSMatrixSetDoubleValue(DSCaseDelta(aCase), 2, 0, log10(1.0/3.0));
+//    }
+
+
+bail:
+    return;
+}
+
 static DSCase * dsDesignSpaceCaseByRemovingIdenticalFluxes(const DSDesignSpace * ds, const DSCase * aCase)
 {
         DSCase * newCase = NULL;
         DSUInteger * zeroBoundaries = NULL;
         const DSUInteger * signature;
-        DSUInteger * terms = NULL;
+        DSUInteger * terms = NULL, numberOfEquations;
         double * factors = NULL;
-        DSUInteger i, j, start, current, numberZeroBoundaries;
+        DSUInteger i, j, start, current, numberZeroBoundaries, *numberZeroBoundariesPerBlock =NULL;
         const DSMatrix * coefficient = NULL;
         double factor;
+        bool fulfill_mass_balances = false;
+        char *id[100];
+    
+//        printf("************ Reporting from routine dsDesignSpaceCaseByRemovingIdenticalFluxes  for case %s \n", aCase->caseIdentifier);
+    
         if (ds == NULL) {
                 DSError(M_DS_DESIGN_SPACE_NULL, A_DS_ERROR);
                 goto bail;
@@ -1042,25 +2135,44 @@ static DSCase * dsDesignSpaceCaseByRemovingIdenticalFluxes(const DSDesignSpace *
         if (DSCaseHasSolution(aCase) == false) {
                 goto bail;
         }
-        zeroBoundaries = DSCaseIndexOfZeroBoundaries(aCase, &numberZeroBoundaries);
+        if(DSDesignSpaceShouldConsiderMassBalances(ds) == true)
+            numberZeroBoundariesPerBlock = DSSecureCalloc(ds->massBalances->n, sizeof(DSUInteger));
+    
+//        printf("abount to calculate indices of zero boundaries \n");
+    
+        zeroBoundaries = DSCaseIndexOfZeroBoundaries(aCase,
+                                                     &numberZeroBoundaries,
+                                                     numberZeroBoundariesPerBlock,
+                                                     ds);
+//        printf("number of zeroboundaries is %u \n", numberZeroBoundaries);
         if (zeroBoundaries == NULL || numberZeroBoundaries == 0) {
                 goto bail;
         }
-        if (dsDesignSpaceCasesWithIdenticalFluxesAreCyclical(ds, aCase, numberZeroBoundaries, zeroBoundaries) == true) {
-                goto bail;
+        
+        if (DSDesignSpaceSkipOverlappingCodominantPhenotypes(ds) == true){
+            if (dsDesignSpaceCasesWithIdenticalFluxesAreCyclical_alt(ds, aCase,
+                                                                     numberZeroBoundaries,
+                                                                     zeroBoundaries) == true) {
+                    goto bail;
+            }
         }
+    
+//        printf("all initial tests passed! \n");
+    
         newCase = DSCaseCopy(aCase);
         signature = DSDesignSpaceSignature(ds);
-        factors = DSSecureCalloc(sizeof(double), 2*DSDesignSpaceNumberOfEquations(ds));
+        factors = DSSecureCalloc(sizeof(double), 2*DSCaseNumberOfEquations(aCase));
         terms = DSSecureCalloc(sizeof(DSUInteger), numberZeroBoundaries);
         for (j = 0; j < 2*DSDesignSpaceNumberOfEquations(ds); j++) {
                 factors[j] = 1.;
         }
+//        printf("factors vector initialized \n ");
         for (i = 0; i < numberZeroBoundaries; i++) {
+//                printf("for loop. Analyzing zeroBoundaries %u \n", i);
                 current = zeroBoundaries[i];
                 start = 0;
                 factor = 2.;
-                for (j = 0; j < 2*DSDesignSpaceNumberOfEquations(ds); j++) {
+                for (j = 0; j < 2*DSCaseNumberOfEquations(aCase); j++) {
                         if (signature[j] == 1)
                                 continue;
                         if (current < signature[j]-1)
@@ -1075,7 +2187,7 @@ static DSCase * dsDesignSpaceCaseByRemovingIdenticalFluxes(const DSDesignSpace *
                         }
                         break;
                 }
-                if (current >= DSCaseSignature(aCase)[j]-1) {
+                if ((current >= DSCaseSignature(aCase)[j]-1) & (DSDesignSpaceSkipOverlappingCodominantPhenotypes(ds) == true)) {
                         DSCaseFree(newCase);
                         newCase = NULL;
                         break;
@@ -1090,21 +2202,46 @@ static DSCase * dsDesignSpaceCaseByRemovingIdenticalFluxes(const DSDesignSpace *
                 factors[j]++;// DSMatrixDoubleValue(coefficient, j/2, current);
         }
         start = i;
-        if (newCase != NULL) {
-                for (i = 0; i < numberZeroBoundaries; i++) {
-                        DSMatrixSetDoubleValue(DSCaseDelta(newCase), zeroBoundaries[i], 0, log10(2.0));
+        if (DSDesignSpaceShouldConsiderMassBalances(ds) == true && newCase != NULL && DSDesignSpaceAdjustCodominantStoichiometry(ds) == false ){
+                fulfill_mass_balances = DSCaseCodominantCaseFulfillMassBalances(ds,
+                                                                                newCase,
+                                                                                numberZeroBoundaries,
+                                                                                zeroBoundaries,
+                                                                                numberZeroBoundariesPerBlock,
+                                                                                factors);
+                if (fulfill_mass_balances == false){
+                    DSCaseFree(newCase);
+                    newCase = NULL;
                 }
-                DSCaseRecalculateBoundaryMatrices(newCase);
+        }
+        if (newCase != NULL) {
+            if (DSDesignSpaceAdjustCodominantStoichiometry(ds) == true &&
+                DSDesignSpaceShouldConsiderMassBalances(ds) == false){
+                    dsDesignSpaceCodominatCaseAdjustSsystemMatrices(newCase,
+                                                                    factors,
+                                                                    ds);
+            }
+            for (i = 0; i < numberZeroBoundaries; i++) {
+                    DSMatrixSetDoubleValue(DSCaseDelta(newCase), zeroBoundaries[i], 0, log10(2.0));
+//                    printf("adjusting zero boundaries. Boundary nr %u \n", i);
+            }
+            DSCaseRecalculateBoundaryMatrices(newCase);
+//            printf("boundary matrices recalculated! \n");
         }
 bail:
         if (zeroBoundaries != NULL)
                 DSSecureFree(zeroBoundaries);
+        if (numberZeroBoundariesPerBlock != NULL)
+                DSSecureFree(numberZeroBoundariesPerBlock);
         if (newCase == NULL)
                 newCase = (DSCase *)aCase;
         if (factors != NULL)
                 DSSecureFree(factors);
         if (terms != NULL)
                 DSSecureFree(terms);
+    
+//        printf("************ End Reporting from routine dsDesignSpaceCaseByRemovingIdenticalFluxes  for case %s \n", aCase->caseIdentifier);
+    
         return newCase;
 }
 
@@ -1701,6 +2838,7 @@ static void dsDesignSpaceCalculateCyclicalCasesSeries(DSDesignSpace *ds)
 {
         DSUInteger i, caseNumber, numberOfCases, * termSignature;
         DSCase * aCase = NULL;
+//        char aux[100];
         if (ds == NULL) {
                 DSError(M_DS_DESIGN_SPACE_NULL, A_DS_ERROR);
                 goto bail;
@@ -1730,31 +2868,24 @@ static void dsDesignSpaceCalculateCyclicalCasesSeries(DSDesignSpace *ds)
                 }
                 termSignature = DSCaseSignatureForCaseNumber(caseNumber, ds->gma);
                 if (termSignature != NULL) {
+                    
+//                        if (ds->casePrefix != NULL)
+//                            sprintf(aux, "%s", ds->casePrefix);
+//                        printf("*****5 Calling dsDesignSpaceCalculateCyclicalCasesSeries for case %u (%s) ***** \n", DSCaseNumberForSignature(termSignature, ds->gma), aux);
+
                         aCase = DSCaseWithTermsFromDesignSpace(ds, termSignature, DSDesignSpaceCasePrefix(ds));
+                                
                         if (aCase != NULL) {
-                                
-//                                printf("Analyzing Cyclical cases for case number %s \n", aCase->caseIdentifier);
-                                
-                                
+//                                printf("*****5 About to call function DSDesignSpaceCalculateCyclicalCase \n");
                                 DSDesignSpaceCalculateCyclicalCase(ds, aCase);
                                 DSCaseFree(aCase);
+//                                printf("*****5 Finished calling function DSDesignSpaceCalculateCyclicalCase \n");
                         }
                         DSSecureFree(termSignature);
                 }
         }
-        
-////        // analyze a specific case.
-//        caseNumber = 52418;
-//        termSignature = DSCaseSignatureForCaseNumber(caseNumber, ds->gma);
-//        if (termSignature != NULL) {
-//                aCase = DSCaseWithTermsFromDesignSpace(ds, termSignature, DSDesignSpaceCasePrefix(ds));
-//                if (aCase != NULL) {
-//                        DSDesignSpaceCalculateCyclicalCase(ds, aCase);
-//                        DSCaseFree(aCase);
-//                }
-//                DSSecureFree(termSignature);
-//        }
     
+//    printf(" *****5 dsDesignSpaceCalculateCyclicalCasesSeries for case %u (%s) sucessfully processed ***** \n", DSCaseNumberForSignature(termSignature, ds->gma), aux);
 bail:
         return;
 }
@@ -2727,7 +3858,7 @@ static DSDesignSpace * dsDesignSpaceSubDesignSpaceByRemovingLastEquation(DSDesig
                 DSExpressionFree(equations[i]);
         }
         DSSecureFree(equations);
-        DSVariablePoolPrint(Xd_a);
+//        DSVariablePoolPrint(Xd_a);
         subds = DSDesignSpaceByParsingStrings(strings, Xd_a, numberOfEquations);
         for (i = 0; i < numberOfEquations; i++) {
                 DSSecureFree(strings[i]);
@@ -3017,6 +4148,7 @@ extern DSDictionary * DSDesignSpaceCalculateAllValidCasesByResolvingCyclicalCase
                 DSError(M_DS_DESIGN_SPACE_NULL, A_DS_ERROR);
                 goto bail;
         }
+//        DSDesignSpaceSetSerial(ds, true);
         if (DSDesignSpaceSerial(ds) == false) {
                 caseDictionary = dsDesignSpaceCalculateAllValidCasesByResolvingCyclicalCasesSeriesParallelBSD(ds);
         } else {
@@ -3192,6 +4324,9 @@ extern void DSDesignSpaceCalculateCyclicalCase(DSDesignSpace *ds, DSCase * aCase
                 DSError(M_DS_CASE_NULL, A_DS_ERROR);
                 goto bail;
         }
+        if (DSCaseCd(aCase) == NULL || DSCaseCi(aCase) == NULL || DSCaseDelta(aCase) == NULL ){
+            goto bail;
+        }
         if (DSCaseConditionsAreValid(aCase) == false) {
                 goto bail;
         }
@@ -3219,6 +4354,7 @@ bail:
 
 extern void DSDesignSpaceCalculateCyclicalCases(DSDesignSpace *ds)
 {
+//        DSDesignSpaceSetSerial(ds, true);
         if (DSDesignSpaceSerial(ds) == true)
                 dsDesignSpaceCalculateCyclicalCasesSeries(ds);
         else
@@ -3454,8 +4590,6 @@ extern const bool DSCaseIsCyclical(const DSCase *aCase)
 //        printf("The RIGHT null space of the matrix Ad is: \n");
 //        DSMatrixPrint(DSMatrixRightNullspace(Ad));
 //    }
-    
-    
 
     // delete variables
     if (Ai != NULL)
@@ -3501,6 +4635,7 @@ extern DSDesignSpaceMessage * DSDesignSpaceEncode(const DSDesignSpace * ds)
                 message->delta = DSMatrixEncode(ds->delta);
         }
         message->modifierflags = ds->modifierFlags;
+        message->modifierflags2 = ds->modifierFlags2;
         message->numberofcases = ds->numberOfCases;
         
         if (DSDSValidPool(ds) != NULL){
@@ -3564,6 +4699,8 @@ extern DSDesignSpaceMessage * DSDesignSpaceEncode(const DSDesignSpace * ds)
             message->has_numberofconservations = true;
             message->numberofconservations = ds->numberOfConservations;
         }
+        if(DSDesignSpaceShouldConsiderMassBalances(ds) == true)
+            message->massbalances = DSMassBalanceEncode(ds->massBalances);
 
 bail:
         return message;
@@ -3573,10 +4710,13 @@ extern DSDesignSpace * DSDesignSpaceFromDesignSpaceMessage(const DSDesignSpaceMe
 {
         DSDesignSpace * ds = NULL;
         DSUInteger i, numberCycles, w;
-        char name[100];
+        char name[100], *aux;
         DSVectorMessage * data;
         DSUInteger * blowingcases;
         DSCase ** processedCases;
+        DSMassBalanceData *massBalances =NULL;
+        DSMassBalanceDataMessage *massBalances_message = NULL;
+        DSVariablePool *metabolicBlocks =NULL;
         if (message == NULL) {
                 printf("message is NULL\n");
                 goto bail;
@@ -3591,6 +4731,8 @@ extern DSDesignSpace * DSDesignSpaceFromDesignSpaceMessage(const DSDesignSpaceMe
         }
         ds->numberOfCases = message->numberofcases;
         ds->modifierFlags = message->modifierflags;
+        if (message->modifierflags2 != NULL)
+            ds->modifierFlags2 = message->modifierflags2;
         if (message->n_validcases != 0){
                 ds->validCases = DSDictionaryAlloc();
                 for (i = 0; i < message->n_validcases; i++) {
@@ -3654,6 +4796,44 @@ extern DSDesignSpace * DSDesignSpaceFromDesignSpaceMessage(const DSDesignSpaceMe
             processedCases = DSDesignSpaceCalculateCases(ds, message->n_blowingcasesnumbers, blowingcases);
             DSSecureFree(processedCases);
             DSSecureFree(blowingcases);
+        }
+        if (message->massbalances!= NULL){
+            massBalances_message = message->massbalances;
+            massBalances = DSSecureMalloc(sizeof(DSMassBalanceData));
+            massBalances->n = massBalances_message->n;
+            if (massBalances_message->fin != NULL){
+                massBalances->fin = DSSecureMalloc(sizeof(char *)*massBalances_message->n_fin);
+                for(i = 0; i<massBalances_message->n_fin; i++){
+                    aux = DSSecureMalloc(sizeof(char)*1000);
+                    strcpy(aux, massBalances_message->fin[i]);
+                    massBalances->fin[i] = aux;
+                }
+            }
+            if (massBalances_message->fout != NULL){
+                massBalances->fout = DSSecureMalloc(sizeof(char *)*massBalances_message->n_fout);
+                for(i = 0; i<massBalances_message->n_fout; i++){
+                    aux = DSSecureMalloc(sizeof(char)*1000);
+                    strcpy(aux, massBalances_message->fout[i]);
+                    massBalances->fout[i] = aux;
+                }
+            }
+            if (massBalances_message->signature !=NULL){
+                massBalances->signature = DSSecureMalloc(sizeof(DSUInteger)*massBalances_message->n_signature);
+                for(i = 0; i<massBalances_message->n_signature; i++){
+                    massBalances->signature[i] = massBalances_message->signature[i];
+                }
+            }
+            if (massBalances_message->metabolicblocks_variables != NULL){
+                metabolicBlocks = DSVariablePoolAlloc();
+                for (i=0; i<massBalances_message->n_metabolicblocks_variables; i++){
+                    DSVariablePoolAddVariableWithName(metabolicBlocks, massBalances_message->metabolicblocks_variables[i]);
+                    DSVariablePoolSetValueForVariableWithName(metabolicBlocks,
+                                                              massBalances_message->metabolicblocks_variables[i],
+                                                              massBalances_message->metabolicblocks_ids[i]);
+                }
+                massBalances->metabolicBlocks = metabolicBlocks;
+            }
+            ds->massBalances = massBalances;
         }
     
 
@@ -3728,6 +4908,71 @@ extern DSVectorMessage * DSVectorEncode(const DSUInteger * data, DSUInteger n)
     message->vector = DSSecureCalloc(sizeof(DSUInteger), n);
     for (i = 0; i < n; i++){
         message->vector[i] = data[i];
+    }
+    
+bail:
+    return message;
+    
+}
+
+extern DSMassBalanceDataMessage * DSMassBalanceEncode(const DSMassBalanceData *data){
+    
+    DSMassBalanceDataMessage * message = NULL;
+    if (data == NULL) {
+        DSError(M_DS_CASE_NULL, A_DS_ERROR);
+        goto bail;
+    }
+    
+    DSUInteger n, i, n_dependent_variables;
+    char *aux;
+    DSVariable **all_variables=NULL;
+    
+    n = data->n;
+    
+    message = DSSecureMalloc(sizeof(DSMassBalanceDataMessage));
+    dsmass_balance_data_message__init(message);
+    message->n = n;
+    message->n_fin = n;
+    message->n_fout = n;
+    message->n_signature = 2*n;
+    
+    if (data->signature !=NULL){
+        message->signature = DSSecureMalloc(sizeof(DSUInteger)*2*n);
+        for (i=0; i<2*n; i++){
+            message->signature[i] = data->signature[i];
+        }
+    }
+    
+    if (data->fin != NULL){
+        message->fin = DSSecureMalloc(sizeof(char *)*n);
+        for (i=0; i<n; i++){
+            aux = DSSecureMalloc(sizeof(char)*1000);
+            strcpy(aux, data->fin[i]);
+            message->fin[i] = aux;
+        }
+    }
+    
+    if (data->fout != NULL){
+        message->fout = DSSecureMalloc(sizeof(char *)*n);
+        for (i=0; i<n; i++){
+            aux = DSSecureMalloc(sizeof(char)*1000);
+            strcpy(aux, data->fout[i]);
+            message->fout[i] = aux;
+        }
+    }
+        
+    if (data->metabolicBlocks != NULL){
+//        DSVariablePoolPrint(data->metabolicBlocks);
+        n_dependent_variables = DSVariablePoolNumberOfVariables(data->metabolicBlocks);
+        message->metabolicblocks_ids = DSSecureMalloc(sizeof(DSUInteger)*n_dependent_variables);
+        message->metabolicblocks_variables = DSSecureMalloc(sizeof(char *)*n_dependent_variables);
+        all_variables = DSVariablePoolAllVariables(data->metabolicBlocks);
+        message->n_metabolicblocks_ids = n_dependent_variables;
+        message->n_metabolicblocks_variables = n_dependent_variables;
+        for(i=0; i<n_dependent_variables; i++){
+            message->metabolicblocks_ids[i] = (unsigned int)DSVariablePoolValueForVariableWithName(data->metabolicBlocks, DSVariableName(all_variables[i]));
+            message->metabolicblocks_variables[i] = strdup(DSVariableName(all_variables[i]));
+        }
     }
     
 bail:

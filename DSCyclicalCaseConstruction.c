@@ -55,6 +55,7 @@ extern DSMatrix * dsSubcaseProblematicEquations(const DSCase * aCase)
         }
         A = DSSSystemA(aCase->ssys);
         if (DSMatrixRows(A) > DSMatrixColumns(A)) {
+                printf("printing matrix A \n");
                 printf("%i,%i\n", DSMatrixRows(A), DSMatrixColumns(A));
                 DSMatrixPrint(A);
         }
@@ -1839,6 +1840,30 @@ bail:
     return;
 }
 
+static bool is_nested_main_f(const DSDesignSpace *ds, const DSUInteger index, DSUInteger *cycle_number){
+    
+    bool is_nested_main = false;
+    DSUInteger ll;
+    
+    if (ds == NULL)
+        goto bail;
+    
+    if (ds->extensionData != NULL){
+        for (ll = 0; ll < ds->extensionData->numberCycles; ll++){
+            if (index == ds->extensionData->mainCycleVariables[ll]){
+                is_nested_main = true;
+                *cycle_number = ll;
+                break;
+            }
+        }
+    }
+    
+bail:
+    return is_nested_main;
+    
+}
+
+
 static void dsCyclicalCaseAugmentedEquationsForCycleALT(char ** systemEquations,
                                                      const DSCase * aCase,
                                                      const DSDesignSpace * original,
@@ -1862,16 +1887,16 @@ static void dsCyclicalCaseAugmentedEquationsForCycleALT(char ** systemEquations,
 {
         DSExpression *fluxEquation;
         char * string, *name;
-        DSUInteger i, ii, j, k, l, index, ll, index_secondary_main;
-        bool is_secondary_main;
+        DSUInteger i, ii, j, k, l = 0, index, ll, index_secondary_main;
+        bool is_secondary_main, is_nested_main;
         const DSUInteger *signature;
         DSMatrix * C, *Kd, *Ki;
         DSMatrix * Ks, *Kn, *LKi, *LKd, *temp;
         const DSGMASystem * gma;
         double denominator = 0, numerator = 0;
-        DSUInteger count_plus = 0, count_minus = 0, term_nr, equation_nr;
+        DSUInteger count_plus = 0, count_minus = 0, term_nr, equation_nr, index_main, index_main_cycle_nr;
         DSUInteger c_plus_previous_cycle = 0, c_minus_previous_cycle = 0;
-        
+        char aux1[100], aux2[100];
         if (original == NULL) {
                 DSError(M_DS_DESIGN_SPACE_NULL, A_DS_ERROR);
                 goto bail;
@@ -1880,7 +1905,18 @@ static void dsCyclicalCaseAugmentedEquationsForCycleALT(char ** systemEquations,
                 DSError(M_DS_MAT_NULL, A_DS_ERROR);
                 goto bail;
         }
-        l = 0;
+        
+//        printf("*0. The design space equations for the ds with prefix %s are: \n", original->casePrefix);
+//        for (i=0; i<DSDesignSpaceNumberOfEquations(original); i++){
+//            printf("Eq %u = %s \n", i, DSExpressionAsString(DSDesignSpaceEquations(original)[i]));
+//            
+//        }
+//    
+//    
+//    printf("*0. Cyclenumber = %u, primarycyclevariable=%u, numberSecondaryVariables = %u, SecondaryVariables = %u \n", cycleNumber, primaryCycleVariable, numberSecondaryVariables, secondaryVariables[0]);
+//    printf("*0 the case equations are: \n");
+//    DSCasePrintEquations(aCase);
+    
         for (i = 0; i < DSDesignSpaceNumberOfEquations(original); i++) {
                 if (DSMatrixDoubleValue(problematicMatrix, i, cycleNumber) == 0.0f) {
                         continue;
@@ -1905,6 +1941,7 @@ static void dsCyclicalCaseAugmentedEquationsForCycleALT(char ** systemEquations,
         l = 0;
         for (i = 0; i < 2*DSDesignSpaceNumberOfEquations(original); i++) {
                 is_secondary_main = false;
+                is_nested_main = false;
                 if (DSMatrixDoubleValue(problematicMatrix, i/2, cycleNumber) == 0.0f) {
                         continue;
                 }
@@ -1960,7 +1997,12 @@ static void dsCyclicalCaseAugmentedEquationsForCycleALT(char ** systemEquations,
                         index_secondary_main = ll;
                     }
                 }
+
+                is_nested_main = is_nested_main_f(original, i/2, &index_main_cycle_nr);
+//                printf("*0 is_nested_main (i=%u) calculated for case %s!. index_main_cycle_nr = %u \n", i, aCase->caseIdentifier, index_main_cycle_nr);
+                
                 for (j = 0; j < signature[i]; j++) {
+//                        printf("*0 processing j=%u for case %s \n", j, aCase->caseIdentifier);
                         if (j + 1 == DSCaseSignature(aCase)[i]){
                                     if (i % 2 == 0 && is_secondary_main == true)
                                         c_plus_previous_cycle++;
@@ -1969,82 +2011,139 @@ static void dsCyclicalCaseAugmentedEquationsForCycleALT(char ** systemEquations,
                                     continue;
                             }
                         fluxEquation = DSExpressionFromPowerlawInMatrixForm(j, Kd, DSGMASystemXd(gma), Ki, DSGMASystemXi(gma), C);
+//                        printf("*0 flux equation created! \n");
                         name = DSExpressionAsString(fluxEquation);
+//                        printf("*0 name generated created! \n");
+                        // We deal with G_l_eq and G_l_term first
                         if (i % 2 == 0) {
                                 sprintf(string, "%s + %s", systemEquations[primaryCycleVariable], name);
                                 term_nr = j;
                                 equation_nr = i/2;
-                                if (is_secondary_main == false){
-                                    if (extensionData->G_l_eq != NULL)
-                                        DSuIntegerMatrixSetValue(extensionData->G_l_eq,
-                                                                 cycleNumber,
-                                                                 count_plus,
-                                                                 equation_nr);
-                                    if (extensionData->G_l_term != NULL)
-                                        DSuIntegerMatrixSetValue(extensionData->G_l_term,
-                                                                 cycleNumber,
-                                                                 count_plus,
-                                                                 term_nr);
-                                    count_plus++;
-                                } else {
-                                    term_nr = DSuIntegerMatrixValue(original->extensionData->G_l_term,
-                                                                secondaryMain_previous_cycle[index_secondary_main],
-                                                                    c_plus_previous_cycle);
-                                    
+//                                printf("G_l matrices: variables initialiced \n");
+                                if ((is_nested_main == true) && (original->extensionData != NULL)){
+                                    index_main = term_nr;
                                     equation_nr = DSuIntegerMatrixValue(original->extensionData->G_l_eq,
-                                                                secondaryMain_previous_cycle[index_secondary_main],
-                                                                        c_plus_previous_cycle);
-                                    if (extensionData->G_l_eq != NULL)
-                                        DSuIntegerMatrixSetValue(extensionData->G_l_eq,
-                                                                 cycleNumber,
-                                                                 count_plus,
-                                                                 equation_nr);
-                                    if (extensionData->G_l_term != NULL)
-                                        DSuIntegerMatrixSetValue(extensionData->G_l_term,
-                                                                 cycleNumber,
-                                                                 count_plus,
-                                                                 term_nr);
-                                    c_plus_previous_cycle++;
+                                                                        index_main_cycle_nr,
+                                                                        index_main);
+                                    term_nr = DSuIntegerMatrixValue(original->extensionData->G_l_term,
+                                                                    index_main_cycle_nr,
+                                                                    index_main);
+                                    DSuIntegerMatrixSetValue(extensionData->G_l_eq,
+                                                             cycleNumber,
+                                                             count_plus,
+                                                             equation_nr);
+                                    DSuIntegerMatrixSetValue(extensionData->G_l_term,
+                                                             cycleNumber,
+                                                             count_plus,
+                                                             term_nr);
                                     count_plus++;
+//                                    printf("G_l matrices: first option \n");
+                                } else if ((is_secondary_main == true) && (original->extensionData != NULL)){
+                                    
+                                        term_nr = DSuIntegerMatrixValue(original->extensionData->G_l_term,
+                                                                    secondaryMain_previous_cycle[index_secondary_main],
+                                                                        c_plus_previous_cycle);
+                                        equation_nr = DSuIntegerMatrixValue(original->extensionData->G_l_eq,
+                                                                    secondaryMain_previous_cycle[index_secondary_main],
+                                                                            c_plus_previous_cycle);
+                                        DSuIntegerMatrixSetValue(extensionData->G_l_eq,
+                                                                     cycleNumber,
+                                                                     count_plus,
+                                                                     equation_nr);
+                                        DSuIntegerMatrixSetValue(extensionData->G_l_term,
+                                                                     cycleNumber,
+                                                                     count_plus,
+                                                                     term_nr);
+                                        c_plus_previous_cycle++;
+                                        count_plus++;
+//                                        printf("G_l matrices: second option \n");
+                                        
+                                } else {
+                                        DSuIntegerMatrixSetValue(extensionData->G_l_eq,
+                                                                     cycleNumber,
+                                                                     count_plus,
+                                                                     equation_nr);
+                                        DSuIntegerMatrixSetValue(extensionData->G_l_term,
+                                                                     cycleNumber,
+                                                                     count_plus,
+                                                                     term_nr);
+                                        count_plus++;
+//                                        printf("G_l matrices: third option \n");
                                 }
+//                                DSuIntegerMatrixSetValue(extensionData->G_l_eq_previous,
+//                                                             cycleNumber,
+//                                                             count_plus - 1,
+//                                                             equation_nr);
+//                                DSuIntegerMatrixSetValue(extensionData->G_l_term_previous,
+//                                                             cycleNumber,
+//                                                             count_plus - 1,
+//                                                             term_nr);
+//                            printf("matriced G_l processed \n");
+                        // Now, we deal with H_l_eq and H_l_term.
                         } else {
                                 term_nr = j;
                                 equation_nr = i/2;
                                 sprintf(string, "%s - %s", systemEquations[primaryCycleVariable], name);
-                                if (is_secondary_main == false){
-                                    if (extensionData->H_l_eq != NULL)
-                                        DSuIntegerMatrixSetValue(extensionData->H_l_eq,
-                                                                 cycleNumber,
-                                                                 count_minus,
-                                                                 equation_nr);
-                                    if (extensionData->H_l_term != NULL)
-                                        DSuIntegerMatrixSetValue(extensionData->H_l_term,
-                                                                 cycleNumber,
-                                                                 count_minus,
-                                                                 term_nr);
-                                    count_minus++;
-                                }else{
-                                    term_nr = DSuIntegerMatrixValue(original->extensionData->H_l_term,
-                                                            secondaryMain_previous_cycle[index_secondary_main],
-                                                                    c_minus_previous_cycle);
-                                    
+//                                printf("H_l matrices. variables initialized \n");
+                                if ((is_nested_main == true) && (original->extensionData != NULL)){
+//                                    printf("H_l matrices. first option start for term %s \n", name);
+                                    index_main = term_nr;
+//                                    printf("index_main is %u; index_main_cycle_nr = %u; count_minus = %u \n", index_main, index_main_cycle_nr, count_minus);
                                     equation_nr = DSuIntegerMatrixValue(original->extensionData->H_l_eq,
+                                                                        index_main_cycle_nr,
+                                                                        index_main);
+//                                    printf("equation_nr is %u \n", equation_nr);
+                                    term_nr = DSuIntegerMatrixValue(original->extensionData->H_l_term,
+                                                                    index_main_cycle_nr,
+                                                                    index_main);
+//                                    printf("term_nr is %u \n", term_nr);
+//                                    printf("H_l_eq matrix is: \n");
+//                                    DSuIntegerMatrixPrint(extensionData->H_l_eq);
+//                                    DSuIntegerMatrixPrint(extensionData->H_l_term);
+                                    DSuIntegerMatrixSetValue(extensionData->H_l_eq,
+                                                             cycleNumber,
+                                                             count_minus,
+                                                             equation_nr);
+                                    DSuIntegerMatrixSetValue(extensionData->H_l_term,
+                                                             cycleNumber,
+                                                             count_minus,
+                                                             term_nr);
+                                    count_minus++;
+//                                    printf("H_l matrices. first option end \n");
+                                } else if ((is_secondary_main == true) && (original->extensionData != NULL)){
+//                                        printf("H_l matrices. second option start \n");
+                                        term_nr = DSuIntegerMatrixValue(original->extensionData->H_l_term,
                                                                 secondaryMain_previous_cycle[index_secondary_main],
                                                                         c_minus_previous_cycle);
-                                    if (extensionData->H_l_eq != NULL)
+                                        equation_nr = DSuIntegerMatrixValue(original->extensionData->H_l_eq,
+                                                                            secondaryMain_previous_cycle[index_secondary_main],
+                                                                            c_minus_previous_cycle);
                                         DSuIntegerMatrixSetValue(extensionData->H_l_eq,
                                                                  cycleNumber,
                                                                  count_minus,
                                                                  equation_nr);
-                                    if (extensionData->H_l_term != NULL)
                                         DSuIntegerMatrixSetValue(extensionData->H_l_term,
                                                                  cycleNumber,
                                                                  count_minus,
                                                                  term_nr);
-                                    c_minus_previous_cycle++;
-                                    count_minus++;
+                                        c_minus_previous_cycle++;
+                                        count_minus++;
+//                                        printf("H_l matrices. second option \n");
+                                }else{
+//                                        printf("H_l matrices. third option start \n");
+                                        DSuIntegerMatrixSetValue(extensionData->H_l_eq,
+                                                                 cycleNumber,
+                                                                 count_minus,
+                                                                 equation_nr);
+                                        DSuIntegerMatrixSetValue(extensionData->H_l_term,
+                                                                 cycleNumber,
+                                                                 count_minus,
+                                                                 term_nr);
+                                        count_minus++;
+//                                        printf("H_l matrices. third option \n");
                                 }
                         }
+//                    printf("matriced H_l processed \n");
                         if (string != systemEquations[primaryCycleVariable]) {
                                 DSSecureFree(systemEquations[primaryCycleVariable]);
                                 systemEquations[primaryCycleVariable] = string;
@@ -2067,12 +2166,6 @@ static void dsCyclicalCaseAugmentedEquationsForCycleALT(char ** systemEquations,
                         systemEquations[ii] = NULL;
                     }
             }
-            
-//            if (aCase->caseIdentifier !=   NULL){
-//                printf("zero positive or negative terms for case  %s \n", aCase->caseIdentifier);
-//                printf("That message was reported from function dsCyclicalCaseAugmentedEquationsForCycleALT_ \n");
-//
-//            }
         }
 bail:
         return;
@@ -2370,6 +2463,10 @@ static void dsCyclicalCaseAugmentedEquationsForCycleALT_conserved(char ** system
                     DSuIntegerMatrixSetValue(extensionData->G_l_eq, cycleNumber, count_plus, equation_nr);
                 if (extensionData->G_l_term != NULL)
                     DSuIntegerMatrixSetValue(extensionData->G_l_term, cycleNumber, count_plus, term_nr);
+//                if (extensionData->G_l_eq_previous != NULL)
+//                    DSuIntegerMatrixSetValue(extensionData->G_l_eq_previous, cycleNumber, count_plus, equation_nr);
+//                if (extensionData->G_l_term_previous != NULL)
+//                    DSuIntegerMatrixSetValue(extensionData->G_l_term_previous, cycleNumber, count_plus, term_nr);
                 count_plus++;
             } else {
                 term_nr = j;
@@ -3117,9 +3214,6 @@ static char ** dsCyclicalCaseOriginalEquationsWithEquilibriumConstraints(const D
                 DSMatrixFree(C);
         }
         for (i = 0; i < DSDesignSpaceNumberOfEquations(original); i++) {
-//                if (DSCaseNumber(aCase) == 126 && DSDesignSpaceCyclical(original) == false) {
-//                        printf("%s\n", systemEquations[i]);
-//                }
                 DSExpressionFree(equations[i]);
                 DSExpressionFree(caseEquations[i]);
         }
@@ -3147,6 +3241,7 @@ static char ** dsCyclicalCaseEquationsSplitVariables(const DSCase * aCase,
         DSUInteger numberAllSecondaryVariables, * allSecondaryVariables = NULL;
         double  * coefficientMultipliers = NULL;
         DSuIntegerMatrix * G_l_eq = NULL, *G_l_term = NULL, *H_l_eq = NULL, *H_l_term = NULL;
+//        DSuIntegerMatrix * G_l_eq_previous = NULL, *G_l_term_previous = NULL;
     
         if (aCase == NULL) {
                 DSError(M_DS_CASE_NULL, A_DS_ERROR);
@@ -3288,13 +3383,15 @@ static char ** dsCyclicalCaseEquationsSplitVariables(const DSCase * aCase,
                 maxH = (tempH >= maxH) ?  tempH : maxH ; // Number of Negative Terms.
         }
     
-        if (DSDesignSpaceConserved(original) == true)
-            if (signature != NULL)
-                DSSecureFree((DSUInteger *)signature);
+        if (DSDesignSpaceConserved(original) == true){
+            if (signature != NULL){
+                    DSSecureFree((DSUInteger *)signature);
+            }
+        }
     
-        // allocate unsigned integer matrices G
         if (numberOfCycles != 0 && maxG != 0 && maxH != 0){
             
+            // allocate unsigned integer matrices G
             G_l_eq = DSuIntegerMatrixCalloc(numberOfCycles, maxG);
             G_l_term = DSuIntegerMatrixCalloc(numberOfCycles, maxG);
             extensionData->G_l_eq = G_l_eq;
@@ -3305,6 +3402,16 @@ static char ** dsCyclicalCaseEquationsSplitVariables(const DSCase * aCase,
             H_l_term = DSuIntegerMatrixCalloc(numberOfCycles, maxH);
             extensionData->H_l_eq = H_l_eq;
             extensionData->H_l_term = H_l_term;
+        } else {
+            printf("MaxG, MaxH or number is cycles is 0 for the internal design space being generated! going to bail. \n");
+//            for (i=0; i<DSDesignSpaceNumberOfEquations(original); i++){
+//                if (systemEquations[i] != NULL)
+//                    DSSecureFree(systemEquations[i]);
+//            }
+            if (systemEquations != NULL)
+                DSSecureFree(systemEquations);
+            systemEquations = NULL;
+            goto bail;
         }
     
         DSUInteger m, mm, *secondaryMain, numberSecondaryMain, *secondaryMain_previous_cycle;
@@ -3325,7 +3432,7 @@ static char ** dsCyclicalCaseEquationsSplitVariables(const DSCase * aCase,
                                 numberSecondaryMain++;
                             }
             }
-            
+//            printf("*1 about to call dsCyclicalCaseAugmentedEquationsForCycleALT \n");
             if (DSDesignSpaceConserved(original) == true)
                 dsCyclicalCaseAugmentedEquationsForCycleALT_conserved(systemEquations, aCase, original,
                                                                       problematicEquations, coefficientArray, i,
@@ -3342,6 +3449,7 @@ static char ** dsCyclicalCaseEquationsSplitVariables(const DSCase * aCase,
                                                             numberSecondaryMain,
                                                             secondaryMain,
                                                             secondaryMain_previous_cycle);
+//            printf("*1 dsCyclicalCaseAugmentedEquationsForCycleALT sucessfully called \n");
             if (original->extensionData != NULL){
                 if (secondaryMain != NULL)
                     DSSecureFree(secondaryMain);
@@ -3532,14 +3640,14 @@ DSCycleExtensionData * dsCycleExtensionDataInitForCyclicalCase(const DSCase * aC
                 goto bail;
         }
     
-    extensionData = DSSecureCalloc(sizeof(DSCycleExtensionData), 1);
-    extensionData->originalsSystem = DSSSystemCopy(aCase->ssys);
+        extensionData = DSSecureCalloc(sizeof(DSCycleExtensionData), 1);
+        extensionData->originalsSystem = DSSSystemCopy(aCase->ssys);
+        extensionData->parent_ds = (void *)original;
+        if (original->extensionData == NULL)
+            extensionData->beta = (DSMatrix *)original->gma->beta;
+        else
+            extensionData->beta = original->extensionData->beta;
     
-    if (original->extensionData == NULL)
-        extensionData->beta = (DSMatrix *)original->gma->beta;
-    else
-        extensionData->beta = original->extensionData->beta;
-
 bail:
         return extensionData;
 }
@@ -3615,14 +3723,18 @@ DSDesignSpace * dsCyclicalCaseCollapsedSystem(const DSCase * aCase,
                 goto bail;
             }
         }
+
         if (problematicEquations == NULL)
                 goto bail;
         if (coefficientArray == NULL)
                 goto bail;
+        
         extensionData = dsCycleExtensionDataInitForCyclicalCase(aCase, original);
+//    printf("**2 about to call dsCyclicalCaseEquationsSplitVariables \n");
         systemEquations = dsCyclicalCaseEquationsSplitVariables(aCase, original,
                                                                 problematicEquations, coefficientArray,
                                                                 extensionData);
+//    printf("**2 function dsCyclicalCaseEquationsSplitVariables calculated \n");
     
         if (systemEquations == NULL) {
                 goto bail;
@@ -3656,6 +3768,13 @@ DSDesignSpace * dsCyclicalCaseCollapsedSystem(const DSCase * aCase,
         DSDesignSpaceSetCyclical(collapsed, true);
         DSDesignSpaceSetUnstable(collapsed, DSDesignSpaceUnstable(original));
         DSDesignSpaceSetResolveCoDominance(collapsed, DSDesignSpaceResolveCoDominance(original));
+        DSDesignSpaceSetSkipOverlappingCodominantPhenotypes(collapsed, DSDesignSpaceSkipOverlappingCodominantPhenotypes(original));
+        DSDesignSpaceSetAdjustCodominantStoichiometry(collapsed, DSDesignSpaceAdjustCodominantStoichiometry(original));
+        DSDesignSpaceSetAdjustCodominantBoundaries(collapsed, DSDesignSpaceShouldAdjustCodominantBoundaries(original));
+        DSDesignSpaceSetShouldConsiderMassBalances(collapsed,
+                                                   DSDesignSpaceShouldConsiderMassBalances(original));
+        if (DSDesignSpaceShouldConsiderMassBalances(collapsed) == true)
+            collapsed->massBalances = original->massBalances;
         DSCyclicalCaseInit3dSignature(collapsed, original, aCase);
         collapsed->extensionData = extensionData;
         if (DSDesignSpaceNumberOfCases(collapsed) != 0) {
@@ -3693,6 +3812,9 @@ extern DSDesignSpace * DSCyclicalCaseDesignSpacesForUnderdeterminedCase(const DS
                 DSError(M_DS_DESIGN_SPACE_NULL, A_DS_ERROR);
                 goto bail;
         }
+    
+//        printf("***3 Reporting from function DSCyclicalCaseDesignSpacesForUnderdeterminedCase for case %s \n", aCase->caseIdentifier);
+    
         if (DSSSystemIsConserved(aCase->ssys) == true){
                 if (DSCaseNumberOfEquations(aCase) + DSDesignSpaceNumberOfConservations(original) != DSDesignSpaceNumberOfEquations(original)) {
                         DSError(M_DS_WRONG ": Number of equations in design space must match number of equations in case", A_DS_ERROR);
@@ -3708,18 +3830,22 @@ extern DSDesignSpace * DSCyclicalCaseDesignSpacesForUnderdeterminedCase(const DS
         if (problematicEquations == NULL){
                 goto bail;
         }
+//    printf("***3: problematic equations calculated \n");
         problematicTerms = dsSubcaseProblematicTerms(aCase, problematicEquations);
         if (problematicTerms == NULL){
                 goto bail;
         }
+//    printf("***3: problematic terms calculated \n");
         coefficientArray = dsSubcaseCoefficientsOfInterest(aCase, problematicTerms);
         if (coefficientArray == NULL){
                 goto bail;
         }
+//    printf("***3: coefficientArray calculated \n");
         if (DSMatrixArrayNumberOfMatrices(problematicTerms) != DSMatrixArrayNumberOfMatrices(coefficientArray)){
                 goto bail;
         }
         subcase = dsCyclicalCaseCollapsedSystem(aCase, original, problematicEquations, coefficientArray);
+//    printf("***3: subcase created \n");
     
 bail:
         if (problematicEquations != NULL)
@@ -3728,5 +3854,7 @@ bail:
                 DSMatrixArrayFree(problematicTerms);
         if (coefficientArray != NULL)
                 DSMatrixArrayFree(coefficientArray);
+//        printf("***3 done with this function \n ");
+        
         return subcase;
 }

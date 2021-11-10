@@ -44,6 +44,12 @@ __BEGIN_DECLS
 #define DS_DESIGN_SPACE_FLAG_RESOLVE_CO_DOMINANCE        0x04
 #define DS_DESIGN_SPACE_FLAG_UNSTABLE                    0x08
 #define DS_DESIGN_SPACE_FLAG_CONSERVATIONS               0x10
+#define DS_DESIGN_SPACE_FLAG_CO_DOMINANCE_ADJUST_STOICHIOMETRY          0x20
+#define DS_DESIGN_SPACE_FLAG_CO_DOMINANCE_SKIP_OVERLAPPING_PHENOTYPES   0x40
+#define DS_DESIGN_SPACE_FLAG_MASS_BALANCES                              0x80
+
+// these flags are contained in ds->modifierFlags2
+#define DS_DESIGN_SPACE_FLAG_C0_DOMINANCE_ADJUST_BOUNDARIES             0x01
 
 #if defined (__APPLE__) && defined (__MACH__)
 #pragma mark - Allocation, deallocation and initialization
@@ -69,10 +75,22 @@ extern void DSDesignSpaceAddConditions(DSDesignSpace *ds, const DSMatrix * Cd, c
 extern void DSDesignSpaceSetSerial(DSDesignSpace *ds, bool serial);
 extern void DSDesignSpaceSetCyclical(DSDesignSpace *ds, bool cyclical);
 extern void DSDesignSpaceSetResolveCoDominance(DSDesignSpace *ds, bool Codominance);
+extern void DSDesignSpaceSetAdjustCodominantStoichiometry(DSDesignSpace *ds, bool adjust);
+extern void DSDesignSpaceSetSkipOverlappingCodominantPhenotypes(DSDesignSpace *ds, bool adjust);
+extern void DSDesignSpaceSetShouldConsiderMassBalances(DSDesignSpace *ds, bool mass_balance);
+extern void DSDesignSpaceSetAdjustCodominantBoundaries(DSDesignSpace *ds, bool adjust_boundaries);
 extern void DSDesignSpaceSetUnstable(DSDesignSpace *ds, bool Unstable);
 extern void DSDesignSpaceSetResolveConservations(DSDesignSpace *ds, bool Conservations);
 extern void DSDesignSpaceSetNumberOfConservations(DSDesignSpace *ds, DSUInteger numberOfConservations);
 extern void DSDesignSpaceSetNumberOfInheritedConservations(DSDesignSpace *collapsed, const DSDesignSpace *original);
+extern void DSDesignSpaceInitializeMassBalances(DSDesignSpace *ds,
+                                                const char ** fin_strings,
+                                                const char ** fout_strings,
+                                                const char ** signature_string,
+                                                DSUInteger numberOfMassBalances,
+                                                const DSVariablePool * metabolicBlocks,
+                                                const char ** S_string, DSUInteger rows, DSUInteger columns,
+                                                const char ** rxns);
 
 #if defined (__APPLE__) && defined (__MACH__)
 #pragma mark - Getters -
@@ -83,6 +101,15 @@ extern bool DSDesignSpaceCyclical(const DSDesignSpace *ds);
 extern bool DSDesignSpaceResolveCoDominance(const DSDesignSpace *ds);
 extern bool DSDesignSpaceUnstable(const DSDesignSpace *ds);
 extern bool DSDesignSpaceConserved(const DSDesignSpace *ds);
+extern bool DSDesignSpaceShouldConsiderMassBalances(const DSDesignSpace * ds);
+extern bool DSDesignSpaceAdjustCodominantStoichiometry(const DSDesignSpace *ds);
+extern bool DSDesignSpaceSkipOverlappingCodominantPhenotypes(const DSDesignSpace *ds);
+extern bool DSDesignSpaceShouldAdjustCodominantBoundaries(DSDesignSpace *ds);
+
+
+extern const char * DSDesignSpaceFinAtIndex(const DSDesignSpace *ds, DSUInteger n);
+extern const char * DSDesignSpaceFoutAtIndex(const DSDesignSpace *ds, DSUInteger n);
+extern DSUInteger DSDesignSpaceNumberOfMetabolicBlocks(const DSDesignSpace *ds);
 
 extern const DSVariablePool * DSDesignSpaceXi(const DSDesignSpace *ds);
 extern const DSVariablePool * DSDesignSpaceXd(const DSDesignSpace *ds);
@@ -175,6 +202,7 @@ extern const bool DSCaseIsCyclical(const DSCase *aCase);
 extern DSDesignSpaceMessage * DSDesignSpaceEncode(const DSDesignSpace * aCase);
 extern DSExtensionDataMessage * DSExtensionDataEncode(const DSCycleExtensionData *extensionData);
 extern DSVectorMessage * DSVectorEncode(const DSUInteger * data, DSUInteger n);
+extern DSMassBalanceDataMessage * DSMassBalanceEncode(const DSMassBalanceData *data);
 extern DSDesignSpace * DSDesignSpaceFromDesignSpaceMessage(const DSDesignSpaceMessage * message);
 extern DSDesignSpace * DSDesignSpaceDecode(size_t length, const void * buffer);
 

@@ -353,6 +353,7 @@ typedef struct {
 typedef struct {
         DSMatrix *alpha;               //!< A DSMatrix object with the coefficients for the jth positive term of the ith equations.
         DSMatrix *beta;                //!< A DSMatrix object with the coefficients for the jth negative term of the ith equations.
+        DSMatrix *alpha_adjusted;      //!< A DSMatrix object with the adjusted coefficients for the jth positive term of the ith equations. This matrix is only defined for codominant ssystems when adjusting the stoichiometry
         DSMatrix *Gd;                  //!< A DSMatrix object with the exponent for the jth dependent variable of the ith equations.
         DSMatrix *Gi;                  //!< A DSMatrix object with the exponent for the jth independent variable of the ith equations.
         DSMatrix *Hd;                  //!< A DSMatrix object with the exponent for the jth dependent variable of of the ith equations.
@@ -368,6 +369,18 @@ typedef struct {
         DSDictionary * fluxDictionary; //!< A dictorionary relating dynamic variables and their fluxes.
         DSUInteger numberOfConservations;
 } DSSSystem;
+
+typedef struct{
+    
+    char ** fin, ** fout;               //!< Vector of strings containing mass balance expressions for each metabolic block
+    char ** fin_Xd, **fout_Xd;          //!< Vector of strings containing mass balance expressions (as a function of dependent variables) for each metabolic block. Defined only when data structure is contained in a DSCase.
+    DSUInteger n;                       //!< Number of metabolic blocs in the system. There is one fin and one fout string for each block.
+    DSUInteger *signature;              //!< Contains the number of input and output terms for each mass balance. Its length is 2*n. Analogous to the design space signature.
+    DSVariablePool *metabolicBlocks;    //!< Variablepool with the metabolic_block_id for each dependent variable.
+    DSMatrix * S;                       //!< The stoichiometric matrix of the system
+    char ** rxns;                       //!< A  vector of strings containing the system's reaction. Its length equals the number of columns of S.
+    
+} DSMassBalanceData;
 
 /**
  * \brief Data type used to represent a case.
@@ -404,12 +417,14 @@ typedef struct {
         char * caseIdentifier;            //!< A case identifier used to identify cases and subcases [will replace case number].
         bool freeVariables;               //!< Flag indicating if the Case object should free the dependent, algebraic and independent variables.
         DSUInteger numberInheritedConservations;
+        DSMassBalanceData *dominant_mass_balances; //!< Contains dominant Fin and Fouts. Relevant when analyzing codominances. 
 } DSCase;
 
 
 typedef DSCase DSPseudoCase;
 
 typedef struct {
+        void * parent_ds;                                //!< A pointer to the parent DS.
         DSUInteger numberCycles;                        //!< Integer indicating number of cycles
         DSUInteger * mainCycleVariables;                //!< Array containing indices of main cyclical variable for each cycle.
         DSUInteger * numberSecondaryVariables;          //!< Array containing number of secondary variables per cycle.
@@ -417,10 +432,12 @@ typedef struct {
         const DSSSystem * originalsSystem;
         const DSMatrix *beta;                           //!< A DSMatrix object with the coefficients for the jth negative term of the ith equations of the original GMA.
         char ** extendedEquations;
-        DSuIntegerMatrix * G_l_eq;                      //!< Matrix containing indices of equation of positive terms in the global dominance equation.
-        DSuIntegerMatrix * G_l_term;                    //!< Matrix containing indices of terms of positive terms in the global dominance equation.
-        DSuIntegerMatrix * H_l_term;                    //!< Matrix containing indices of terms of negative terms in the global dominance equation.
-        DSuIntegerMatrix * H_l_eq;                      //!< Matrix containing indices of equation of negative terms in the global dominance equation.
+        DSuIntegerMatrix * G_l_eq;                      //!< Matrix containing indices of equation of positive terms in the global dominance equation. Root DS is the reference.
+        DSuIntegerMatrix * G_l_term;                    //!< Matrix containing indices of terms of positive terms in the global dominance equation.  Root DS is the reference.
+        DSuIntegerMatrix * H_l_term;                    //!< Matrix containing indices of terms of negative terms in the global dominance equation.  Root DS is the reference.
+        DSuIntegerMatrix * H_l_eq;                      //!< Matrix containing indices of equation of negative terms in the global dominance equation.  Root DS is the reference.
+//        DSuIntegerMatrix * G_l_eq_previous;                      //!< Matrix containing indices of equation of positive terms in the global dominance equation. Previous DS is the reference.
+//        DSuIntegerMatrix * G_l_term_previous;                    //!< Matrix containing indices of terms of positive terms in the global dominance equation.  Previous DS is the reference.
 } DSCycleExtensionData;
 
 
@@ -447,7 +464,7 @@ typedef struct {
         DSMatrix * Cd, *Ci, *delta;             //!< Condition matrices.
         DSDictionary *cyclicalCases;            //!< DSDictionary containing design space objects with subcases.
         DSMatrix * Rn;                          //!< Matrix Used to calculate the coefficients of the characteristic equations using the method of underdetermined coefficients.
-        unsigned char modifierFlags;            //!< A character holding flags that modify S-System behavior.
+        unsigned char modifierFlags, modifierFlags2;  //!< A character holding flags that modify S-System behavior.
         DSDictionary * cycleFluxes;
         DSCycleExtensionData * extensionData;
         char * casePrefix;                      //!< A string used for cyclical cases to indicate subcase parents.
@@ -457,6 +474,7 @@ typedef struct {
         DSDictionary *Xd_t_dic;                 //!< Useful when full system has conservation relationships. It stores unique Xd_t variable pools
         DSDictionary *Xd_a_dic;                 //!< Useful when full system has conservation relationships. It stores unique Xd_a variable pools
         DSDictionary *Xd_a_c_dic;                //!< Useful when full system has conservation relationships. It stores unique Xd_a_c variable pools
+        DSMassBalanceData *massBalances;
 } DSDesignSpace;
 
 /**

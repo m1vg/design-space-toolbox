@@ -98,5 +98,16 @@ message DSDesignSpaceMessage {
         repeated int32 blowingCasesNumbers = 13;
         optional int32 numberOfConservations = 14;
         optional int32 numberinheritedconservations = 15;
+        optional DSMassBalanceDataMessage massBalances = 16;
+        optional int32 modifierFlags2 = 17;
+}
+
+message DSMassBalanceDataMessage{
+        required int32 n = 1;
+        repeated string fin = 2;
+        repeated string fout = 3;
+        repeated int32 signature = 4;
+        repeated string metabolicblocks_variables = 5;
+        repeated int32 metabolicblocks_ids = 6;
 }
 

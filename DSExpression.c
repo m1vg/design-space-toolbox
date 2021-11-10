@@ -1162,6 +1162,40 @@ bail:
         return string;
 }
 
+extern char * DSExpressionBranchAtIndexAsString(const DSExpression *expression, DSUInteger index){
+        
+    char * string = NULL;
+    
+    if (expression == NULL) {
+            DSError(M_DS_NULL ": Node to print is null", A_DS_ERROR);
+            goto bail;
+    }
+    
+    if (index > DSExpressionNumberOfBranches(expression))
+        goto bail;
+    
+    DSExpression *expression_n = NULL;
+    DSUInteger length = DS_EXPRESSION_STRING_INIT_LENGTH, i;
+    
+    string = DSSecureCalloc(sizeof(char), length);
+    expression_n = DSExpressionBranchAtIndex(expression, index);
+    dsExpressionToStringInternal(expression_n, &string, &length);
+    
+    
+bail:
+    return string;
+}
+
+extern DSUInteger DSExpressionNumberOfTerms(const DSExpression *expression){
+    
+    DSUInteger numberOfTerms = 0;
+    if (expression == NULL)
+        goto bail;
+    numberOfTerms = DSExpressionNumberOfBranches(expression);
+bail:
+    return numberOfTerms;
+}
+
 static void expressionToLatexStringInternal(const DSExpression *current, char ** string, DSUInteger *length, const DSDictionary * substitutionDict)
 {
         DSUInteger i;
@@ -1397,6 +1431,73 @@ bail:
         return areEqual;
 }
 
+extern bool DSStringIsEqualToStringIgnoringOrder(const char *lhs_string, const char *rhs_string){
+    
+    DSExpression *ratio=NULL;
+    bool areEqual = false;
+    char ratio_string[1000];
+    DSVariablePool *Xi=NULL;
+    
+    if (lhs_string == NULL || rhs_string == NULL) {
+            areEqual = false;
+            goto bail;
+    }
+    
+    if (strcmp(lhs_string, rhs_string) == 0) {
+            areEqual = true;
+            goto bail;
+    }
+    
+    sprintf(ratio_string, "%s/(%s)", lhs_string, rhs_string);
+    ratio = DSExpressionByParsingStringSimplifyExpressionAsExpression(ratio_string);
+    Xi = DSExpressionVariablesInExpression(ratio);
+    
+    if (DSVariablePoolNumberOfVariables(Xi) == 0)
+        areEqual = true;
+    else
+        areEqual = false;
+    
+    if (ratio != NULL)
+        DSSecureFree(ratio);
+    if (Xi != NULL)
+        DSVariablePoolFree(Xi);
+    
+bail:
+    return areEqual;
+    
+}
+
+
+extern bool DSExpressionIsEqualToExpressionIgnoringOrder(const DSExpression * lhs, const DSExpression *rhs){
+    
+    bool areEqual = false;
+    char * lhs_string = NULL, *rhs_string = NULL;
+    
+    if (lhs == rhs) {
+            areEqual = true;
+            goto bail;
+    }
+    if (lhs == NULL || rhs == NULL) {
+            areEqual = false;
+            goto bail;
+    }
+    
+    lhs_string = DSExpressionAsString(lhs);
+    rhs_string = DSExpressionAsString(rhs);
+    
+    areEqual = DSStringIsEqualToStringIgnoringOrder(lhs_string, rhs_string);
+    
+    if (lhs_string !=NULL)
+        DSSecureFree(lhs_string);
+    if (rhs_string !=NULL)
+        DSSecureFree(rhs_string);
+
+    
+bail:
+    return areEqual;
+    
+}
+
 extern DSExpression * DSExpressionByReplacingSubExpression(const DSExpression * expression, const DSExpression * target, const DSExpression * substitute)
 {
         DSExpression * newExpression = NULL;
@@ -1580,6 +1681,261 @@ extern DSExpression * DSExpressionFromPowerlawInMatrixForm(const DSUInteger row,
         DSSecureFree(string);
 bail:
         return expression;
+}
+
+static void processbranches(DSExpression * expression,
+                            DSMatrix * Ki,
+                            DSMatrix *C,
+                            DSVariablePool * Xi,
+                            double previous_exponent){
+    
+    if (expression == NULL || Ki == NULL || C == NULL || Xi == NULL)
+        goto bail;
+    
+    DSUInteger i, ii, index;
+    DSExpression *expression_i = NULL;
+    DSVariablePool *tempPool = NULL, *Xd = NULL;
+    double value, previous_exponent_i = 1.0;
+    DSMatrix *Kd = NULL;
+    char **ptr;
+
+    Xd = DSVariablePoolAlloc();
+    
+//    printf("using processbranches. Received %s in form of matrices. Merging %s with the exponent %f \n",
+//           DSExpressionAsString(DSExpressionFromPowerlawInMatrixForm(0, Kd, Xd, Ki, Xi, C)),
+//           DSExpressionAsString(expression),
+//           previous_exponent);
+//    printf("The expression has %u branches \n", DSExpressionNumberOfBranches(expression));
+//    printf("The operator is: %c \n", DSExpressionOperator(expression));
+
+    if (DSExpressionOperator(expression) == '^'){
+        previous_exponent_i = strtod(DSExpressionAsString(DSExpressionBranchAtIndex(expression, 1)),
+                                   ptr);
+        processbranches(DSExpressionBranchAtIndex(expression, 0), Ki, C, Xi, previous_exponent*previous_exponent_i);
+        goto bail;
+    }
+    
+    
+    if (DSExpressionNumberOfBranches(expression) == 0 && DSExpressionOperator(expression) == '?'){
+        tempPool = DSExpressionVariablesInExpression(expression);
+//        DSMatrixSetDoubleValue(C, 0, 0, 1);
+        if (DSVariablePoolNumberOfVariables(tempPool) == 1){
+//            printf("process branches for expressions withoutbranches and 1 variable! the constant is: %f \n", expression->node.constant);
+            index = DSVariablePoolIndexOfVariableWithName(Xi,
+                                                          DSVariablePoolAllVariableNames(tempPool)[0]);
+            value = DSMatrixDoubleValue(Ki, 0, index) + 1.0*previous_exponent;
+            DSMatrixSetDoubleValue(Ki, 0, index, value);
+        }
+        if (tempPool != NULL){
+            DSVariablePoolFree(tempPool);
+            tempPool = NULL;
+        }
+        
+    }
+    
+    
+    for(i=0; i<DSExpressionNumberOfBranches(expression); i++){
+        
+            expression_i = DSExpressionBranchAtIndex(expression, i);
+            tempPool = DSExpressionVariablesInExpression(expression_i);
+        
+//            printf("Branch %u: %s \n", i, DSExpressionAsString(expression_i));
+            if (DSVariablePoolNumberOfVariables(tempPool) == 0){
+//                    printf("branch %u has 0 variables \n", i);
+                    if (DSExpressionOperator(expression) == '*')
+                        DSMatrixSetDoubleValue(C, 0, 0, expression_i->node.constant);
+                    if (tempPool != NULL){
+                        DSVariablePoolFree(tempPool);
+                        tempPool = NULL;
+                    }
+                    continue;
+            }
+        
+            if (DSExpressionNumberOfBranches(expression_i) == 0){
+                if (DSVariablePoolNumberOfVariables(tempPool) > 1){
+                    previous_exponent_i = strtod(DSExpressionAsString(DSExpressionBranchAtIndex(expression_i, 1)),
+                                               ptr);
+                    processbranches(DSExpressionBranchAtIndex(expression_i, 0), Ki, C, Xi, previous_exponent_i);
+                }else{
+                    index = DSVariablePoolIndexOfVariableWithName(Xi,
+                                                                  DSVariablePoolAllVariableNames(tempPool)[0]);
+                    value = DSMatrixDoubleValue(Ki, 0, index) + 1.0*previous_exponent;
+                    DSMatrixSetDoubleValue(Ki, 0, index, value);
+                }
+            }else{
+                processbranches(expression_i, Ki, C, Xi, previous_exponent);
+            }
+            if (tempPool != NULL)
+                DSVariablePoolFree(tempPool);
+    }
+//test1:
+//    printf("using processbranches. Generated %s \n",
+//           DSExpressionAsString(DSExpressionFromPowerlawInMatrixForm(0, Kd, Xd, Ki, Xi, C)));
+    
+bail:
+    return;
+    
+}
+
+
+extern DSExpression * DSExpressionSimplifyExpressionAsExpression(const DSExpression *expression){
+    
+    if (expression == NULL)
+        goto bail;
+    
+//    printf("**************************************** start ****************************************  \n");
+//    printf("Reporting from DSExpressionSimplifyExpressionAsExpression. The expression I got is: %s \n ", DSExpressionAsString(expression));
+    
+    DSMatrix * Ki = NULL, *Kd =NULL, *C = NULL;
+    DSVariablePool *Xi = NULL, *Xd = NULL, *tempPool = NULL, *tempPool_ii = NULL;
+    DSUInteger length = DS_EXPRESSION_STRING_INIT_LENGTH, i, index, ii;
+    DSExpression *expression_i, *expression_ii, *expression_aux;
+    double value, previous_exponent = 1.0;
+    char **ptr;
+    
+    Xd = DSVariablePoolAlloc();
+    Xi = DSExpressionVariablesInExpression(expression);
+    if (DSVariablePoolNumberOfVariables(Xi) !=0)
+        Ki = DSMatrixCalloc(1, DSVariablePoolNumberOfVariables(Xi));
+    else
+        Ki = DSMatrixCalloc(1, 1);
+    C = DSMatrixCalloc(1, 1);
+    
+//    printf("The expression has %u branches \n", DSExpressionNumberOfBranches(expression));
+//    printf("The operator is: %c \n", DSExpressionOperator(expression));
+    
+    if (DSExpressionNumberOfBranches(expression) == 0){
+        if (DSVariablePoolNumberOfVariables(Xi) != 0)
+            DSMatrixSetDoubleValue(C, 0, 0, 1.0);
+        else
+            DSMatrixSetDoubleValue(C, 0, 0, expression->node.constant);
+        DSMatrixSetDoubleValue(Ki, 0, 0, 1.0);
+    }
+
+    if (DSExpressionOperator(expression) == '^'){
+        previous_exponent = strtod(DSExpressionAsString(DSExpressionBranchAtIndex(expression, 1)),
+                                   ptr);
+        processbranches(DSExpressionBranchAtIndex(expression, 0), Ki, C, Xi, previous_exponent);
+        goto bail0;
+    }
+    
+    for(i=0; i<DSExpressionNumberOfBranches(expression); i++){
+        
+            expression_i = DSExpressionBranchAtIndex(expression, i);
+            tempPool = DSExpressionVariablesInExpression(expression_i);
+//            printf("Branch %u: %s \n", i, DSExpressionAsString(expression_i));
+        
+            if (DSVariablePoolNumberOfVariables(tempPool) == 0){
+                    
+                if (DSExpressionOperator(expression) == '*'){
+//                    printf("branch %u has 0 variables. The constant is %f \n", i, expression_i->node.constant);
+                    DSMatrixSetDoubleValue(C, 0, 0, expression_i->node.constant);
+                }else{
+                    printf("Generate an error! \n");
+                }
+                    if (tempPool != NULL){
+                        DSVariablePoolFree(tempPool);
+                        tempPool = NULL;
+                    }
+                    continue;
+            }
+            if (DSExpressionNumberOfBranches(expression_i) == 0){
+                if (DSVariablePoolNumberOfVariables(tempPool) > 1){
+//                    printf("branch %u has more than 1 variables \n", i);
+                    previous_exponent = strtod(DSExpressionAsString(DSExpressionBranchAtIndex(expression_i, 1)),
+                                               ptr);
+                    processbranches(DSExpressionBranchAtIndex(expression_i, 0), Ki, C, Xi, previous_exponent);
+                } else {
+//                    printf("branch %u has 1 variable \n", i);
+                    index = DSVariablePoolIndexOfVariableWithName(Xi,
+                                                                  DSVariablePoolAllVariableNames(tempPool)[0]);
+                    value = DSMatrixDoubleValue(Ki, 0, index) + 1.0;
+                    DSMatrixSetDoubleValue(Ki, 0, index, value);
+                }
+            }else{
+                    processbranches(expression_i, Ki, C, Xi, previous_exponent);
+                }
+        
+            if (tempPool != NULL)
+                DSVariablePoolFree(tempPool);
+    }
+bail0:
+    expression_aux = DSExpressionFromPowerlawInMatrixForm(0, Kd, Xd, Ki, Xi, C);
+    
+//    printf("Reporting from DSExpressionSimplifyExpressionAsExpression. The expression I generated is: %s \n ", DSExpressionAsString(expression_aux));
+//    printf("**************************************** end ****************************************  \n");
+    
+    if (Xd != NULL)
+        DSVariablePoolFree(Xd);
+    if (Xi != NULL)
+        DSVariablePoolFree(Xi);
+    if (Ki != NULL)
+        DSMatrixFree(Ki);
+    if (C != NULL)
+        DSMatrixFree(C);
+        
+bail:
+    return expression_aux;
+    
+}
+
+extern char * DSExpressionSimplifyExpressionAsString(const DSExpression *expression){
+    
+    if (expression == NULL)
+        goto bail;
+    
+    char * string = NULL;
+    DSExpression *simplified_expression = NULL;
+    
+    simplified_expression = DSExpressionSimplifyExpressionAsExpression(expression);
+    string = DSExpressionAsString(simplified_expression);
+    
+    if (simplified_expression != NULL)
+        DSExpressionFree(simplified_expression);
+    
+bail:
+    return string;
+    
+}
+
+extern DSExpression * DSExpressionByParsingStringSimplifyExpressionAsExpression(const char * string){
+    
+    if (string == NULL)
+        goto bail;
+    
+    DSExpression * simplified_expression = NULL, *string_as_expression=NULL;
+    
+    string_as_expression = DSExpressionByParsingString(string);
+    simplified_expression = DSExpressionSimplifyExpressionAsExpression(string_as_expression);
+    
+    if (string_as_expression != NULL)
+        DSExpressionFree(string_as_expression);
+            
+bail:
+    return simplified_expression;
+}
+
+extern const char * DSExpressionByParsingStringSimplifyExpressionAsString(const char * string){
+    
+    if (string == NULL)
+        goto bail;
+    
+    DSExpression * simplified_expression = NULL, *string_as_expression=NULL;
+    char * simplified_string = NULL;
+    
+    string_as_expression = DSExpressionByParsingString(string);
+    simplified_expression = DSExpressionSimplifyExpressionAsExpression(string_as_expression);
+    simplified_string = DSExpressionAsString(simplified_expression);
+    
+    if (string_as_expression != NULL)
+        DSExpressionFree(string_as_expression);
+    if (simplified_expression != NULL)
+        DSExpressionFree(simplified_expression);
+            
+bail:
+    return simplified_string;
+    
+    
 }
 
 

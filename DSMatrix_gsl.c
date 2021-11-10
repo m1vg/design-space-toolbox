@@ -269,7 +269,9 @@ extern DSUInteger DSuIntegerMatrixValue(const DSuIntegerMatrix *matrix, const DS
         goto bail;
     }
     if (row >= DSMatrixRows(matrix) || column >= DSMatrixColumns(matrix)) {
-        DSError(M_DS_MAT_OUTOFBOUNDS, A_DS_ERROR);
+        DSError(M_DS_MAT_OUTOFBOUNDS, A_DS_ERROR); // A_DS_FATAL   A_DS_ERROR
+        printf("The problematic matrix is [trying to access %u, %u] : \n", row, column);
+        DSuIntegerMatrixPrint(matrix);
         goto bail;
     }
     value = mat[row][column];
@@ -418,6 +420,28 @@ bail:
         if (values != NULL)
                 DSSecureFree(values);
         return aMatrix;
+}
+
+extern DSMatrix * DSMatrixFromStringVector(const char ** string, const DSUInteger rows, DSUInteger columns){
+    
+    DSMatrix * aMatrix = NULL;
+    double value;
+    DSUInteger row, col, i;
+    
+    if (string == NULL) {
+            DSError(M_DS_WRONG ": String to parse is NULL", A_DS_ERROR);
+            goto bail;
+    }
+    aMatrix = DSMatrixAlloc(rows, columns);
+    for (i=0; i<rows*columns; i++){
+        value = atof(string[i]);
+        row = i/columns;
+        col = i%columns;
+        DSMatrixSetDoubleValue(aMatrix, row, col, value);
+    }
+    
+bail:
+    return aMatrix;
 }
 
 
@@ -663,7 +687,9 @@ extern double DSMatrixDoubleValue(const DSMatrix *matrix, const DSUInteger row, 
                 goto bail;
         }
         if (row >= DSMatrixRows(matrix) || column >= DSMatrixColumns(matrix)) {
-                DSError(M_DS_MAT_OUTOFBOUNDS, A_DS_ERROR);
+                printf("The problematic matrix is [trying to access %u, %u] : \n", row, column);
+                DSMatrixPrint(matrix);
+                DSError(M_DS_MAT_OUTOFBOUNDS, A_DS_ERROR); // A_DS_FATAL A_DS_ERROR
                 goto bail;
         }
         value =gsl_matrix_get(DSMatrixInternalPointer(matrix), row, column);

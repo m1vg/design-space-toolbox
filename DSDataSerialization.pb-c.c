@@ -457,6 +457,51 @@ void   dsdesign_space_message__free_unpacked
   assert(message->base.descriptor == &dsdesign_space_message__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
+void   dsmass_balance_data_message__init
+                     (DSMassBalanceDataMessage         *message)
+{
+  static const DSMassBalanceDataMessage init_value = DSMASS_BALANCE_DATA_MESSAGE__INIT;
+  *message = init_value;
+}
+size_t dsmass_balance_data_message__get_packed_size
+                     (const DSMassBalanceDataMessage *message)
+{
+  assert(message->base.descriptor == &dsmass_balance_data_message__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t dsmass_balance_data_message__pack
+                     (const DSMassBalanceDataMessage *message,
+                      uint8_t       *out)
+{
+  assert(message->base.descriptor == &dsmass_balance_data_message__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t dsmass_balance_data_message__pack_to_buffer
+                     (const DSMassBalanceDataMessage *message,
+                      ProtobufCBuffer *buffer)
+{
+  assert(message->base.descriptor == &dsmass_balance_data_message__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+DSMassBalanceDataMessage *
+       dsmass_balance_data_message__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (DSMassBalanceDataMessage *)
+     protobuf_c_message_unpack (&dsmass_balance_data_message__descriptor,
+                                allocator, len, data);
+}
+void   dsmass_balance_data_message__free_unpacked
+                     (DSMassBalanceDataMessage *message,
+                      ProtobufCAllocator *allocator)
+{
+  if(!message)
+    return;
+  assert(message->base.descriptor == &dsmass_balance_data_message__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
 static const ProtobufCFieldDescriptor dsmatrix_message__field_descriptors[3] =
 {
   {
@@ -1410,7 +1455,7 @@ const ProtobufCMessageDescriptor dsextension_data_message__descriptor =
   (ProtobufCMessageInit) dsextension_data_message__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCFieldDescriptor dsdesign_space_message__field_descriptors[15] =
+static const ProtobufCFieldDescriptor dsdesign_space_message__field_descriptors[17] =
 {
   {
     "gma",
@@ -1592,6 +1637,30 @@ static const ProtobufCFieldDescriptor dsdesign_space_message__field_descriptors[
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
+  {
+    "massBalances",
+    16,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_MESSAGE,
+    0,   /* quantifier_offset */
+    offsetof(DSDesignSpaceMessage, massbalances),
+    &dsmass_balance_data_message__descriptor,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "modifierFlags2",
+    17,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_INT32,
+    offsetof(DSDesignSpaceMessage, has_modifierflags2),
+    offsetof(DSDesignSpaceMessage, modifierflags2),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
 };
 static const unsigned dsdesign_space_message__field_indices_by_name[] = {
   4,   /* field[4] = Cd */
@@ -1603,7 +1672,9 @@ static const unsigned dsdesign_space_message__field_indices_by_name[] = {
   6,   /* field[6] = delta */
   10,   /* field[10] = extensionData */
   0,   /* field[0] = gma */
+  15,   /* field[15] = massBalances */
   1,   /* field[1] = modifierFlags */
+  16,   /* field[16] = modifierFlags2 */
   2,   /* field[2] = numberOfCases */
   13,   /* field[13] = numberOfConservations */
   14,   /* field[14] = numberinheritedconservations */
@@ -1613,7 +1684,7 @@ static const unsigned dsdesign_space_message__field_indices_by_name[] = {
 static const ProtobufCIntRange dsdesign_space_message__number_ranges[1 + 1] =
 {
   { 1, 0 },
-  { 0, 15 }
+  { 0, 17 }
 };
 const ProtobufCMessageDescriptor dsdesign_space_message__descriptor =
 {
@@ -1623,10 +1694,113 @@ const ProtobufCMessageDescriptor dsdesign_space_message__descriptor =
   "DSDesignSpaceMessage",
   "",
   sizeof(DSDesignSpaceMessage),
-  15,
+  17,
   dsdesign_space_message__field_descriptors,
   dsdesign_space_message__field_indices_by_name,
   1,  dsdesign_space_message__number_ranges,
   (ProtobufCMessageInit) dsdesign_space_message__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
+static const ProtobufCFieldDescriptor dsmass_balance_data_message__field_descriptors[6] =
+{
+  {
+    "n",
+    1,
+    PROTOBUF_C_LABEL_REQUIRED,
+    PROTOBUF_C_TYPE_INT32,
+    0,   /* quantifier_offset */
+    offsetof(DSMassBalanceDataMessage, n),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "fin",
+    2,
+    PROTOBUF_C_LABEL_REPEATED,
+    PROTOBUF_C_TYPE_STRING,
+    offsetof(DSMassBalanceDataMessage, n_fin),
+    offsetof(DSMassBalanceDataMessage, fin),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "fout",
+    3,
+    PROTOBUF_C_LABEL_REPEATED,
+    PROTOBUF_C_TYPE_STRING,
+    offsetof(DSMassBalanceDataMessage, n_fout),
+    offsetof(DSMassBalanceDataMessage, fout),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "signature",
+    4,
+    PROTOBUF_C_LABEL_REPEATED,
+    PROTOBUF_C_TYPE_INT32,
+    offsetof(DSMassBalanceDataMessage, n_signature),
+    offsetof(DSMassBalanceDataMessage, signature),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "metabolicblocks_variables",
+    5,
+    PROTOBUF_C_LABEL_REPEATED,
+    PROTOBUF_C_TYPE_STRING,
+    offsetof(DSMassBalanceDataMessage, n_metabolicblocks_variables),
+    offsetof(DSMassBalanceDataMessage, metabolicblocks_variables),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "metabolicblocks_ids",
+    6,
+    PROTOBUF_C_LABEL_REPEATED,
+    PROTOBUF_C_TYPE_INT32,
+    offsetof(DSMassBalanceDataMessage, n_metabolicblocks_ids),
+    offsetof(DSMassBalanceDataMessage, metabolicblocks_ids),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+};
+static const unsigned dsmass_balance_data_message__field_indices_by_name[] = {
+  1,   /* field[1] = fin */
+  2,   /* field[2] = fout */
+  5,   /* field[5] = metabolicblocks_ids */
+  4,   /* field[4] = metabolicblocks_variables */
+  0,   /* field[0] = n */
+  3,   /* field[3] = signature */
+};
+static const ProtobufCIntRange dsmass_balance_data_message__number_ranges[1 + 1] =
+{
+  { 1, 0 },
+  { 0, 6 }
+};
+const ProtobufCMessageDescriptor dsmass_balance_data_message__descriptor =
+{
+  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "DSMassBalanceDataMessage",
+  "DSMassBalanceDataMessage",
+  "DSMassBalanceDataMessage",
+  "",
+  sizeof(DSMassBalanceDataMessage),
+  6,
+  dsmass_balance_data_message__field_descriptors,
+  dsmass_balance_data_message__field_indices_by_name,
+  1,  dsmass_balance_data_message__number_ranges,
+  (ProtobufCMessageInit) dsmass_balance_data_message__init,
   NULL,NULL,NULL    /* reserved[123] */
 };

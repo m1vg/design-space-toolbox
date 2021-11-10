@@ -94,6 +94,7 @@ extern void DSuIntegerMatrixFree(DSuIntegerMatrix *matrix);
 extern DSMatrix * DSMatrixIdentity(const DSUInteger size);
 extern DSMatrix * DSMatrixRandomNumbers(const DSUInteger rows, const DSUInteger columns);
 extern DSMatrix * DSMatrixByParsingString(const char * string);
+extern DSMatrix * DSMatrixFromStringVector(const char ** string, const DSUInteger rows, DSUInteger columns);
 
 #if defined(__APPLE__) && defined (__MACH__)
 #pragma mark Arithmetic (factory)

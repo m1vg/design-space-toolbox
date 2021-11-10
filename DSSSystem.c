@@ -34,6 +34,7 @@
 #include "DSErrors.h"
 #include "DSMemoryManager.h"
 #include "DSVariable.h"
+#include "DSCase.h"
 #include "DSSSystem.h"
 #include "DSUnstableCase.h"
 #include "DSExpression.h"
@@ -63,7 +64,9 @@
 #define DSSSysXd_b(x)                     ((x)->Xd_b)
 #define DSSSysXd_a_c(x)                   ((x)->Xd_a_c)
 #define DSSSysAlpha(x)                    ((x)->alpha)
+#define DSSSysAlphaAdjusted(x)            ((x)->alpha_adjusted)
 #define DSSSysBeta(x)                     ((x)->beta)
+#define DSSSysBetaAdjusted(x)             ((x)->beta_adjusted)
 #define DSSSysGd(x)                       ((x)->Gd)
 #define DSSSysGi(x)                       ((x)->Gi)
 #define DSSSysHd(x)                       ((x)->Hd)
@@ -130,12 +133,15 @@ extern DSSSystem * DSSSystemCopy(const DSSSystem * original)
         DSSSystemSetIsSingular(newSSys, DSSSystemIsSingular(original));
         DSSSystemSetIsUnstable(newSSys, DSSSystemIsUnstable(original));
         DSSSystemSetIsConserved(newSSys, DSSSystemIsConserved(original));
+        DSSSystemSetAdjustCodominantStoichiometry(newSSys, DSSSystemAdjustCodominantStoichiometry(original));
         if (DSSSystemIsConserved(newSSys) == true){
             newSSys->numberOfConservations = original->numberOfConservations;
         }
         if (DSSSystemIsSingular(newSSys) == false) {
                 DSSSysM(newSSys) = DSMatrixCopy(DSSSysM(original));
         }
+        if (DSSSystemAdjustCodominantStoichiometry(newSSys) == true)
+            DSSSysAlphaAdjusted(newSSys) = DSMatrixCopy(DSSSysAlphaAdjusted(original));
 bail:
         return newSSys;
 }
@@ -184,6 +190,8 @@ extern void DSSSystemFree(DSSSystem * sys)
                 DSMatrixFree(DSSSysHi(sys));
         if (DSSSysM(sys) != NULL)
                 DSMatrixFree(DSSSysM(sys));
+        if (DSSSysAlphaAdjusted(sys) != NULL)
+                DSMatrixFree(DSSSysAlphaAdjusted(sys));
         DSSecureFree(sys);
 bail:
         return;
@@ -1298,6 +1306,7 @@ DSSSystem * DSSSystemWithTermsFromGMACyclical(const DSDesignSpace * ds,
     double factor = 1.0, den = 1.0, num = 1.0;
     bool isMainCyclicalVariable = false, isSecondaryVariable = false, isMainVariable = false;
     bool alreadyassigned_bol = false;
+    DSDesignSpace *previous, *original;
     
     if (gma == NULL) {
         DSError(M_DS_NULL ": Template GMA to make S-System is NULL", A_DS_ERROR);
@@ -1308,6 +1317,67 @@ DSSSystem * DSSSystemWithTermsFromGMACyclical(const DSDesignSpace * ds,
         goto bail;
     }
     
+//
+//
+//    // delete this after debugging
+//    bool de_bug = false;
+//    char aux[100];
+//
+//    sprintf(aux, "%s", "93_15");
+//    if (ds->casePrefix != NULL){
+//        if (strcmp(ds->casePrefix, aux) == 0){
+//            if (DSCaseNumberForSignature(termArray, ds->gma) == 5){
+//                sprintf(aux, "%s", "93_15_5");
+//                de_bug = true;
+//            }
+//        }
+//    }
+//
+//    if (de_bug == true){
+//        previous = ds->extensionData->parent_ds;
+//        original = previous->extensionData->parent_ds;
+//
+//        printf("****(DSSSystemWithTermsFromGMACyclical) The equations of the original ds are: \n");
+//        for (i=0; i<5; i++){
+//            printf("Equation %u: %s \n",i, DSExpressionAsString(DSGMASystemEquations(original->gma)[i]));
+//        }
+//        printf("The corresponding beta matrix is: \n");
+//        DSMatrixPrint(original->gma->beta);
+//
+//        printf("The equations of the previous ds (93) ds are: ---------\n");
+//        for (i=0; i<5; i++){
+//            printf("Equation %u: %s \n",i, DSExpressionAsString(DSGMASystemEquations(previous->gma)[i]));
+//        }
+//        printf("The corresponding beta matrix is: \n");
+//        DSMatrixPrint(previous->gma->beta);
+//        printf("The correspinding H_L_term matrix is: \n");
+//        DSuIntegerMatrixPrint(previous->extensionData->H_l_term);
+//        printf("The corresponding H_L_eq matrix is: \n");
+//        DSuIntegerMatrixPrint(previous->extensionData->H_l_eq);
+//        printf("The main cyclical variables (%u) are: %u \n ", previous->extensionData->numberCycles,
+//               previous->extensionData->mainCycleVariables[0]);
+//        printf("The secondary cyclical variables (%u) are: %u \n", previous->extensionData->numberSecondaryVariables[0], previous->extensionData->allSecondaryVariables[0][0]);
+//        printf("The original ssystem is: \n");
+//        DSSSystemPrintEquations(previous->extensionData->originalsSystem);
+//
+//        printf("The equations of the current ds (93_15) are: ----------\n");
+//        for (i=0; i<5; i++){
+//            printf("Equation %u: %s \n",i, DSExpressionAsString(DSGMASystemEquations(ds->gma)[i]));
+//        }
+//        printf("The corresponding beta matrix is: \n");
+//        DSMatrixPrint(ds->gma->beta);
+//        printf("The correspinding H_L_term matrix is: \n");
+//        DSuIntegerMatrixPrint(ds->extensionData->H_l_term);
+//        printf("The corresponding H_L_eq matrix is: \n");
+//        DSuIntegerMatrixPrint(ds->extensionData->H_l_eq);
+//        printf("The main cyclical variables (%u) are: %u \n ", ds->extensionData->numberCycles,
+//               ds->extensionData->mainCycleVariables[0]);
+//        printf("The secondary cyclical variables (%u) are: %u \n", ds->extensionData->numberSecondaryVariables[0], ds->extensionData->allSecondaryVariables[0][0]);
+//        printf("The original ssystem is: \n");
+//        DSSSystemPrintEquations(ds->extensionData->originalsSystem);
+//
+//    }
+//
     ssys = DSSSystemAlloc();
     DSSSysXd(ssys) = (DSVariablePool *)DSGMASystemXd(gma);
     DSSSysXi(ssys) = (DSVariablePool *)DSGMASystemXi(gma);
@@ -1339,6 +1409,9 @@ DSSSystem * DSSSystemWithTermsFromGMACyclical(const DSDesignSpace * ds,
         // If constructing equation for a main cyclical variable
         if (isMainCyclicalVariable == true){
             
+//            if (de_bug == true)
+//                printf("ismaincyclicalvariable is true for case %s \n", aux);
+            
                     // define if outlet reaction (dependent_pool_index) is a secondary variable or main variable
                     isSecondaryVariable = false;
                     isMainVariable = false;
@@ -1365,12 +1438,17 @@ DSSSystem * DSSSystemWithTermsFromGMACyclical(const DSDesignSpace * ds,
                     den = DSMatrixDoubleValue(beta_original, ind_eq, ind_term);
                     num = DSMatrixDoubleValue(DSGMASystemBeta(gma), i/2, term2-1);
                     factor = den/num;
+//                    if (de_bug == true)
+//                        printf("factor equals %f for case %s \n", factor, aux);
             
                     if ((isMainVariable == false && isSecondaryVariable == true ) ||
                         (isMainVariable == false && isSecondaryVariable == false)){
                         
                             // If the outlet reaction does not correspond to the main variable and it is secondary.
                             // First we assign the original Alphas and Betas to the mainCycleVariable
+                        
+//                            if (de_bug == true)
+//                                printf("main variable is secondary for case %s \n", aux);
                         
                             dsSSystemAssignMatricesCyclicalCase(ssys,
                                                                 originalSsys,
@@ -1382,6 +1460,9 @@ DSSSystem * DSSSystemWithTermsFromGMACyclical(const DSDesignSpace * ds,
                         
                     }else{
                             //do the normal assignment for the main cyclical variable as output
+//                            if (de_bug == true)
+//                                printf("main variable is output for case %s \n", aux);
+                        
                             dsSSystemAssignMatricesCyclicalCase(ssys,
                                                                 originalSsys,
                                                                 gma,term1,
@@ -1390,6 +1471,10 @@ DSSSystem * DSSSystemWithTermsFromGMACyclical(const DSDesignSpace * ds,
                     }
                     currentCycle++;
         }else{
+            
+//                    if (de_bug == true)
+//                        printf("ismaincyclicalvariable is false for case %s \n", aux);
+            
                     // The normal assignment, when we are NOT dealing with a main variable.
                     for(w = 0; w < numberOfCycles; w++)
                         if( i/2 == alreadyassigned[w])
@@ -1418,6 +1503,10 @@ DSSSystem * DSSSystemWithTermsFromGMACyclical(const DSDesignSpace * ds,
 bail:
     if (alreadyassigned != NULL)
         DSSecureFree(alreadyassigned);
+    
+//    if (de_bug ==true)
+//        printf("****(DSSSystemWithTermsFromGMACyclical) End of the function for case %s\n", aux);
+    
     return ssys;
 }
 
@@ -2486,6 +2575,18 @@ bail:
         return matrix;
 }
 
+extern const DSMatrix * DSSSystemAlphaAdjusted(const DSSSystem * ssys)
+{
+        DSMatrix *matrix = NULL;
+        if (ssys == NULL) {
+                DSError(M_DS_NULL ": S-System is NULL", A_DS_ERROR);
+                goto bail;
+        }
+        matrix = DSSSysAlphaAdjusted(ssys);
+bail:
+        return matrix;
+}
+
 extern const DSMatrix * DSSSystemBeta(const DSSSystem * ssys)
 {
         DSMatrix *matrix = NULL;
@@ -3094,6 +3195,19 @@ bail:
     return isFalseBlowing;
 }
 
+extern bool DSSSystemAdjustCodominantStoichiometry(const DSSSystem *ssys){
+    
+    bool AdjustCodominantStoichiometry = false;
+    if (ssys == NULL) {
+        DSError(M_DS_SSYS_NULL, A_DS_ERROR);
+        goto bail;
+    }
+    AdjustCodominantStoichiometry = (ssys->modifierFlags & DS_SSYSTEM_FLAG_ADJUST_CODOMINANT_STOICHIOMETRY) ? true : false;
+bail:
+    return AdjustCodominantStoichiometry;
+    
+}
+
 extern bool DSSSystemShouldFreeXd(const DSSSystem *ssys)
 {
         bool shouldFree = false;
@@ -3157,6 +3271,21 @@ extern void DSSSystemSetIsUnstable(DSSSystem *ssys, bool isUnstable)
 bail:
     return;
 }
+
+extern void DSSSystemSetAdjustCodominantStoichiometry(DSSSystem *ssys, bool AdjustStoichiometry){
+    
+    unsigned char newFlag;
+    if (ssys == NULL) {
+        DSError(M_DS_SSYS_NULL, A_DS_ERROR);
+        goto bail;
+    }
+    newFlag = ssys->modifierFlags & ~DS_SSYSTEM_FLAG_ADJUST_CODOMINANT_STOICHIOMETRY;
+    ssys->modifierFlags = (AdjustStoichiometry ? DS_SSYSTEM_FLAG_ADJUST_CODOMINANT_STOICHIOMETRY : 0) | newFlag;
+bail:
+    return;
+
+}
+
 
 extern void DSSSystemSetShouldFreeXd(DSSSystem *ssys, bool shouldFreeXd)
 {
@@ -4719,6 +4848,26 @@ extern void DSSSystemPrintLogarithmicSolution(const DSSSystem *ssys)
         }
 bail:
         return;
+}
+
+extern void DSSSystemAdjustStoichiometryOfCodominantCase(DSSSystem *ssys){
+    
+    if (ssys == NULL) {
+            DSError(M_DS_SSYS_NULL, A_DS_ERROR);
+            goto bail;
+    }
+    
+    if (DSSSystemAdjustCodominantStoichiometry(ssys) == false)
+        goto bail;
+    
+    DSMatrix *alpha_adjusted = NULL;
+    DSMatrixFree(ssys->alpha);
+    alpha_adjusted = DSMatrixCopy(ssys->alpha_adjusted);
+    ssys->alpha = alpha_adjusted;
+    
+bail:
+    return;
+
 }
 
 #if defined(__APPLE__) && defined (__MACH__)

@@ -25,6 +25,7 @@ typedef struct _DSGMASystemMessage DSGMASystemMessage;
 typedef struct _DSVectorMessage DSVectorMessage;
 typedef struct _DSExtensionDataMessage DSExtensionDataMessage;
 typedef struct _DSDesignSpaceMessage DSDesignSpaceMessage;
+typedef struct _DSMassBalanceDataMessage DSMassBalanceDataMessage;
 
 
 /* --- enums --- */
@@ -215,10 +216,33 @@ struct  _DSDesignSpaceMessage
   int32_t numberofconservations;
   protobuf_c_boolean has_numberinheritedconservations;
   int32_t numberinheritedconservations;
+  DSMassBalanceDataMessage *massbalances;
+  protobuf_c_boolean has_modifierflags2;
+  int32_t modifierflags2;
 };
 #define DSDESIGN_SPACE_MESSAGE__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&dsdesign_space_message__descriptor) \
-    , NULL, 0, 0, 0,NULL, NULL, NULL, NULL, NULL, 0,NULL, 0,NULL, NULL, 0,NULL, 0,NULL, 0, 0, 0, 0 }
+    , NULL, 0, 0, 0,NULL, NULL, NULL, NULL, NULL, 0,NULL, 0,NULL, NULL, 0,NULL, 0,NULL, 0, 0, 0, 0, NULL, 0, 0 }
+
+
+struct  _DSMassBalanceDataMessage
+{
+  ProtobufCMessage base;
+  int32_t n;
+  size_t n_fin;
+  char **fin;
+  size_t n_fout;
+  char **fout;
+  size_t n_signature;
+  int32_t *signature;
+  size_t n_metabolicblocks_variables;
+  char **metabolicblocks_variables;
+  size_t n_metabolicblocks_ids;
+  int32_t *metabolicblocks_ids;
+};
+#define DSMASS_BALANCE_DATA_MESSAGE__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&dsmass_balance_data_message__descriptor) \
+    , 0, 0,NULL, 0,NULL, 0,NULL, 0,NULL, 0,NULL }
 
 
 /* DSMatrixMessage methods */
@@ -411,6 +435,25 @@ DSDesignSpaceMessage *
 void   dsdesign_space_message__free_unpacked
                      (DSDesignSpaceMessage *message,
                       ProtobufCAllocator *allocator);
+/* DSMassBalanceDataMessage methods */
+void   dsmass_balance_data_message__init
+                     (DSMassBalanceDataMessage         *message);
+size_t dsmass_balance_data_message__get_packed_size
+                     (const DSMassBalanceDataMessage   *message);
+size_t dsmass_balance_data_message__pack
+                     (const DSMassBalanceDataMessage   *message,
+                      uint8_t             *out);
+size_t dsmass_balance_data_message__pack_to_buffer
+                     (const DSMassBalanceDataMessage   *message,
+                      ProtobufCBuffer     *buffer);
+DSMassBalanceDataMessage *
+       dsmass_balance_data_message__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data);
+void   dsmass_balance_data_message__free_unpacked
+                     (DSMassBalanceDataMessage *message,
+                      ProtobufCAllocator *allocator);
 /* --- per-message closures --- */
 
 typedef void (*DSMatrixMessage_Closure)
@@ -443,6 +486,9 @@ typedef void (*DSExtensionDataMessage_Closure)
 typedef void (*DSDesignSpaceMessage_Closure)
                  (const DSDesignSpaceMessage *message,
                   void *closure_data);
+typedef void (*DSMassBalanceDataMessage_Closure)
+                 (const DSMassBalanceDataMessage *message,
+                  void *closure_data);
 
 /* --- services --- */
 
@@ -459,6 +505,7 @@ extern const ProtobufCMessageDescriptor dsgmasystem_message__descriptor;
 extern const ProtobufCMessageDescriptor dsvector_message__descriptor;
 extern const ProtobufCMessageDescriptor dsextension_data_message__descriptor;
 extern const ProtobufCMessageDescriptor dsdesign_space_message__descriptor;
+extern const ProtobufCMessageDescriptor dsmass_balance_data_message__descriptor;
 
 PROTOBUF_C__END_DECLS
 

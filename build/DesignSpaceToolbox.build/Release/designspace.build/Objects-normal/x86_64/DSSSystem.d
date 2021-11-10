@@ -1,35 +1,36 @@
 dependencies: \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/DSSSystem.c \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/DSTypes.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/DSErrors.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/DSIO.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/DSMemoryManager.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/DSVariable.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/DSDictionary.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/DSSSystem.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/DSDataSerialization.pb-c.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/DSSSystem.c \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/DSTypes.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/DSErrors.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/DSIO.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/DSMemoryManager.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/DSVariable.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/DSDictionary.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/DSCase.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/DSDataSerialization.pb-c.h \
   /usr/local/include/protobuf-c/protobuf-c.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/DSUnstableCase.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/qhull_ra.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/libqhull_r.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/user_r.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/mem_r.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/qset_r.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/stat_r.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/random_r.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/geom_r.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/merge_r.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/poly_r.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/io_r.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/DSSSystem.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/DSUnstableCase.h \
   /usr/local/include/glpk.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/DSExpression.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/DSExpressionTokenizer.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/DSExpressionGrammar.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/DSSSystemGrammar.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/DSGMASystemParsingAux.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/DSMatrix.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/qhull_ra.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/libqhull_r.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/user_r.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/mem_r.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/qset_r.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/stat_r.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/random_r.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/geom_r.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/merge_r.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/poly_r.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/io_r.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/DSMatrixArray.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/DSGMASystem.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/DSExpression.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/DSExpressionTokenizer.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/DSExpressionGrammar.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/DSSSystemGrammar.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/DSGMASystemParsingAux.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/DSMatrix.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/DSMatrixArray.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/DSGMASystem.h \
   /usr/local/include/gsl/gsl_matrix_double.h \
   /usr/local/include/gsl/gsl_types.h /usr/local/include/gsl/gsl_errno.h \
   /usr/local/include/gsl/gsl_inline.h \

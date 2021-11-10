@@ -87,6 +87,8 @@ extern DSExpression * DSExpressionByCompressingConstantVariables(const DSExpress
 #endif
 
 extern bool DSExpressionIsEqualToExpression(const DSExpression * lhs, const DSExpression *rhs);
+extern bool DSStringIsEqualToStringIgnoringOrder(const char *lhs_string, const char *rhs_string);
+extern bool DSExpressionIsEqualToExpressionIgnoringOrder(const DSExpression * lhs, const DSExpression *rhs);
 extern DSExpression * DSExpressionByReplacingSubExpression(const DSExpression * expression, const DSExpression * target, const DSExpression * substitute);
 extern DSExpression ** DSExpressionRecastSystemEquations(const DSExpression ** expressionArray, DSUInteger * numberOfEquations, const char * prefix);
 extern double DSExpressionEvaluateWithVariablePool(const DSExpression *expression, const DSVariablePool *pool);
@@ -100,10 +102,16 @@ extern DSVariablePool * DSExpressionVariablesInExpression(const DSExpression * e
 #endif
 
 extern char * DSExpressionAsString(const DSExpression *expression);
+extern char * DSExpressionBranchAtIndexAsString(const DSExpression *expression, DSUInteger index);
+extern DSUInteger DSExpressionNumberOfTerms(const DSExpression *expression);
 extern char * DSExpressionAsLatexString(const DSExpression *expression, const DSDictionary * substitutionDict);
 extern void DSExpressionPrint(const DSExpression *expression);
 
 extern DSExpression * DSExpressionFromPowerlawInMatrixForm(const DSUInteger row, const DSMatrix * Kd, const DSVariablePool * Xd, const DSMatrix * Ki, const DSVariablePool *Xi, const DSMatrix * C);
+extern char * DSExpressionSimplifyExpressionAsString(const DSExpression *expression);
+extern DSExpression * DSExpressionSimplifyExpressionAsExpression(const DSExpression *expression);
+extern DSExpression * DSExpressionByParsingStringSimplifyExpressionAsExpression(const char * string);
+extern const char * DSExpressionByParsingStringSimplifyExpressionAsString(const char * string);
 extern DSExpression * DSExpressionFromLogPowerlawInMatrixForm(const DSUInteger row, const DSMatrix * Kd, const DSVariablePool * Xd, const DSMatrix * Ki, const DSVariablePool *Xi, const DSMatrix * C);
 
 

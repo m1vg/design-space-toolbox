@@ -58,6 +58,9 @@ extern DSCyclicalCase * DSCyclicalCaseForCaseInDesignSpace(const DSDesignSpace *
         if (DSCaseIsValid(aCase, true) == true) {
                 goto bail;
         }
+        if (DSCaseCd(aCase) == NULL || DSCaseCi(aCase) == NULL || DSCaseDelta(aCase) == NULL ){
+            goto bail;
+        }
         if (DSCaseConditionsAreValid(aCase) == false) {
                 goto bail;
         }

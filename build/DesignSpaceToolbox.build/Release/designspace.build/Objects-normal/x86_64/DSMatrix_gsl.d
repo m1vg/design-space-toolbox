@@ -1,5 +1,5 @@
 dependencies: \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/DSMatrix_gsl.c \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/DSMatrix_gsl.c \
   /usr/local/include/gsl/gsl_linalg.h /usr/local/include/gsl/gsl_mode.h \
   /usr/local/include/gsl/gsl_inline.h \
   /usr/local/include/gsl/gsl_permutation.h \
@@ -59,23 +59,23 @@ dependencies: \
   /usr/local/include/gsl/gsl_nan.h /usr/local/include/gsl/gsl_pow_int.h \
   /usr/local/include/gsl/gsl_minmax.h /usr/local/include/gsl/gsl_blas.h \
   /usr/local/include/gsl/gsl_eigen.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/DSMatrix.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/DSTypes.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/DSDataSerialization.pb-c.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/DSMatrix.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/DSTypes.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/DSDataSerialization.pb-c.h \
   /usr/local/include/protobuf-c/protobuf-c.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/qhull_ra.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/libqhull_r.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/user_r.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/mem_r.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/qset_r.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/stat_r.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/random_r.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/geom_r.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/merge_r.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/poly_r.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/io_r.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/DSErrors.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/DSIO.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/DSMemoryManager.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/DSMatrixArray.h \
-  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox_3/DSMatrixTokenizer.h
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/qhull_ra.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/libqhull_r.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/user_r.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/mem_r.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/qset_r.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/stat_r.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/random_r.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/geom_r.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/merge_r.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/poly_r.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/io_r.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/DSErrors.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/DSIO.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/DSMemoryManager.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/DSMatrixArray.h \
+  /Users/mavalder/Dropbox/Projects_2018/UC_Davis/Research/DST3/design-space-toolbox/DSMatrixTokenizer.h
