@@ -2078,7 +2078,7 @@ extern void DSSubCaseGenerate3dSignature(const DSDesignSpace *ds, DSCase *aCase,
                 aCase->signature_3d[loc*3 + 2] = DSuIntegerMatrixValue(three_digit, ii, 2) + 1;
             }
             
-            // finally, we copy the internal signature from the case into the 3d signature for variables that are not main cyclical or secondary.
+            // finally, we copy the internal signature from the case into the 3d signature for variables that are not main cyclical or secondary and have more than 1 element in the respective position
             all_main_and_secondary_variables = DSSecureCalloc(sizeof(DSUInteger), 1);
             DSSubCaseAllMainAndSecondaryVariables(ds, all_main_and_secondary_variables, &vector_count);
             for (ii = 0; ii<numberOfEquations; ii++){
@@ -2089,6 +2089,8 @@ extern void DSSubCaseGenerate3dSignature(const DSDesignSpace *ds, DSCase *aCase,
                     }
                 }
                 if (is_main_secondary == true)
+                    continue;
+                if (DSGMASystemSignature(ds->gma)[ii] == 1)
                     continue;
                 aCase->signature_3d[ii*3 + 1] = DSCaseSignature(aCase)[ii*2];
                 aCase->signature_3d[ii*3 + 2] = DSCaseSignature(aCase)[ii*2 + 1];

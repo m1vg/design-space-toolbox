@@ -433,7 +433,7 @@ extern void DSDesignSpaceInitializeMassBalances(DSDesignSpace *ds,
     massBalances->metabolicBlocks = DSVariablePoolCopy(metabolicBlocks);
 
     ds->massBalances = massBalances;
-    DSDesignSpaceSetShouldConsiderMassBalances(ds, true);
+//    DSDesignSpaceSetShouldConsiderMassBalances(ds, true);
         
 bail:
     return;
@@ -2028,6 +2028,15 @@ static double * dsCaseCodominantCaseMergeLinkedFactors(double *cyclical_factors,
 //    DSMatrix *S = ds->massBalances->S;
 //    char ** rxns = ds->massBalances->rxns;
 //    DSVariablePool * Xd = DSCaseXd(aCase);
+//
+//    printf("Printing elements for the case %s \n", aCase->caseIdentifier);
+//    printf("The stoichiometric matrix is: \n");
+//    DSMatrixPrint(S);
+//    printf("The mass balances are rxns[0]: %s \n", rxns[0]);
+//    printf("The metabolites are: \n");
+//    DSVariablePoolPrint(Xd);
+//
+    
     
     // The elements in tis function will be the stoichiometric matrix, along with the vector of pools and reactions.
     
@@ -2063,6 +2072,7 @@ static void dsDesignSpaceCodominatCaseAdjustSsystemMatrices(DSCase *aCase,
         cyclical_factors = factors;
     
     // for k-7-like networks, cyclical factors need to be further processed to merge common factors.
+//    printf("about to merge linked factors for case %s \n", aCase->caseIdentifier);
     linked_factors = dsCaseCodominantCaseMergeLinkedFactors(cyclical_factors, aCase, ds);
 
     alpha = DSMatrixCopy(DSSSystemAlpha(DSCaseSSystem(aCase)));
@@ -2203,6 +2213,7 @@ static DSCase * dsDesignSpaceCaseByRemovingIdenticalFluxes(const DSDesignSpace *
         }
         start = i;
         if (DSDesignSpaceShouldConsiderMassBalances(ds) == true && newCase != NULL && DSDesignSpaceAdjustCodominantStoichiometry(ds) == false ){
+//                printf("checking for mass balances for case %s \n", newCase->caseIdentifier);
                 fulfill_mass_balances = DSCaseCodominantCaseFulfillMassBalances(ds,
                                                                                 newCase,
                                                                                 numberZeroBoundaries,
@@ -2217,6 +2228,7 @@ static DSCase * dsDesignSpaceCaseByRemovingIdenticalFluxes(const DSDesignSpace *
         if (newCase != NULL) {
             if (DSDesignSpaceAdjustCodominantStoichiometry(ds) == true &&
                 DSDesignSpaceShouldConsiderMassBalances(ds) == false){
+//                    printf("NOT checking for mass balances for case %s \n", newCase->caseIdentifier);
                     dsDesignSpaceCodominatCaseAdjustSsystemMatrices(newCase,
                                                                     factors,
                                                                     ds);

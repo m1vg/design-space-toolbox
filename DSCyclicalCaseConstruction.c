@@ -3773,7 +3773,7 @@ DSDesignSpace * dsCyclicalCaseCollapsedSystem(const DSCase * aCase,
         DSDesignSpaceSetAdjustCodominantBoundaries(collapsed, DSDesignSpaceShouldAdjustCodominantBoundaries(original));
         DSDesignSpaceSetShouldConsiderMassBalances(collapsed,
                                                    DSDesignSpaceShouldConsiderMassBalances(original));
-        if (DSDesignSpaceShouldConsiderMassBalances(collapsed) == true)
+        if (DSDesignSpaceResolveCoDominance(collapsed) == true)  //DSDesignSpaceShouldConsiderMassBalances(collapsed) 
             collapsed->massBalances = original->massBalances;
         DSCyclicalCaseInit3dSignature(collapsed, original, aCase);
         collapsed->extensionData = extensionData;
