@@ -2001,6 +2001,230 @@ bail:
     return factors_aux;
 }
 
+static DSUInteger ** dsCaseCodominantCaseIdentifyMetabolicBlocks(DSMatrix *S,
+                                                        DSUInteger ** n_block_i_p,
+                                                        DSUInteger * n_blocks_p){
+    
+    DSUInteger ** metabolic_blocks, * n_block_i = * n_block_i_p, n_blocks = * n_blocks_p;
+    DSUInteger *assigned = DSSecureMalloc(sizeof(DSUInteger)*1), n_assigned = 0, i, ii, j;
+    DSUInteger index1;
+    bool assigned_flag, new_group_flag;
+    DSMatrix *m1=NULL, *m2=NULL, *m2_trans = NULL, *m3 = NULL, *m4 = NULL;
+    
+    // We initialice the metabolic_blocks structure
+    metabolic_blocks = DSSecureMalloc(sizeof(DSUInteger *));
+    metabolic_blocks[0] = DSSecureMalloc(sizeof(DSUInteger));
+    
+//    printf("reporting from dsCaseCodominantCaseIdentifyMetabolicBlocks \n");
+//    printf("n_bloocks is %u \n", n_blocks);
+//    printf("n_block_i[n_blocks] = %u \n", n_block_i[n_blocks]);
+//    printf("metabolic_blocks[n_blocks][n_block_i[n_blocks]] = %u \n", metabolic_blocks[n_blocks][n_block_i[n_blocks]]);
+//    printf("The matrix S is \n");
+//    DSMatrixPrint(S);
+    
+    for (i = 0; i<DSMatrixRows(S); i++){
+        index1 = i; assigned_flag = false;
+        if (index1 == 0){
+            metabolic_blocks[n_blocks][n_block_i[n_blocks]] = index1;
+            n_block_i[n_blocks] += 1;
+            assigned[n_assigned] = index1;
+            n_assigned += 1;
+            n_blocks += 1;
+            continue;
+        }
+        for (ii = 0; ii<n_assigned; ii++){
+            if (index1 == assigned[ii])
+                assigned_flag = true;
+        }
+        if (assigned_flag == true)
+            continue;
+        // We now check if the index1 pool is connected to any group_i in metabolic_blocks
+        new_group_flag = true;
+        m1 = DSMatrixSubMatrixIncludingRowList(S, 1, index1);
+        for (ii=0; ii<n_blocks; ii++){
+            for (j=0; j<n_block_i[ii]; j++){
+                m2 = DSMatrixSubMatrixIncludingRowList(S, 1, metabolic_blocks[ii][j]);
+                m3 = DSMatrixTranspose(m2);
+                m4 = DSMatrixByMultiplyingMatrix(m1, m3);
+                if (m2 != NULL)
+                    DSMatrixFree(m2);
+                if (m3 != NULL)
+                    DSMatrixFree(m3);
+                if (DSMatrixDoubleValue(m4, 0, 0) != 0.0){
+                    new_group_flag = false;
+                    metabolic_blocks[ii] = DSSecureRealloc(metabolic_blocks[ii],
+                                                           sizeof(DSUInteger)*(n_block_i[ii] + 1));
+                    metabolic_blocks[ii][n_block_i[ii]] = index1;
+                    n_block_i[ii] += 1;
+                    assigned[n_assigned] = index1;
+                    n_assigned += 1;
+                    if (m4 != NULL)
+                        DSMatrixFree(m4);
+                    break;
+                }
+            }
+        }
+        if (m1 != NULL)
+            DSMatrixFree(m1);
+        if (new_group_flag == true){
+            metabolic_blocks = DSSecureRealloc(metabolic_blocks, (n_blocks +1) * sizeof(DSUInteger *));
+            metabolic_blocks[n_blocks] = DSSecureMalloc(sizeof(DSUInteger));
+            metabolic_blocks[n_blocks][0] = index1;
+            n_block_i = DSSecureRealloc(n_block_i, sizeof(DSUInteger)* (n_blocks +1));
+            n_block_i[n_blocks] = 1;
+            n_blocks += 1;
+        }
+    }
+    
+    // We now print the metabolic blocks
+//    printf("The metabolic blocks are: \n");
+//    for (i=0; i<n_blocks; i++){
+//        printf("Block %u: \n", i);
+//        for (ii=0; ii<n_block_i[i]; ii++){
+//            printf("Element %u = %u \n", ii, metabolic_blocks[i][ii]);
+//        }
+//    }
+    
+    * n_blocks_p = n_blocks;
+    return metabolic_blocks;
+}
+
+static DSUInteger * dsCaseCodominantCaseIdentifyInputFlux(DSMatrix * S,
+                                                          DSUInteger n_blocks,
+                                                          DSUInteger * n_block_i,
+                                                          DSUInteger ** metabolic_blocks,
+                                                          DSUInteger * affectedPools){
+    
+    
+    DSUInteger * input_flux_i = DSSecureCalloc(sizeof(DSUInteger), n_blocks), *affectedPools_i = NULL;
+    DSUInteger j, i, ii, input_pool, k;
+    DSMatrix *S_sub = NULL;
+    bool input = false;
+    
+    // For a reaction to be an input, it needs to have all values in its column be positive.
+    // construct submatrices and then loop over the columns and determine if the reaction is an exchange flux.
+    for (j=0; j<n_blocks; j++){
+            S_sub = DSMatrixSubMatrixIncludingRows(S, n_block_i[j], metabolic_blocks[j]);
+            affectedPools_i = DSSecureMalloc(sizeof(DSUInteger) * n_block_i[j]);
+            for (k=0; k<n_block_i[j]; k++){
+                affectedPools_i[k] = affectedPools[metabolic_blocks[j][k]];
+            }
+        
+//            printf("analyzing block %u \n", j);
+//            printf("The sub matrix for the block is: \n");
+//            DSMatrixPrint(S_sub);
+        
+            if (S_sub == NULL)
+                continue;
+            for (i=0; i<DSMatrixColumns(S_sub); i++){
+                input = false;
+                for (ii=0; ii<DSMatrixRows(S_sub); ii++){
+                    if (DSMatrixDoubleValue(S_sub, ii, i) == 0.0){
+                        continue;
+                    } else if (DSMatrixDoubleValue(S_sub, ii, i) > 0.0){
+                        input = true;
+                        input_pool = affectedPools_i[ii];
+                    } else {
+                        input = false;
+                    }
+                }
+                if (input == true){
+                    // real input flux
+//                    input_flux_i[j] = i;
+                    // input pool
+                    input_flux_i[j] = input_pool;
+                }
+            }
+            if (affectedPools_i != NULL)
+                DSSecureFree(affectedPools_i);
+            DSMatrixFree(S_sub);
+        
+    }
+    return input_flux_i;
+}
+
+static void dsCaseCodominantCaseProcessLinkedFactors(double *linked_factors,
+                                                     DSUInteger n_linked_factors,
+                                                     DSUInteger n_affectedPools,
+                                                     DSUInteger * affectedPools,
+                                                     DSUInteger n_blocks,
+                                                     DSUInteger * n_block_i,
+                                                     DSUInteger ** metabolic_blocks,
+                                                     DSUInteger * input_flux_i){
+    
+    if (input_flux_i == NULL){
+        goto bail;
+    }
+    
+    DSUInteger i, ii, ind;
+    double positive_cum = 0.0, negative_cum = 0.0;
+    bool positive_term = false, negative_term = false;
+    
+//    printf("reporting from dsCaseCodominantCaseProcessLinkedFactors \n");
+//    printf("The original linked_factors vector is: \n");
+//    for (i=0; i<n_linked_factors; i++){
+//        printf("Block %u: %f \n", i, linked_factors[i]);
+//    }
+    
+    // For each metabolic block: determine the sum of the linked_factors, then, assign this sum to the linked factor corresponding to the input flux, all other factors within the group are set to 1.0.
+    
+    for (i=0; i<n_blocks; i++){
+        positive_cum = 0.0;
+        negative_cum = 0.0;
+        positive_term = false, negative_term = false;
+        
+        for (ii=0; ii<n_block_i[i]; ii++){
+            ind = affectedPools[metabolic_blocks[i][ii]];
+            if (linked_factors[2*ind] != 1.0){
+                positive_term = true;
+                positive_cum += linked_factors[2*ind] - 1.0;
+            }
+            if (linked_factors[2*ind + 1] != 1.0){
+                negative_term = true;
+                negative_cum += linked_factors[2*ind + 1] - 1.0;
+            }
+            if (positive_cum == true && negative_term == true){
+                DSError(": inconsistent codominant case. Revise function dsCaseCodominantCaseProcessLinkedFactors",
+                        A_DS_WARN);
+                goto bail;
+            }
+        }
+        
+        for (ii=0; ii<n_block_i[i]; ii++){
+            ind = affectedPools[metabolic_blocks[i][ii]];
+            if (positive_term == true){
+//                    printf("adjusting positive terms. positive_cum + 1.0 = %f \n", positive_cum +1.0);
+//                    printf("ind == input_flux_i[i] --> %u == %u \n", ind, input_flux_i[i]);
+                    if (ind == input_flux_i[i]){
+                        linked_factors[ind*2] = positive_cum + 1.0;
+                    } else{
+                        linked_factors[ind*2] = 1.0;
+                    }
+            }
+            if (negative_term == true){
+//                printf("adjusting negative terms. negative_cum + 1.0 = %f \n", negative_cum +1.0);
+//                printf("ind == input_flux_i[i] --> %u == %u \n", ind, input_flux_i[i]);
+                if (ind == input_flux_i[i]){
+                    linked_factors[ind*2 + 1] = negative_cum + 1.0;
+                } else{
+                    linked_factors[ind*2 + 1] = 1.0;
+                }
+            }
+        }
+    }
+    
+    
+//    printf("The processed linked_factors vector is: \n");
+//    for (i=0; i<n_linked_factors; i++){
+//        printf("Block %u: %f \n", i, linked_factors[i]);
+//    }
+    
+    
+bail:
+    return;
+}
+
+
 static double * dsCaseCodominantCaseMergeLinkedFactors(double *cyclical_factors, DSCase * aCase, DSDesignSpace * ds){
     
     if (aCase == NULL) {
@@ -2013,38 +2237,89 @@ static double * dsCaseCodominantCaseMergeLinkedFactors(double *cyclical_factors,
     }
     
     double * linked_factors = NULL;
-    DSUInteger i;
-
+    DSUInteger i, n_affectedPools = 0, *affectedPools = NULL, **metabolic_blocks = NULL, n_blocks = 0;
+    DSUInteger * n_block_i = NULL, * input_flux_i = NULL;
+    DSVariablePool *Xd_sub = DSVariablePoolAlloc();
+    DSMatrix *S = ds->massBalances->S, *S_sub = NULL;
+    char ** rxns = ds->massBalances->rxns;
+    DSVariablePool * Xd = DSCaseXd(aCase);
+    DSUInteger rows_S_sub = 0;
+    
+    affectedPools = DSSecureMalloc(sizeof(DSUInteger)*1);
     linked_factors = DSSecureMalloc(sizeof(double)*DSCaseNumberOfEquations(aCase)*2);
     for (i=0; i<DSCaseNumberOfEquations(aCase)*2; i++){
         linked_factors[i] = cyclical_factors[i];
+//        printf("The linked_factors[%u] = %f \n", i, linked_factors[i]);
+        if (linked_factors[i] != 1.0 ){
+                if (n_affectedPools == 0){
+                    affectedPools[n_affectedPools] = i/2;
+                }else{
+                    affectedPools = DSSecureRealloc(affectedPools, (n_affectedPools + 1)*sizeof(DSUInteger));
+                    affectedPools[n_affectedPools] = i/2;
+                }
+                DSVariablePoolAddVariable(Xd_sub, DSVariablePoolVariableAtIndex(Xd, i/2));
+                n_affectedPools += 1;
+        }
     }
     
-//    if (ds->massBalances == NULL){
-//        DSError(": Mass Balances is NULL", A_DS_ERROR);
-//        goto bail;
-//    }
-//
-//    DSMatrix *S = ds->massBalances->S;
-//    char ** rxns = ds->massBalances->rxns;
-//    DSVariablePool * Xd = DSCaseXd(aCase);
-//
+    if (ds->massBalances == NULL){
+        DSError(": Mass Balances is NULL", A_DS_ERROR);
+        goto bail;
+    }
+
 //    printf("Printing elements for the case %s \n", aCase->caseIdentifier);
 //    printf("The stoichiometric matrix is: \n");
 //    DSMatrixPrint(S);
-//    printf("The mass balances are rxns[0]: %s \n", rxns[0]);
 //    printf("The metabolites are: \n");
 //    DSVariablePoolPrint(Xd);
-//
+//    printf("The affected pools are: \n");
+//    for (i=0; i<n_affectedPools; i++){
+//        printf("affectedPools[%u] = %u \n", i, affectedPools[i]);
+//    }
+//    printf("the affected variable pool is: \n");
+//    DSVariablePoolPrint(Xd_sub);
+    
+    // Now, we build a sub-stoichiometric matrix considering the affected pools only.
+    if (n_affectedPools != 0)
+        S_sub = DSMatrixSubMatrixIncludingRows(S, n_affectedPools, affectedPools);
     
     
-    // The elements in tis function will be the stoichiometric matrix, along with the vector of pools and reactions.
+    // The key elements in this function will be the S_sub along with the vector of pools (Xd_sub) and reactions (rxns).
+    // Now, we need to identify metabolic blocks.
     
-    // The general idea here is to construct a subset of the stoichiometric matrix containing the fluxes affected by the factors.
-    // Then, for the most general case, metabolic blocks are found. For each metabolic block, We find a common metabolite linking all reactions within the block. Then, we identify the input flux and assigned it a factor corresponding to a merged factor. 
+    if (n_affectedPools == 1){
+//        printf("n_affectedPools = 1. Going to Bail! \n");
+        goto bail;
+    }
     
+    n_block_i = DSSecureMalloc(1*sizeof(DSUInteger));
+    n_block_i[0] = 0;
+    metabolic_blocks = dsCaseCodominantCaseIdentifyMetabolicBlocks(S_sub, &n_block_i, &n_blocks);
+    
+//    For each metabolic block, we identify the input flux.
+    input_flux_i = dsCaseCodominantCaseIdentifyInputFlux(S_sub, n_blocks, n_block_i, metabolic_blocks, affectedPools);
+    
+    // Now, we process the variable "linked_factors" to merge linked factors.
+    dsCaseCodominantCaseProcessLinkedFactors(linked_factors, DSCaseNumberOfEquations(aCase)*2,
+                                             n_affectedPools, affectedPools,
+                                             n_blocks, n_block_i, metabolic_blocks, input_flux_i);
     
 bail:
+    if (affectedPools != NULL)
+        DSSecureFree(affectedPools);
+    if (n_affectedPools != 0)
+        DSMatrixFree(S_sub);
+    if (Xd_sub != NULL)
+        DSSecureFree(Xd_sub);
+    if (metabolic_blocks != NULL){
+        for (i=0; i<n_blocks; i++)
+            DSSecureFree(metabolic_blocks[i]);
+        DSSecureFree(metabolic_blocks);
+    }
+    if (n_block_i != NULL)
+        DSSecureFree(n_block_i);
+    if (input_flux_i != NULL)
+        DSSecureFree(input_flux_i);
     return linked_factors;
 }
 
